@@ -1,7 +1,7 @@
 buildscript {
     repositories {
         mavenCentral()
-        maven { url = "http://files.minecraftforge.net/maven" }
+        maven { url = "https://files.minecraftforge.net/maven" }
         maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
     }
     dependencies {
@@ -31,8 +31,8 @@ if (new File(projectDir, '.git').exists()) {
 }
 
 repositories {
-    maven { url "http://mobiusstrip.eu/maven"} // Waila
-	maven { url "http://chickenbones.net/maven/" } // NEI
+    maven { url "https://mobiusstrip.eu/maven"} // Waila
+	maven { url "https://chickenbones.net/maven/" } // NEI
 }
 
 dependencies {
