@@ -6,39 +6,24 @@ import net.minecraft.item.Item;
 
 public class ItemRegistry {
 
-    public static Item materials;
-    public static Item debugWand;
-    public static Item hammerEngineer;
-    public static Item swordInfused;
-    public static Item probe;
-    public static Item bowSearing;
-    public static Item strangeBone;
-    public static Item trap;
+    public static final Item materials = new ItemMaterials();
+    public static final Item debugWand = new ItemWandDebug();
+    public static final Item hammerEngineer = new ItemHammerEngineer();
+    public static final Item swordInfused = new ItemSwordInfused();
+    public static final Item probe = new ItemProbe();
+    public static final Item bowSearing = new ItemBowSearing();
+    public static final Item strangeBone = new ItemStrangeBone();
+    public static final Item trap = new ItemTrap();
 
     public static void registerItems() {
 
-        materials = new ItemMaterials();
         GameRegistry.registerItem(materials, "ItemMaterials");
-
-        debugWand = new ItemWandDebug();
         GameRegistry.registerItem(debugWand, "ItemWandDebug");
-
-        hammerEngineer = new ItemHammerEngineer();
         GameRegistry.registerItem(hammerEngineer, "ItemHammerEngineer");
-
-        swordInfused = new ItemSwordInfused();
         GameRegistry.registerItem(swordInfused, "ItemSwordInfused");
-
-        probe = new ItemProbe();
         GameRegistry.registerItem(probe, "ItemProbe");
-
-        bowSearing = new ItemBowSearing();
         GameRegistry.registerItem(bowSearing, "ItemBowSearing");
-
-        strangeBone = new ItemStrangeBone();
         GameRegistry.registerItem(strangeBone, "ItemStrangeBone");
-
-        trap = new ItemTrap();
         GameRegistry.registerItem(trap, "ItemTrap");
     }
 }

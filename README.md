@@ -9,3 +9,4 @@ Use the provided Gradle wrapper to build the project:
 ./gradlew build
 ```
 
+See `AGENTS.md` for contribution guidelines.
