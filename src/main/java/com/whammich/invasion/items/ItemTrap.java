@@ -79,9 +79,8 @@ public class ItemTrap extends Item {
         return this.icons[meta];
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @SideOnly(Side.CLIENT)
-    public void getSubItems(Item item, CreativeTabs tabs, List list) {
+    public void getSubItems(Item item, CreativeTabs tabs, List<ItemStack> list) {
         for (int i = 0; i < names.length; i++) {
             list.add(new ItemStack(this, 1, i));
         }

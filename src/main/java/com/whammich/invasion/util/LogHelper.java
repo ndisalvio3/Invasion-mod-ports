@@ -7,21 +7,21 @@ import org.apache.logging.log4j.Logger;
 
 public class LogHelper {
 
-    private static Logger logger = LogManager.getLogger(Reference.NAME);
+    private static final Logger LOGGER = LogManager.getLogger(Reference.NAME);
 
     public static void info(Object info) {
         if (ConfigHandler.enableLogging)
-            logger.info(info);
+            LOGGER.info(info);
     }
 
     public static void error(Object error) {
         if (ConfigHandler.enableLogging)
-            logger.error(error);
+            LOGGER.error(error);
     }
 
     public static void debug(Object debug) {
         if (ConfigHandler.enableLogging)
-            logger.debug(debug);
+            LOGGER.debug(debug);
     }
 
 }
