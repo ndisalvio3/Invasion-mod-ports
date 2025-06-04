@@ -152,6 +152,8 @@ tasks.build.dependsOn sourceJar, javadocJar, deobfJar
 
 tasks.withType(JavaCompile) { task ->
     task.options.encoding = 'UTF-8'
+    task.sourceCompatibility = '1.8'
+    task.targetCompatibility = '1.8'
 }
 
 publishing {

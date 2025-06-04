@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
 import org.lwjgl.opengl.GL11;
@@ -28,8 +29,9 @@ public class RenderB extends RenderLiving {
         super.doRender(entityBird, renderX, renderY, renderZ, interpYaw, partialTick);
     }
 
-    public void doRender(Entity entity, double d, double d1, double d2, float f, float f1) {
-        renderBz((EntityIMBird) entity, d, d1, d2, f, f1);
+    @Override
+    public void doRender(EntityLiving entity, double x, double y, double z, float yaw, float partialTick) {
+        renderBz((EntityIMBird) entity, x, y, z, yaw, partialTick);
     }
 
     private void renderNavigationVector(EntityIMBird entityBird, double entityRenderOffsetX, double entityRenderOffsetY, double entityRenderOffsetZ) {
