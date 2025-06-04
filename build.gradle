@@ -22,6 +22,14 @@ group = package_group
 archivesBaseName = mod_name
 version = "${mc_version}-${mod_version}-${build_number}"
 
+sourceSets {
+    main {
+        java {
+            srcDir 'src/api/java'
+        }
+    }
+}
+
 import org.ajoberstar.grgit.Grgit
 
 def gitHash = 'unknown'
@@ -36,7 +44,8 @@ repositories {
 }
 
 dependencies {
-	compile "mcp.mobius.waila:Waila:${waila_version}_${mc_version}"
+        // Waila API is bundled locally to avoid external maven dependency
+        compileOnly files('src/api/java')
     compile fileTree(dir: 'libs', include: '*.jar')
 }
 
