@@ -47,7 +47,8 @@ def mcServerUrl = 'https://launcher.mojang.com/v1/objects/952438ac4e01b4d115c5fc
 
 gradle.afterProject { proj ->
     tasks.matching { it.name == 'downloadClient' }.all { t ->
-        t.doFirst {
+        t.actions = []
+        t.doLast {
             def dest = new File(gradle.gradleUserHomeDir,
                 "caches/minecraft/net/minecraft/minecraft/${proj.mc_version}/minecraft-${proj.mc_version}.jar")
             if (!dest.exists()) {
@@ -55,10 +56,10 @@ gradle.afterProject { proj ->
                 new URL(mcJarUrl).withInputStream { i -> dest.withOutputStream { it << i } }
             }
         }
-        t.enabled = false
     }
     tasks.matching { it.name == 'downloadServer' }.all { t ->
-        t.doFirst {
+        t.actions = []
+        t.doLast {
             def dest = new File(gradle.gradleUserHomeDir,
                 "caches/minecraft/net/minecraft/minecraft_server/${proj.mc_version}/minecraft_server-${proj.mc_version}.jar")
             if (!dest.exists()) {
@@ -66,10 +67,10 @@ gradle.afterProject { proj ->
                 new URL(mcServerUrl).withInputStream { i -> dest.withOutputStream { it << i } }
             }
         }
-        t.enabled = false
     }
     tasks.matching { it.name == 'getVersionJson' }.all { t ->
-        t.doFirst {
+        t.actions = []
+        t.doLast {
             def dest = new File(gradle.gradleUserHomeDir,
                 "caches/minecraft/versionJsons/${proj.mc_version}.json")
             if (!dest.exists()) {
@@ -77,13 +78,12 @@ gradle.afterProject { proj ->
                 new URL(mcJsonUrl).withInputStream { i -> dest.withOutputStream { it << i } }
             }
         }
-        t.enabled = false
     }
 }
 
 repositories {
-    maven { url "https://mobiusstrip.eu/maven"} // Waila
-	maven { url "https://chickenbones.net/maven/" } // NEI
+    mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
