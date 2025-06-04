@@ -4,6 +4,7 @@ import net.minecraft.client.model.ModelWolf;
 import net.minecraft.client.renderer.entity.RenderWolf;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.passive.EntityWolf;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
@@ -21,7 +22,7 @@ public class RenderIMWolf extends RenderWolf {
     }
 
     @Override
-    protected ResourceLocation getEntityTexture(Entity entity) {
+    protected ResourceLocation getEntityTexture(EntityWolf entity) {
         return wolf;
     }
 }

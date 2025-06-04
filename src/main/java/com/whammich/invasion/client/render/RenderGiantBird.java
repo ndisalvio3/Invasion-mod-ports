@@ -34,8 +34,9 @@ public class RenderGiantBird extends RenderIMLiving {
         super.doRenderLiving(entityBird, renderX, renderY, renderZ, interpYaw, partialTick);
     }
 
-    public void doRender(Entity entity, double d, double d1, double d2, float f, float f1) {
-        renderGiantBird((EntityIMBird) entity, d, d1, d2, f, f1);
+    @Override
+    public void doRender(EntityLiving entity, double x, double y, double z, float yaw, float partialTick) {
+        renderGiantBird((EntityIMBird) entity, x, y, z, yaw, partialTick);
     }
 
     protected void renderModel(EntityLiving par1EntityLiving, float par2, float par3, float par4, float par5, float par6, float par7) {
