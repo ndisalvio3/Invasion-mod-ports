@@ -93,7 +93,8 @@ public class ItemProbe extends Item {
     }
 
     @SideOnly(Side.CLIENT)
-    public void getSubItems(Item item, CreativeTabs tabs, List<ItemStack> list) {
+    @SuppressWarnings("rawtypes")
+    public void getSubItems(Item item, CreativeTabs tabs, List list) {
         for (int i = 0; i < names.length; i++) {
             list.add(new ItemStack(this, 1, i));
         }
