@@ -1,6 +1,7 @@
 package invmod.common.nexus;
 
 import com.whammich.invasion.registry.ModMenus;
+import com.whammich.invasion.registry.ModBlocks;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -24,7 +25,7 @@ public class ContainerNexus extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return true;
+        return stillValid(access, player, ModBlocks.NEXUS.get());
     }
 
     @Override

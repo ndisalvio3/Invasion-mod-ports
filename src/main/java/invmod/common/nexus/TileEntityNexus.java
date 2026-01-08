@@ -5,10 +5,17 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.extensions.IMenuProviderExtension;
 
-public class TileEntityNexus extends BlockEntity implements INexusAccess {
+public class TileEntityNexus extends BlockEntity implements INexusAccess, MenuProvider, IMenuProviderExtension {
     private boolean active;
 
     public TileEntityNexus(BlockPos pos, BlockState state) {
@@ -59,6 +66,21 @@ public class TileEntityNexus extends BlockEntity implements INexusAccess {
         if (level != null) {
             level.addParticle(ParticleTypes.ELECTRIC_SPARK, x + 0.5D, y + 0.5D, z + 0.5D, 0.0D, 0.2D, 0.0D);
         }
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.invasion.nexus");
+    }
+
+    @Override
+    public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+        return new ContainerNexus(containerId, inventory, this);
+    }
+
+    @Override
+    public void writeClientSideData(AbstractContainerMenu menu, RegistryFriendlyByteBuf buffer) {
+        buffer.writeBlockPos(worldPosition);
     }
 
     @Override

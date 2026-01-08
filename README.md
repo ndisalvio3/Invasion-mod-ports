@@ -13,34 +13,10 @@ export PATH="$JAVA_HOME/bin:$PATH"
 ./gradlew build
 ```
 
-- `./gradlew build` compiles the code and runs any tests.
-- Always run `./gradlew build` after code changes before reporting results.
-- Build must pass before committing or moving a Jira issue from In Progress to Completed.
-- Scope guard: if the build fails for any reason, troubleshoot and fix it before committing or completing the issue; do not defer or leave failures unresolved.
-
-## Work Tracking & Documentation
-- Jira: https://nicholas.atlassian.net (project `DEV`).
-- Do not use Confluence.
-- At the start of a new chat, check Jira immediately and begin work.
-- Prioritize issues in In Progress over To Do.
-- If there are any issues in To Do or In Progress, work on them first without asking for direction.
-- Only ask for guidance when there are no open issues to work on.
+## Workflow (follow for every session, including when the user says "begin")
+- Check Jira immediately and start work on the highest-priority open issue (In Progress first, then To Do) without asking for direction.
 - Move the issue to In Progress as soon as work begins.
-- Track all work in Jira; do not recreate TODO files.
-- Use sub-tasks as needed.
-- Track all work on a specific issue via sub-tasks.
-- Use issue comments as needed for clarifications and updates.
-- Keep tickets current with professional status updates and clear acceptance criteria.
-
-## Repository Guidelines
-- Keep commits focused and avoid modifying `AGENTS.md` except to update instructions.
-- Prefer small, focused changes and follow existing naming/style conventions.
-- Document behavior changes in Jira.
-- If the build fails, fix it before proceeding; do not defer or leave it unresolved.
-- Each commit must be fully working and include a detailed commit message that stays within the scope of the issue worked on.
-- Whenever a Markdown file is modified, beautify it before continuing.
-
-## Completion Checklist
-- Run Build & Test before moving an issue to Completed.
-- Upon commit, move the issue from In Progress to Completed.
-- Commit and push each issue's changes before starting the next task.
+- Implement changes following existing naming/style conventions; keep commits focused; avoid modifying `AGENTS.md` except to update instructions.
+- Run `./gradlew build` after changes; if it fails, fix it before proceeding.
+- Before finishing: comment on the Jira issue, commit and push the changes with a detailed, in-scope message, and transition the issue to Done.
+- Only reply `done` to the user after the build passes, the issue is updated, and changes are pushed.
