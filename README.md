@@ -2,9 +2,9 @@
 
 So you think your base is tough, do you?
 
-This repository contains the source for the Invasion mod ported to modern tooling.
+This repository contains the source for the Invasion mod, ported to modern tooling.
 
-## Quick Start
+## Build & Test
 Use Java 21 and the Gradle wrapper:
 
 ```bash
@@ -13,10 +13,14 @@ export PATH="$JAVA_HOME/bin:$PATH"
 ./gradlew build
 ```
 
+- `./gradlew build` compiles the code and runs any tests.
+
 ## Work Tracking & Documentation
 - Jira: https://nicholas.atlassian.net (project `DEV`).
 - Confluence: space list unavailable via API (404); confirm access if needed.
 - Track all work in Jira; do not recreate TODO files.
+- Use sub-tasks as needed.
+- Use issue comments as needed for clarifications and updates.
 - Capture decisions, designs, and implementation notes in Confluence.
 - Keep tickets current with professional status updates and clear acceptance criteria.
 
@@ -26,11 +30,12 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - Document behavior changes in Jira and Confluence.
 - If the build fails due to missing dependencies or network restrictions, note it in your PR summary.
 
-## Testing
-- `./gradlew build` compiles the code and runs any tests.
-
 ## Validation
 - Playtest full cycle (night spawns, wave timing, spawn points, difficulty scaling).
 - Verify damage values, drops, mob behaviors, burning in daylight.
 - Confirm client/server compatibility, networking stability.
 - Run full client + dedicated server test on NeoForge 1.21.5.
+
+## Completion Checklist
+- Run Build & Test and Validation before moving an issue to Completed.
+- Commit and push each issue's changes before starting the next task.
