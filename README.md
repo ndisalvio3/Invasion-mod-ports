@@ -24,6 +24,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - Move the issue to In Progress as soon as work begins.
 - Track all work in Jira; do not recreate TODO files.
 - Use sub-tasks as needed.
+- Track all work on a specific issue via sub-tasks.
 - Use issue comments as needed for clarifications and updates.
 - Capture decisions, designs, and implementation notes in Confluence.
 - Keep tickets current with professional status updates and clear acceptance criteria.
