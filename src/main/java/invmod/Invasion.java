@@ -3,7 +3,6 @@ package invmod;
 import com.mojang.logging.LogUtils;
 import com.whammich.invasion.config.InvasionConfigSnapshot;
 import com.whammich.invasion.network.NetworkHandler;
-import invmod.common.ConfigInvasion;
 import invmod.common.nexus.TileEntityNexus;
 import invmod.common.nexus.MobBuilder;
 import net.minecraft.network.chat.Component;
@@ -39,7 +38,6 @@ public final class Invasion {
     public static final Item itemDebugWand = Items.AIR;
     public static final Item itemStrangeBone = Items.AIR;
 
-    public static ConfigInvasion configInvasion = new ConfigInvasion();
     public static String latestVersionNumber = "null";
     public static String recentNews = "null";
 
