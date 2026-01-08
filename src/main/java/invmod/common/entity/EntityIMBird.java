@@ -1,275 +1,111 @@
 package invmod.common.entity;
 
-import com.whammich.invasion.client.render.AnimationRegistry;
-import com.whammich.invasion.client.render.animation.AnimationAction;
-import com.whammich.invasion.client.render.animation.AnimationState;
 import invmod.Invasion;
-import invmod.common.nexus.INexusAccess;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.passive.EntityWolf;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.potion.Potion;
-import net.minecraft.util.DamageSource;
-import net.minecraft.world.World;
-import net.minecraftforge.common.ForgeHooks;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
-public class EntityIMBird extends EntityIMFlying {
-    private static final int META_ANIMATION_FLAGS = 26;
-    private AnimationState animationRun;
-    private AnimationState animationFlap;
-    private AnimationState animationBeak;
-    private WingController wingController;
-    private LegController legController;
-    private MouthController beakController;
-    private int animationFlags;
-    private float carriedEntityYawOffset;
+public class EntityIMBird extends Monster {
+    private static final EntityDataAccessor<Integer> DATA_TIER = SynchedEntityData.defineId(EntityIMBird.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_FLAVOUR = SynchedEntityData.defineId(EntityIMBird.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TEXTURE = SynchedEntityData.defineId(EntityIMBird.class, EntityDataSerializers.INT);
+
     private int tier;
+    private int flavour;
 
-    public EntityIMBird(World world) {
-        this(world, null);
-    }
-
-    public EntityIMBird(World world, INexusAccess nexus) {
-        super(world, nexus);
-        this.animationRun = new AnimationState(AnimationRegistry.instance().getAnimation("bird_run"));
-        this.animationFlap = new AnimationState(AnimationRegistry.instance().getAnimation("wing_flap_2_piece"));
-        this.animationBeak = new AnimationState(AnimationRegistry.instance().getAnimation("bird_beak"));
-        this.animationRun.setNewAction(AnimationAction.STAND);
-        this.animationFlap.setNewAction(AnimationAction.WINGTUCK);
-        this.animationBeak.setNewAction(AnimationAction.MOUTH_CLOSE);
-        this.wingController = new WingController(this, this.animationFlap);
-        this.legController = new LegController(this, this.animationRun);
-        this.beakController = new MouthController(this, this.animationBeak);
-        setName("Bird");
-        setGender(2);
-        setBaseMoveSpeedStat(1.0F);
-        this.attackStrength = 1;
-        setMaxHealthAndHealth(Invasion.getMobHealth(this));
-        this.animationFlags = 0;
-        this.carriedEntityYawOffset = 0.0F;
-        setGravity(0.025F);
-        setThrust(0.1F);
-        setMaxPoweredFlightSpeed(0.5F);
-        setLiftFactor(0.35F);
-        setThrustComponentRatioMin(0.0F);
-        setThrustComponentRatioMax(0.5F);
-        setMaxTurnForce(getGravity() * 8.0F);
-        setMoveState(MoveState.STANDING);
-        setFlyState(FlyState.GROUNDED);
+    public EntityIMBird(EntityType<? extends EntityIMBird> type, Level level) {
+        super(type, level);
         this.tier = 1;
-
-        this.dataWatcher.addObject(26, Integer.valueOf(0));
+        this.flavour = 0;
     }
 
-    public void doScreech() {
-    }
-
-    public void doMeleeSound() {
-    }
-
-    protected void doHurtSound() {
-    }
-
-    protected void doDeathSound() {
-    }
-
-    public AnimationState getWingAnimationState() {
-        return this.animationFlap;
-    }
-
-    public float getLegSweepProgress() {
-        return 1.0F;
-    }
-
-    public AnimationState getLegAnimationState() {
-        return this.animationRun;
-    }
-
-    public AnimationState getBeakAnimationState() {
-        return this.animationBeak;
+    public static AttributeSupplier.Builder createAttributes() {
+        return Monster.createMonsterAttributes()
+            .add(Attributes.MAX_HEALTH, 18.0D)
+            .add(Attributes.MOVEMENT_SPEED, 0.3D)
+            .add(Attributes.ATTACK_DAMAGE, 2.0D)
+            .add(Attributes.FOLLOW_RANGE, Invasion.getNightMobSightRange());
     }
 
     @Override
-    public void onUpdate() {
-        super.onUpdate();
-        if (this.worldObj.isRemote) {
-            updateFlapAnimation();
-            updateLegAnimation();
-            updateBeakAnimation();
-            this.animationFlags = this.dataWatcher.getWatchableObjectInt(26);
-        } else {
-            this.dataWatcher.updateObject(26, Integer.valueOf(this.animationFlags));
-        }
+    protected void registerGoals() {
+        goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.1D, true));
+        goalSelector.addGoal(5, new RandomStrollGoal(this, 0.9D));
+        goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
+
+        targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
     }
 
-    public String getSpecies() {
-        return "Bird";
+    public void setTier(int tier) {
+        this.tier = tier;
+        entityData.set(DATA_TIER, tier);
+        double health = 18.0D + Math.max(0, tier - 1) * 6.0D;
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(health);
+        setHealth((float) health);
     }
 
-    public boolean getClawsForward() {
-        return (this.animationFlags & 0x1) > 0;
-    }
-
-    public void setClawsForward(boolean flag) {
-        if ((flag ? 1 : 0) != (this.animationFlags & 0x1))
-            this.animationFlags ^= 1;
-    }
-
-    public boolean isAttackingWithWings() {
-        return (this.animationFlags & 0x2) > 0;
-    }
-
-    public void setAttackingWithWings(boolean flag) {
-        if ((flag ? 1 : 0) != (this.animationFlags & 0x2))
-            this.animationFlags ^= 2;
-    }
-
-    public boolean isBeakOpen() {
-        return (this.animationFlags & 0x4) > 0;
-    }
-
-    protected void setBeakOpen(boolean flag) {
-        if ((flag ? 1 : 0) != (this.animationFlags & 0x4))
-            this.animationFlags ^= 4;
-    }
-
-    public float getCarriedEntityYawOffset() {
-        return this.carriedEntityYawOffset;
-    }
-
-    @Override
-    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-        if (ForgeHooks.onLivingAttack(this, par1DamageSource, par2)) return false;
-        if (isEntityInvulnerable()) {
-            return false;
-        }
-        if (this.worldObj.isRemote) {
-            return false;
-        }
-
-        this.entityAge = 0;
-
-        if (getHealth() <= 0.0F) {
-            return false;
-        }
-        if ((par1DamageSource.isFireDamage()) && (isPotionActive(Potion.fireResistance))) {
-            return false;
-        }
-
-
-//    if (((par1DamageSource == DamageSource.anvil) || (par1DamageSource == DamageSource.fallingBlock)) && (getCurrentItemOrArmor(4) != null))
-//    {
-//      //getCurrentItemOrArmor(4).damageItem((int)(par2 * 4.0F + this.rand.nextFloat() * par2 * 2.0F), this);
-//      par2 *= 0.75F;
-//    }
-
-        this.limbSwingAmount = 1.5F;
-        boolean flag = true;
-
-        if (this.hurtResistantTime > this.maxHurtResistantTime / 2.0F) {
-            if (par2 <= this.lastDamage) {
-                return false;
-            }
-
-            damageEntity(par1DamageSource, par2 - this.lastDamage);
-            this.lastDamage = par2;
-            flag = false;
-        } else {
-            this.lastDamage = par2;
-            this.prevHealth = getHealth();
-            this.hurtResistantTime = this.maxHurtResistantTime;
-            damageEntity(par1DamageSource, par2);
-            this.hurtTime = (this.maxHurtTime = 10);
-        }
-
-        this.attackedAtYaw = 0.0F;
-        Entity entity = par1DamageSource.getEntity();
-
-        if (entity != null) {
-            if ((entity instanceof EntityLivingBase)) {
-                setRevengeTarget((EntityLivingBase) entity);
-            }
-
-            if ((entity instanceof EntityPlayer)) {
-                this.recentlyHit = 100;
-                this.attackingPlayer = ((EntityPlayer) entity);
-            } else if ((entity instanceof EntityWolf)) {
-                EntityWolf entitywolf = (EntityWolf) entity;
-
-                if (entitywolf.isTamed()) {
-                    this.recentlyHit = 100;
-                    this.attackingPlayer = null;
-                }
-            }
-        }
-
-        if (flag) {
-            this.worldObj.setEntityState(this, (byte) 2);
-
-            if (par1DamageSource != DamageSource.drown) {
-                setBeenAttacked();
-            }
-
-            if (entity != null) {
-                double d0 = entity.posX - this.posX;
-                double d1 = entity.posZ - this.posZ;
-
-                for (d1 = entity.posZ - this.posZ; d0 * d0 + d1 * d1 < 0.0001D; d1 = (Math.random() - Math.random()) * 0.01D) {
-                    d0 = (Math.random() - Math.random()) * 0.01D;
-                }
-
-                this.attackedAtYaw = ((float) (Math.atan2(d1, d0) * 180.0D / 3.141592653589793D) - this.rotationYaw);
-                knockBack(entity, par2, d0, d1);
-            } else {
-                this.attackedAtYaw = ((int) (Math.random() * 2.0D) * 180);
-            }
-        }
-
-        if (getHealth() <= 0.0F) {
-            if (flag) {
-                doDeathSound();
-            }
-
-            onDeath(par1DamageSource);
-        } else if (flag) {
-            doHurtSound();
-        }
-
-        return true;
-    }
-
-    protected void setBeakState(int timeOpen) {
-        this.beakController.setMouthState(timeOpen);
-    }
-
-    protected void onPickedUpEntity(Entity entity) {
-        this.carriedEntityYawOffset = (entity.rotationYaw - entity.rotationYaw);
-    }
-
-    @Override
-    protected void updateAITick() {
-    }
-
-    protected void updateFlapAnimation() {
-        this.wingController.update();
-    }
-
-    protected void updateLegAnimation() {
-        this.legController.update();
-    }
-
-    protected void updateBeakAnimation() {
-        this.beakController.update();
-    }
-
-    @Override
     public int getTier() {
-        return this.tier;
+        return tier;
+    }
+
+    public void setFlavour(int flavour) {
+        this.flavour = flavour;
+        entityData.set(DATA_FLAVOUR, flavour);
+    }
+
+    public int getFlavour() {
+        return flavour;
+    }
+
+    public void setTextureId(int textureId) {
+        entityData.set(DATA_TEXTURE, textureId);
+    }
+
+    public int getTextureId() {
+        return entityData.get(DATA_TEXTURE);
     }
 
     @Override
-    public String toString() {
-        return "IMBird T" + this.getTier();
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_TIER, tier);
+        builder.define(DATA_FLAVOUR, flavour);
+        builder.define(DATA_TEXTURE, 0);
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        setTier(tag.getIntOr("Tier", 1));
+        setFlavour(tag.getIntOr("Flavour", 0));
+        setTextureId(tag.getIntOr("Texture", 0));
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        tag.putInt("Tier", getTier());
+        tag.putInt("Flavour", getFlavour());
+        tag.putInt("Texture", getTextureId());
+    }
+
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        return super.hurtServer(level, source, amount);
     }
 }

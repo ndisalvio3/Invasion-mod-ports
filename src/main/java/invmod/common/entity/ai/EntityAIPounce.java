@@ -3,7 +3,7 @@ package invmod.common.entity.ai;
 import invmod.common.entity.EntityIMSpider;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.Mth;
 
 public class EntityAIPounce extends EntityAIBase {
     private EntityIMSpider theEntity;

@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "minecraft:block/obsidian",
+    "up": "invasion:blocks/nexusTopOff",
+    "north": "invasion:blocks/nexusSideOff",
+    "south": "invasion:blocks/nexusSideOff",
+    "east": "invasion:blocks/nexusSideOff",
+    "west": "invasion:blocks/nexusSideOff",
+    "particle": "invasion:blocks/nexusSideOff"
+  }
+}

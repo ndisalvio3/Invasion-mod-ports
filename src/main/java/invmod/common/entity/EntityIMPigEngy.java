@@ -6,16 +6,16 @@ import invmod.common.INotifyTask;
 import invmod.common.entity.ai.*;
 import invmod.common.nexus.INexusAccess;
 import invmod.common.util.CoordsInt;
-import net.minecraft.block.Block;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.entity.ai.*;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.item.Items;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 
 public class EntityIMPigEngy extends EntityIMMob implements ICanDig {
     private static final int MAX_LADDER_TOWER_HEIGHT = 4;
@@ -459,8 +459,6 @@ public class EntityIMPigEngy extends EntityIMMob implements ICanDig {
     @Override
     public void onBlockRemoved(int paramInt1, int paramInt2, int paramInt3,
                                Block block) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override

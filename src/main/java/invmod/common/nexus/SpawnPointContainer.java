@@ -1,8 +1,9 @@
 package invmod.common.nexus;
 
 import invmod.common.util.PolarAngle;
-import net.minecraft.block.Block;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,12 +122,12 @@ public class SpawnPointContainer {
         return 0;
     }
 
-    public void pointDisplayTest(Block block, World world) {
+    public void pointDisplayTest(Block block, Level world) {
         ArrayList points = (ArrayList) this.spawnPoints.get(SpawnType.HUMANOID);
         SpawnPoint point = null;
         for (int i = 0; i < points.size(); i++) {
             point = (SpawnPoint) points.get(i);
-            world.setBlock(point.getXCoord(), point.getYCoord(), point.getZCoord(), block);
+            world.setBlock(new BlockPos(point.getXCoord(), point.getYCoord(), point.getZCoord()), block.defaultBlockState(), 3);
         }
     }
 }

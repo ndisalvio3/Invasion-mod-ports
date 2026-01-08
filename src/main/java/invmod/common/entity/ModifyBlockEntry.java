@@ -1,7 +1,7 @@
 package invmod.common.entity;
 
 import invmod.common.util.IPosition;
-import net.minecraft.block.Block;
+import net.minecraft.world.level.block.Block;
 
 public class ModifyBlockEntry implements IPosition {
     private int xCoord;

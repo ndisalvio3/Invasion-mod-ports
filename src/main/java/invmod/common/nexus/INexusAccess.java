@@ -1,41 +1,71 @@
 package invmod.common.nexus;
 
-import invmod.common.entity.EntityIMLiving;
-import invmod.common.entity.ai.AttackerAI;
-import invmod.common.util.IPosition;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
 
-import java.util.HashMap;
-import java.util.List;
+public interface INexusAccess {
+    default void attackNexus(int damage) {
+    }
 
-public abstract interface INexusAccess extends IPosition {
-    public abstract void attackNexus(int paramInt);
+    default void registerMobDied() {
+    }
 
-    public abstract void registerMobDied();
+    default boolean isActivating() {
+        return false;
+    }
 
-    public abstract boolean isActivating();
+    default int getMode() {
+        return 0;
+    }
 
-    public abstract int getMode();
+    default int getActivationTimer() {
+        return 0;
+    }
 
-    public abstract int getActivationTimer();
+    default int getSpawnRadius() {
+        return 0;
+    }
 
-    public abstract int getSpawnRadius();
+    default int getNexusKills() {
+        return 0;
+    }
 
-    public abstract int getNexusKills();
+    default int getGeneration() {
+        return 0;
+    }
 
-    public abstract int getGeneration();
+    default int getNexusLevel() {
+        return 0;
+    }
 
-    public abstract int getNexusLevel();
+    default int getCurrentWave() {
+        return 0;
+    }
 
-    public abstract int getCurrentWave();
+    default Level getLevel() {
+        return null;
+    }
 
-    public abstract World getWorld();
+    default int getXCoord() {
+        return 0;
+    }
 
-    public abstract List<EntityIMLiving> getMobList();
+    default int getYCoord() {
+        return 0;
+    }
 
-    public abstract AttackerAI getAttackerAI();
+    default int getZCoord() {
+        return 0;
+    }
 
-    public abstract void askForRespawn(EntityIMLiving paramEntityIMLiving);
+    default java.util.List<invmod.common.entity.EntityIMLiving> getMobList() {
+        return java.util.Collections.emptyList();
+    }
 
-    public abstract HashMap<String, Long> getBoundPlayers();
+    default java.util.Map<String, Long> getBoundPlayers() {
+        return java.util.Collections.emptyMap();
+    }
+
+    default invmod.common.entity.ai.AttackerAI getAttackerAI() {
+        return null;
+    }
 }

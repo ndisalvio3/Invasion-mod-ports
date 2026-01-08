@@ -1,7 +1,7 @@
 package invmod.common.util;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.Vec3;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 
 public class Distance {
     public static double distanceBetween(IPosition pos1, IPosition pos2) {
@@ -12,9 +12,9 @@ public class Distance {
     }
 
     public static double distanceBetween(IPosition pos1, Vec3 pos2) {
-        double dX = pos2.xCoord - pos1.getXCoord();
-        double dY = pos2.yCoord - pos1.getYCoord();
-        double dZ = pos2.zCoord - pos1.getZCoord();
+        double dX = pos2.x - pos1.getXCoord();
+        double dY = pos2.y - pos1.getYCoord();
+        double dZ = pos2.z - pos1.getZCoord();
         return Math.sqrt(dX * dX + dY * dY + dZ * dZ);
     }
 
@@ -33,9 +33,9 @@ public class Distance {
     }
 
     public static double distanceBetween(Entity entity, Vec3 pos2) {
-        double dX = pos2.xCoord - entity.posX;
-        double dY = pos2.yCoord - entity.posY;
-        double dZ = pos2.zCoord - entity.posZ;
+        double dX = pos2.x - entity.getX();
+        double dY = pos2.y - entity.getY();
+        double dZ = pos2.z - entity.getZ();
         return Math.sqrt(dX * dX + dY * dY + dZ * dZ);
     }
 }

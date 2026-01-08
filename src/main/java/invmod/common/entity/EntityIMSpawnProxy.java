@@ -1,64 +1,49 @@
 package invmod.common.entity;
 
 import invmod.Invasion;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.EnumSkyBlock;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.level.Level;
 
-public class EntityIMSpawnProxy extends EntityLiving {
-    public EntityIMSpawnProxy(World world) {
-        super(world);
+public class EntityIMSpawnProxy extends PathfinderMob {
+    public EntityIMSpawnProxy(EntityType<? extends EntityIMSpawnProxy> type, Level level) {
+        super(type, level);
     }
 
     @Override
-    public void onEntityUpdate() {
-        if (this.worldObj != null) {
-            Entity[] entities = Invasion.getNightMobSpawns1(this.worldObj);
+    public void tick() {
+        super.tick();
+        if (!level().isClientSide) {
+            Entity[] entities = Invasion.getNightMobSpawns1(level());
             for (Entity entity : entities) {
-                entity.setLocationAndAngles(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
-                this.worldObj.spawnEntityInWorld(entity);
+                entity.setPos(getX(), getY(), getZ());
+                entity.setYRot(getYRot());
+                entity.setXRot(getXRot());
+                level().addFreshEntity(entity);
             }
+            discard();
         }
-        setDead();
     }
 
     @Override
-    public void writeEntityToNBT(NBTTagCompound nbttagcompound) {
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
     }
 
     @Override
-    public void readEntityFromNBT(NBTTagCompound nbttagcompound) {
-    }
-
-    public float getBlockPathWeight(int i, int j, int k) {
-        return 0.5F - this.worldObj.getLightBrightness(i, j, k);
-    }
-
-    protected boolean darkEnoughToSpawn() {
-        int i = MathHelper.floor_double(this.posX);
-        int j = MathHelper.floor_double(this.boundingBox.minY);
-        int k = MathHelper.floor_double(this.posZ);
-        if (this.worldObj.getSavedLightValue(EnumSkyBlock.Sky, i, j, k) > this.rand.nextInt(32)) {
-            return false;
-        }
-        int l = this.worldObj.getBlockLightValue(i, j, k);
-        if (this.worldObj.isThundering()) {
-            int i1 = this.worldObj.skylightSubtracted;
-            this.worldObj.skylightSubtracted = 10;
-            l = this.worldObj.getBlockLightValue(i, j, k);
-            this.worldObj.skylightSubtracted = i1;
-        }
-        return l <= this.rand.nextInt(8);
+    public void readAdditionalSaveData(CompoundTag tag) {
     }
 
     @Override
-    public boolean getCanSpawnHere() {
-        int i = MathHelper.floor_double(this.posX);
-        int j = MathHelper.floor_double(this.boundingBox.minY);
-        int k = MathHelper.floor_double(this.posZ);
-        return (darkEnoughToSpawn()) && (super.getCanSpawnHere()) && (getBlockPathWeight(i, j, k) >= 0.0F);
+    public void addAdditionalSaveData(CompoundTag tag) {
+    }
+
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        return false;
     }
 }

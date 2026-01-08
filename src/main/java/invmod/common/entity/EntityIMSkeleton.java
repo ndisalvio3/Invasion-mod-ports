@@ -1,115 +1,93 @@
 package invmod.common.entity;
 
 import invmod.Invasion;
-import invmod.common.entity.ai.*;
-import invmod.common.nexus.INexusAccess;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.ai.EntityAIHurtByTarget;
-import net.minecraft.entity.ai.EntityAILookIdle;
-import net.minecraft.entity.ai.EntityAISwimming;
-import net.minecraft.entity.ai.EntityAIWatchClosest;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Items;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.level.Level;
 
-public class EntityIMSkeleton extends EntityIMMob {
-    private static final ItemStack defaultHeldItem = new ItemStack(Items.bow, 1);
+public class EntityIMSkeleton extends Skeleton {
+    private static final EntityDataAccessor<Integer> DATA_TIER = SynchedEntityData.defineId(EntityIMSkeleton.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_FLAVOUR = SynchedEntityData.defineId(EntityIMSkeleton.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TEXTURE = SynchedEntityData.defineId(EntityIMSkeleton.class, EntityDataSerializers.INT);
+
     private int tier;
+    private int flavour;
 
-    public EntityIMSkeleton(World world) {
-        this(world, null);
-    }
-
-    public EntityIMSkeleton(World world, INexusAccess nexus) {
-        super(world, nexus);
+    public EntityIMSkeleton(EntityType<? extends EntityIMSkeleton> type, Level level) {
+        super(type, level);
         this.tier = 1;
-        //setBurnsInDay(true);
-
-        setMaxHealthAndHealth(Invasion.getMobHealth((EntityIMLiving) this));
-        setName("Skeleton");
-        setGender(0);
-        setBaseMoveSpeedStat(0.21F);
-
-        setAI();
-
+        this.flavour = 0;
     }
 
-    private void setAI() {
-        this.tasks.addTask(0, new EntityAISwimming(this));
-        this.tasks.addTask(1, new EntityAIKillWithArrow(this, EntityPlayer.class, 65, 16.0F));
-        this.tasks.addTask(1, new EntityAIKillWithArrow(this, EntityPlayerMP.class, 65, 16.0F));
-        //this.tasks.addTask(1, new EntityAIRallyBehindEntity(this, EntityIMCreeper.class, 4.0F));
-        this.tasks.addTask(2, new EntityAIKillWithArrow(this, EntityLiving.class, 65, 16.0F));
-        this.tasks.addTask(3, new EntityAIAttackNexus(this));
-        this.tasks.addTask(4, new EntityAIGoToNexus(this));
-        this.tasks.addTask(5, new EntityAIWanderIM(this));
-        this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityPlayer.class, 8.0F));
-        this.tasks.addTask(6, new EntityAILookIdle(this));
-        this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityIMCreeper.class, 12.0F));
-
-        this.targetTasks.addTask(0, new EntityAISimpleTarget(this, EntityPlayer.class, this.getSenseRange(), false));
-        this.targetTasks.addTask(1, new EntityAIHurtByTarget(this, false));
+    public static AttributeSupplier.Builder createAttributes() {
+        return Skeleton.createAttributes()
+            .add(Attributes.MAX_HEALTH, 20.0D)
+            .add(Attributes.MOVEMENT_SPEED, 0.25D)
+            .add(Attributes.ATTACK_DAMAGE, 3.0D)
+            .add(Attributes.FOLLOW_RANGE, Invasion.getNightMobSightRange());
     }
 
-    @Override
-    protected String getLivingSound() {
-        return "mob.skeleton.say";
+    public void setTier(int tier) {
+        this.tier = tier;
+        entityData.set(DATA_TIER, tier);
+        double health = 20.0D + Math.max(0, tier - 1) * 8.0D;
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(health);
+        setHealth((float) health);
     }
 
-    @Override
-    protected String getHurtSound() {
-        return "mob.skeleton.hurt";
-    }
-
-    @Override
-    protected String getDeathSound() {
-        return "mob.skeleton.death";
-    }
-
-    @Override
-    public void writeEntityToNBT(NBTTagCompound nbttagcompound) {
-        super.writeEntityToNBT(nbttagcompound);
-    }
-
-    @Override
-    public void readEntityFromNBT(NBTTagCompound nbttagcompound) {
-        super.readEntityFromNBT(nbttagcompound);
-    }
-
-    @Override
-    public String getSpecies() {
-        return "Skeleton";
-    }
-
-    @Override
     public int getTier() {
-        return this.tier;
+        return tier;
+    }
+
+    public void setFlavour(int flavour) {
+        this.flavour = flavour;
+        entityData.set(DATA_FLAVOUR, flavour);
+    }
+
+    public int getFlavour() {
+        return flavour;
+    }
+
+    public void setTextureId(int textureId) {
+        entityData.set(DATA_TEXTURE, textureId);
+    }
+
+    public int getTextureId() {
+        return entityData.get(DATA_TEXTURE);
     }
 
     @Override
-    public String toString() {
-        return "IMSkeleton-T" + this.getTier();
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_TIER, tier);
+        builder.define(DATA_FLAVOUR, flavour);
+        builder.define(DATA_TEXTURE, 0);
     }
 
     @Override
-    protected void dropFewItems(boolean flag, int bonus) {
-        super.dropFewItems(flag, bonus);
-        int i = this.rand.nextInt(3);
-        for (int j = 0; j < i; j++) {
-            dropItem(Items.arrow, 1);
-        }
-
-        i = this.rand.nextInt(3);
-        for (int k = 1; k < i; k++) {
-            dropItem(Items.bone, 1);
-        }
+    public void readAdditionalSaveData(CompoundTag tag) {
+        setTier(tag.getIntOr("Tier", 1));
+        setFlavour(tag.getIntOr("Flavour", 0));
+        setTextureId(tag.getIntOr("Texture", 0));
     }
 
     @Override
-    public ItemStack getHeldItem() {
-        return defaultHeldItem;
+    public void addAdditionalSaveData(CompoundTag tag) {
+        tag.putInt("Tier", getTier());
+        tag.putInt("Flavour", getFlavour());
+        tag.putInt("Texture", getTextureId());
+    }
+
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        return super.hurtServer(level, source, amount);
     }
 }

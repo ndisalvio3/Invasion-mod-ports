@@ -1,8 +1,8 @@
 package invmod.common.entity;
 
-import net.minecraft.init.Blocks;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 public class IMMoveHelperFlying extends IMMoveHelper {
     private EntityIMFlying a;

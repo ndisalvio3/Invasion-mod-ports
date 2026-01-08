@@ -1,7 +1,7 @@
 package invmod.common.entity;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.Vec3;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 
 public class Path {
     protected final PathNode[] points;
@@ -69,10 +69,10 @@ public class Path {
     }
 
     public Vec3 getPositionAtIndex(Entity entity, int index) {
-        double d = this.points[index].xCoord + (int) (entity.width + 1.0F) * 0.5D;
+        double d = this.points[index].xCoord + (int) (entity.getBbWidth() + 1.0F) * 0.5D;
         double d1 = this.points[index].yCoord;
-        double d2 = this.points[index].zCoord + (int) (entity.width + 1.0F) * 0.5D;
-        return Vec3.createVectorHelper(d, d1, d2);
+        double d2 = this.points[index].zCoord + (int) (entity.getBbWidth() + 1.0F) * 0.5D;
+        return new Vec3(d, d1, d2);
     }
 
     public Vec3 getCurrentNodeVec3d(Entity entity) {
@@ -80,7 +80,7 @@ public class Path {
     }
 
     public Vec3 destination() {
-        return Vec3.createVectorHelper(this.points[(this.points.length - 1)].xCoord, this.points[(this.points.length - 1)].yCoord, this.points[(this.points.length - 1)].zCoord);
+        return new Vec3(this.points[(this.points.length - 1)].xCoord, this.points[(this.points.length - 1)].yCoord, this.points[(this.points.length - 1)].zCoord);
     }
 
     public boolean equalsPath(Path par1PathEntity) {
@@ -108,6 +108,6 @@ public class Path {
             return false;
         }
 
-        return (pathpoint.xCoord == (int) par1Vec3D.xCoord) && (pathpoint.zCoord == (int) par1Vec3D.zCoord);
+        return (pathpoint.xCoord == (int) par1Vec3D.x) && (pathpoint.zCoord == (int) par1Vec3D.z);
     }
 }

@@ -4,11 +4,15 @@ import invmod.common.IPathfindable;
 import invmod.common.nexus.INexusAccess;
 import invmod.common.util.Distance;
 import invmod.common.util.IPosition;
-import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 
@@ -121,25 +125,25 @@ public class Scaffold
         return false;
     }
 
-    public void readFromNBT(NBTTagCompound nbttagcompound) {
-        this.xCoord = nbttagcompound.getInteger("xCoord");
-        this.yCoord = nbttagcompound.getInteger("yCoord");
-        this.zCoord = nbttagcompound.getInteger("zCoord");
-        this.targetHeight = nbttagcompound.getInteger("targetHeight");
-        this.orientation = nbttagcompound.getInteger("orientation");
-        this.initialCompletion = nbttagcompound.getFloat("initialCompletion");
-        this.latestPercentCompleted = nbttagcompound.getFloat("latestPercentCompleted");
+    public void readFromNBT(CompoundTag tag) {
+        this.xCoord = tag.getIntOr("xCoord", 0);
+        this.yCoord = tag.getIntOr("yCoord", 0);
+        this.zCoord = tag.getIntOr("zCoord", 0);
+        this.targetHeight = tag.getIntOr("targetHeight", 0);
+        this.orientation = tag.getIntOr("orientation", 0);
+        this.initialCompletion = tag.getFloatOr("initialCompletion", 0.0F);
+        this.latestPercentCompleted = tag.getFloatOr("latestPercentCompleted", 0.0F);
         calcPlatforms();
     }
 
-    public void writeToNBT(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setInteger("xCoord", this.xCoord);
-        nbttagcompound.setInteger("yCoord", this.yCoord);
-        nbttagcompound.setInteger("zCoord", this.zCoord);
-        nbttagcompound.setInteger("targetHeight", this.targetHeight);
-        nbttagcompound.setInteger("orientation", this.orientation);
-        nbttagcompound.setFloat("initialCompletion", this.initialCompletion);
-        nbttagcompound.setFloat("latestPercentCompleted", this.latestPercentCompleted);
+    public void writeToNBT(CompoundTag tag) {
+        tag.putInt("xCoord", this.xCoord);
+        tag.putInt("yCoord", this.yCoord);
+        tag.putInt("zCoord", this.zCoord);
+        tag.putInt("targetHeight", this.targetHeight);
+        tag.putInt("orientation", this.orientation);
+        tag.putFloat("initialCompletion", this.initialCompletion);
+        tag.putFloat("latestPercentCompleted", this.latestPercentCompleted);
     }
 
     private void calcPlatforms() {
@@ -172,19 +176,19 @@ public class Scaffold
             int existingMainSectionBlocks = 0;
             int existingMainLadderBlocks = 0;
             int existingPlatformBlocks = 0;
-            World world = this.nexus.getWorld();
+            Level world = this.nexus.getLevel();
             for (int i = 0; i < this.targetHeight; i++) {
-                //set bool true, donno why
-                if (world.isBlockNormalCubeDefault(this.xCoord + invmod.common.util.CoordsInt.offsetAdjX[this.orientation], this.yCoord + i, this.zCoord + invmod.common.util.CoordsInt.offsetAdjZ[this.orientation], true)) {
+                BlockPos mainPos = new BlockPos(this.xCoord + invmod.common.util.CoordsInt.offsetAdjX[this.orientation], this.yCoord + i, this.zCoord + invmod.common.util.CoordsInt.offsetAdjZ[this.orientation]);
+                if (isSolidCube(world, mainPos)) {
                     existingMainSectionBlocks++;
                 }
-                if (world.getBlock(this.xCoord, this.yCoord + i, this.zCoord) == Blocks.ladder) {
+                if (world.getBlockState(new BlockPos(this.xCoord, this.yCoord + i, this.zCoord)).is(Blocks.LADDER)) {
                     existingMainLadderBlocks++;
                 }
                 if (isLayerPlatform(i)) {
                     for (int j = 0; j < 8; j++) {
-                        //set bool true, donno why
-                        if (world.isBlockNormalCubeDefault(this.xCoord + invmod.common.util.CoordsInt.offsetRing1X[j], this.yCoord + i, this.zCoord + invmod.common.util.CoordsInt.offsetRing1Z[j], true)) {
+                        BlockPos ringPos = new BlockPos(this.xCoord + invmod.common.util.CoordsInt.offsetRing1X[j], this.yCoord + i, this.zCoord + invmod.common.util.CoordsInt.offsetRing1Z[j]);
+                        if (isSolidCube(world, ringPos)) {
                             existingPlatformBlocks++;
                         }
                     }
@@ -199,8 +203,10 @@ public class Scaffold
         return 0.0F;
     }
 
-    public float getBlockPathCost(PathNode prevNode, PathNode node, IBlockAccess terrainMap) {
-        float materialMultiplier = terrainMap.getBlock(node.xCoord, node.yCoord, node.zCoord).getMaterial().isSolid() ? 2.2F : 1.0F;
+    public float getBlockPathCost(PathNode prevNode, PathNode node, BlockGetter terrainMap) {
+        BlockPos pos = new BlockPos(node.xCoord, node.yCoord, node.zCoord);
+        BlockState state = terrainMap.getBlockState(pos);
+        float materialMultiplier = state.isSolidRender() ? 2.2F : 1.0F;
         if (node.action == PathAction.SCAFFOLD_UP) {
             if (prevNode.action != PathAction.SCAFFOLD_UP) {
                 materialMultiplier *= 3.4F;
@@ -223,11 +229,11 @@ public class Scaffold
         return prevNode.distanceTo(node);
     }
 
-    public void getPathOptionsFromNode(IBlockAccess terrainMap, PathNode currentNode, PathfinderIM pathFinder) {
+    public void getPathOptionsFromNode(BlockGetter terrainMap, PathNode currentNode, PathfinderIM pathFinder) {
         if (this.pathfindBase != null) {
             this.pathfindBase.getPathOptionsFromNode(terrainMap, currentNode, pathFinder);
         }
-        Block block = terrainMap.getBlock(currentNode.xCoord, currentNode.yCoord + 1, currentNode.zCoord);
+        Block block = terrainMap.getBlockState(new BlockPos(currentNode.xCoord, currentNode.yCoord + 1, currentNode.zCoord)).getBlock();
         if ((currentNode.getPrevious() != null) && (currentNode.getPrevious().action == PathAction.SCAFFOLD_UP) && (!avoidsBlock(block))) {
             pathFinder.addNode(currentNode.xCoord, currentNode.yCoord + 1, currentNode.zCoord, PathAction.SCAFFOLD_UP);
             return;
@@ -244,10 +250,11 @@ public class Scaffold
             }
         }
 
-        if ((block == Blocks.air) && (terrainMap.getBlock(currentNode.xCoord, currentNode.yCoord - 2, currentNode.zCoord).getMaterial().isSolid())) {
+        BlockState belowState = terrainMap.getBlockState(new BlockPos(currentNode.xCoord, currentNode.yCoord - 2, currentNode.zCoord));
+        if (block == Blocks.AIR && belowState.isSolidRender()) {
             boolean flag = false;
             for (int i = 1; i < 4; i++) {
-                if (terrainMap.getBlock(currentNode.xCoord, currentNode.yCoord + i, currentNode.zCoord) != Blocks.air) {
+                if (terrainMap.getBlockState(new BlockPos(currentNode.xCoord, currentNode.yCoord + i, currentNode.zCoord)).getBlock() != Blocks.AIR) {
                     flag = true;
                     break;
                 }
@@ -259,10 +266,15 @@ public class Scaffold
     }
 
     private boolean avoidsBlock(Block block) {
-        if ((block == Blocks.fire) || (block == Blocks.bedrock) || (block == Blocks.wooden_door) || (block == Blocks.water) || (block == Blocks.flowing_water) || (block == Blocks.lava) || (block == Blocks.flowing_water)) {
+        if (block == Blocks.FIRE || block == Blocks.BEDROCK || block == Blocks.LAVA) {
             return true;
         }
+        BlockState state = block.defaultBlockState();
+        return state.is(BlockTags.DOORS) || state.getFluidState().is(FluidTags.WATER);
+    }
 
-        return false;
+    private static boolean isSolidCube(Level world, BlockPos pos) {
+        BlockState state = world.getBlockState(pos);
+        return state.isSolidRender();
     }
 }

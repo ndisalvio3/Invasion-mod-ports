@@ -1,14 +1,10 @@
 package invmod.common.entity;
 
-import invmod.common.nexus.INexusAccess;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
 
 public abstract class EntityIMMob extends EntityIMLiving {
-    public EntityIMMob(World world) {
-        super(world, null);
-    }
-
-    public EntityIMMob(World world, INexusAccess nexus) {
-        super(world, nexus);
+    protected EntityIMMob(EntityType<? extends EntityIMLiving> type, Level level) {
+        super(type, level);
     }
 }

@@ -1,6 +1,6 @@
 package invmod.common.util;
 
-import net.minecraft.util.Vec3;
+import net.minecraft.world.phys.Vec3;
 
 public class PosRotate3D {
     private double posX;
@@ -24,7 +24,7 @@ public class PosRotate3D {
     }
 
     public Vec3 getPos() {
-        return Vec3.createVectorHelper(this.posX, this.posY, this.posZ);
+        return new Vec3(this.posX, this.posY, this.posZ);
     }
 
     public double getPosX() {

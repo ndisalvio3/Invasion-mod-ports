@@ -3,14 +3,14 @@ package invmod.common.nexus;
 
 import invmod.common.entity.EntityIMLiving;
 import invmod.common.entity.ai.AttackerAI;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
 import java.util.List;
 
 public class DummyNexus
         implements INexusAccess {
-    private World world;
+    private Level world;
 
     public void attackNexus(int damage) {
     }
@@ -62,11 +62,12 @@ public class DummyNexus
         return 0;
     }
 
-    public World getWorld() {
+    @Override
+    public Level getLevel() {
         return this.world;
     }
 
-    public void setWorld(World world) {
+    public void setWorld(Level world) {
         this.world = world;
     }
 

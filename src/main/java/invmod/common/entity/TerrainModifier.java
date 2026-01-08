@@ -3,9 +3,9 @@ package invmod.common.entity;
 import invmod.Invasion;
 import invmod.common.INotifyTask;
 import invmod.common.util.Distance;
-import net.minecraft.block.Block;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.entity.EntityLiving;
-import net.minecraft.init.Blocks;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.ArrayList;
 import java.util.List;

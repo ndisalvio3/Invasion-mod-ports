@@ -1,108 +1,96 @@
 package invmod.common.entity;
 
-import invmod.Invasion;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
 
-public class EntityIMEgg extends EntityIMLiving {
-    private static int META_HATCHED = 30;
+public class EntityIMEgg extends Entity {
+    private static final EntityDataAccessor<Boolean> DATA_HATCHED = SynchedEntityData.defineId(EntityIMEgg.class, EntityDataSerializers.BOOLEAN);
+
     private int hatchTime;
     private int ticks;
     private boolean hatched;
-    private Entity parent;
     private Entity[] contents;
 
-    public EntityIMEgg(World world) {
-        super(world);
-        getDataWatcher().addObject(META_HATCHED, Byte.valueOf((byte) 0));
+    public EntityIMEgg(EntityType<? extends EntityIMEgg> type, Level level) {
+        super(type, level);
     }
 
-    public EntityIMEgg(Entity parent, Entity[] contents, int hatchTime) {
-        super(parent.worldObj);
-        this.parent = parent;
+    public void setupEgg(Entity[] contents, int hatchTime) {
         this.contents = contents;
         this.hatchTime = hatchTime;
-        this.setBurnsInDay(false);
         this.hatched = false;
         this.ticks = 0;
-        setBaseMoveSpeedStat(0.01F);
-
-        getDataWatcher().addObject(META_HATCHED, Byte.valueOf((byte) 0));
-
-        setMaxHealthAndHealth(Invasion.getMobHealth(this));
-        setName("Spider Egg");
-        setGender(0);
-        setPosition(parent.posX, parent.posY, parent.posZ);
-        setSize(0.5F, 0.8F);
     }
 
     @Override
-    public String getSpecies() {
-        return null;
-    }
-
-    @Override
-    public int getTier() {
-        return 0;
-    }
-
-    @Override
-    public boolean isHostile() {
-        return false;
-    }
-
-    @Override
-    public boolean isNeutral() {
-        return false;
-    }
-
-    @Override
-    public boolean isThreatTo(Entity entity) {
-        if ((entity instanceof EntityPlayer)) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public Entity getAttackingTarget() {
-        return null;
-    }
-
-    @Override
-    public void onEntityUpdate() {
-        super.onEntityUpdate();
-        if (!this.worldObj.isRemote) {
-            this.ticks += 1;
-            if (this.hatched) {
-                if (this.ticks > this.hatchTime + 40)
-                    setDead();
-            } else if (this.ticks > this.hatchTime) {
+    public void tick() {
+        super.tick();
+        if (!level().isClientSide) {
+            ticks++;
+            if (hatched) {
+                if (ticks > hatchTime + 40) {
+                    discard();
+                }
+            } else if (ticks > hatchTime) {
                 hatch();
             }
-        } else if ((!this.hatched) && (getDataWatcher().getWatchableObjectByte(META_HATCHED) == 1)) {
-            this.worldObj.playSoundAtEntity(this, "invmod:egghatch" + (rand.nextInt(1) + (Integer) 1), 1.0F, 1.0F);
-            this.hatched = true;
+        } else if (!hatched && entityData.get(DATA_HATCHED)) {
+            level().playLocalSound(
+                getX(),
+                getY(),
+                getZ(),
+                SoundEvents.TURTLE_EGG_HATCH.value(),
+                SoundSource.HOSTILE,
+                1.0F,
+                1.0F,
+                false
+            );
+            hatched = true;
         }
     }
 
     private void hatch() {
-        this.worldObj.playSoundAtEntity(this, "invmod:egghatch" + (rand.nextInt(1) + (Integer) 1), 1.0F, 1.0F);
-        this.hatched = true;
-        if (!this.worldObj.isRemote) {
-            getDataWatcher().updateObject(META_HATCHED, Byte.valueOf((byte) 1));
-            if (this.contents != null) {
-                for (Entity entity : this.contents) {
-                    entity.setPosition(this.posX, this.posY, this.posZ);
-                    this.worldObj.spawnEntityInWorld(entity);
-                }
+        hatched = true;
+        entityData.set(DATA_HATCHED, Boolean.TRUE);
+        if (contents != null && level() instanceof ServerLevel serverLevel) {
+            for (Entity entity : contents) {
+                entity.setPos(getX(), getY(), getZ());
+                serverLevel.addFreshEntity(entity);
             }
         }
     }
 
     @Override
-    public String toString() {
-        return "IMSpider-egg";
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_HATCHED, Boolean.FALSE);
+    }
+
+    @Override
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        this.hatchTime = tag.getIntOr("HatchTime", 0);
+        this.ticks = tag.getIntOr("Ticks", 0);
+        this.hatched = tag.getBooleanOr("Hatched", false);
+        entityData.set(DATA_HATCHED, hatched);
+    }
+
+    @Override
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.putInt("HatchTime", hatchTime);
+        tag.putInt("Ticks", ticks);
+        tag.putBoolean("Hatched", hatched);
+    }
+
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        return false;
     }
 }

@@ -1,15 +1,10 @@
 package com.whammich.invasion.items;
 
-import com.whammich.invasion.Reference;
-import net.minecraft.item.Item;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ToolMaterial;
 
 public class ItemHammerEngineer extends Item {
-
-    public ItemHammerEngineer() {
-        super();
-
-        setUnlocalizedName(Reference.PREFIX + ".hammer.engineer");
-        setTextureName(Reference.PREFIX + ":engyHammer");
-        setMaxStackSize(1);
+    public ItemHammerEngineer(Item.Properties properties) {
+        super(properties.pickaxe(ToolMaterial.IRON, 2.0F, -2.8F));
     }
 }

@@ -5,8 +5,8 @@ import invmod.common.entity.EntityIMZombiePigman;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 public class EntityAICharge<T extends EntityLivingBase> extends EntityAIMoveToEntity<T> {
     protected EntityCreature charger;

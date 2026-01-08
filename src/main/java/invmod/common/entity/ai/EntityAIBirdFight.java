@@ -6,7 +6,7 @@ import invmod.common.entity.INavigationFlying;
 import invmod.common.entity.Path;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.Mth;
 
 public class EntityAIBirdFight<T extends EntityLivingBase> extends EntityAIMeleeFight<T> {
     private EntityIMBird theEntity;

@@ -7,7 +7,7 @@ import invmod.common.entity.ai.*;
 import invmod.common.nexus.INexusAccess;
 import net.minecraft.entity.ai.EntityAITasks;
 import net.minecraft.entity.monster.EntityZombie;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
 
 public class EntityIMGiantBird extends EntityIMBird {
     private static final float PICKUP_OFFSET_X = 0.0F;

@@ -1,51 +1,49 @@
 package invmod.common.entity;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
 
 public class EntitySFX extends Entity {
-    private int lifespan;
+    private static final int DEFAULT_LIFESPAN = 200;
 
-    public EntitySFX(World world) {
-        super(world);
-        this.lifespan = 200;
+    private int lifespan = DEFAULT_LIFESPAN;
+
+    public EntitySFX(EntityType<? extends EntitySFX> type, Level level) {
+        super(type, level);
     }
 
-    public EntitySFX(World world, double x, double y, double z) {
-        super(world);
-        this.lifespan = 200;
-        this.posX = x;
-        this.posY = y;
-        this.posZ = z;
+    public void setup(double x, double y, double z) {
+        setPos(x, y, z);
     }
 
     @Override
-    public void onUpdate() {
-        super.onUpdate();
-        if (this.lifespan-- <= 0) {
-            setDead();
+    public void tick() {
+        super.tick();
+        if (lifespan-- <= 0) {
+            discard();
         }
     }
 
     @Override
-    public void handleHealthUpdate(byte byte0) {
-        if (byte0 != 0) {
-            if (byte0 != 1) {
-                if (byte0 != 2) ;
-            }
-        }
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
     }
 
     @Override
-    public void entityInit() {
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        this.lifespan = tag.getIntOr("Lifespan", DEFAULT_LIFESPAN);
     }
 
     @Override
-    protected void readEntityFromNBT(NBTTagCompound nbttagcompound) {
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.putInt("Lifespan", lifespan);
     }
 
     @Override
-    protected void writeEntityToNBT(NBTTagCompound nbttagcompound) {
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        return false;
     }
 }

@@ -1,176 +1,166 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url = "https://files.minecraftforge.net/maven" }
-        maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
-    }
-    dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
-        classpath 'org.ajoberstar:gradle-git:0.10.1'
-    }
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.gradle.userdev' version '7.1.20'
 }
 
-apply plugin: 'forge'
-apply plugin: 'maven-publish'
+tasks.named('wrapper', Wrapper).configure {
+    distributionType = Wrapper.DistributionType.BIN
+}
 
-def build_number = 'CUSTOM'
+version = mod_version
+group = mod_group_id
 
-if (System.getenv('BUILD_NUMBER') != null)
-    build_number = System.getenv('BUILD_NUMBER')
+repositories {
+    mavenLocal()
+}
 
-group = package_group
-archivesBaseName = mod_name
-version = "${mc_version}-${mod_version}-${build_number}"
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+runs {
+    configureEach {
+        systemProperty 'forge.logging.markers', 'REGISTRIES'
+        systemProperty 'forge.logging.console.level', 'debug'
+        modSource project.sourceSets.main
+    }
+
+    client {
+        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+    }
+
+    server {
+        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        argument '--nogui'
+    }
+
+    gameTestServer {
+        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+    }
+
+    clientData {
+        arguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+    }
+}
 
 sourceSets {
     main {
         java {
-            srcDir 'src/api/java'
+            srcDirs 'src/main/java', 'src/api/java'
+            include 'com/**'
+            exclude 'com/whammich/invasion/client/**'
+            exclude 'com/whammich/invasion/ConfigHandler.java'
+            include 'invmod/Invasion.java'
+            include 'invmod/common/Config*.java'
+            include 'invmod/common/SimplyID.java'
+            include 'invmod/common/TerrainDataLayer.java'
+            include 'invmod/common/IPathfindable.java'
+            include 'invmod/common/IBlockAccessExtended.java'
+            include 'invmod/common/INotifyTask.java'
+            include 'invmod/common/SparrowAPI.java'
+            include 'invmod/common/util/**'
+            exclude 'invmod/common/util/IMWailaProvider.java'
+            exclude 'invmod/common/util/VersionChecker.java'
+            exclude 'invmod/common/util/ThreadGetData.java'
+            exclude 'invmod/common/util/ExplosionUtil.java'
+            include 'invmod/common/entity/Goal.java'
+            include 'invmod/common/entity/NodeContainer.java'
+            include 'invmod/common/entity/Path.java'
+            include 'invmod/common/entity/PathAction.java'
+            include 'invmod/common/entity/PathNode.java'
+            include 'invmod/common/entity/PathfinderIM.java'
+            include 'invmod/common/entity/PathCreator.java'
+            include 'invmod/common/entity/IPathSource.java'
+            include 'invmod/common/entity/IPathResult.java'
+            include 'invmod/common/entity/INavigation.java'
+            include 'invmod/common/entity/EntityIMLiving.java'
+            include 'invmod/common/entity/EntityIMMob.java'
+            include 'invmod/common/entity/EntityIMTrap.java'
+            include 'invmod/common/entity/EntityIMZombie.java'
+            include 'invmod/common/entity/IHasNexus.java'
+            include 'invmod/common/entity/MoveState.java'
+            include 'invmod/common/entity/Scaffold.java'
+            include 'invmod/common/entity/ai/AttackerAI.java'
+            include 'invmod/common/entity/ai/AttackNexusGoal.java'
+            include 'invmod/common/entity/ai/IMNearestAttackableTargetGoal.java'
+            include 'invmod/common/nexus/INexusAccess.java'
+            include 'invmod/common/nexus/DummyNexus.java'
+            include 'invmod/common/nexus/BlockNexus.java'
+            include 'invmod/common/nexus/TileEntityNexus.java'
+            include 'invmod/common/nexus/ContainerNexus.java'
+            include 'invmod/common/nexus/MobBuilder.java'
+            include 'invmod/common/nexus/EntityConstruct.java'
+            include 'invmod/common/nexus/EntityPattern.java'
+            include 'invmod/common/nexus/IEntityIMPattern.java'
+            include 'invmod/common/nexus/IMEntityType.java'
+            include 'invmod/common/nexus/IMWaveBuilder.java'
+            include 'invmod/common/nexus/IMWaveSpawner.java'
+            include 'invmod/common/nexus/InvMobConstruct.java'
+            include 'invmod/common/nexus/ISpawnerAccess.java'
+            include 'invmod/common/nexus/IWaveSource.java'
+            include 'invmod/common/nexus/SlotOutput.java'
+            include 'invmod/common/nexus/SpawnPointContainer.java'
+            include 'invmod/common/nexus/SpawnPoint.java'
+            include 'invmod/common/nexus/SpawnType.java'
+            include 'invmod/common/nexus/WaveBuilderNormal.java'
+            include 'invmod/common/nexus/WaveBuilderSpiders.java'
+            include 'invmod/common/nexus/WaveContainer.java'
+            include 'invmod/common/nexus/WaveEntry.java'
+            include 'invmod/common/nexus/Wave.java'
+            include 'invmod/common/nexus/WaveSpawnerException.java'
+            include 'invmod/common/InvasionCommand.java'
+        }
+        resources {
+            srcDir 'src/generated/resources'
         }
     }
 }
 
-import org.ajoberstar.grgit.Grgit
-
-def gitHash = 'unknown'
-if (new File(projectDir, '.git').exists()) {
-    def repo = Grgit.open(project.file('.'))
-    gitHash = repo.log().find().abbreviatedId
-}
-
-// Workaround for outdated Mojang URLs in ForgeGradle 1.2
-// Pre-download the required client JAR and version JSON from modern hosts
-// and disable the original download tasks that point to removed endpoints
-def mcJarUrl = 'https://piston-data.mojang.com/v1/objects/b88808bbb3da8d9f453694b5d8f74a3396f1a533/client.jar'
-def mcJsonUrl = 'https://piston-meta.mojang.com/v1/packages/095b1df74a3ffee4b53fec100abb50d40a42d950/1.21.5.json'
-def mcServerUrl = 'https://piston-data.mojang.com/v1/objects/e6ec2f64e6080b9b5d9b471b291c33cc7f509733/server.jar'
-
-gradle.afterProject { proj ->
-    tasks.matching { it.name == 'downloadClient' }.all { t ->
-        t.actions = []
-        t.doLast {
-            def dest = new File(gradle.gradleUserHomeDir,
-                "caches/minecraft/net/minecraft/minecraft/${proj.mc_version}/minecraft-${proj.mc_version}.jar")
-            if (!dest.exists()) {
-                dest.parentFile.mkdirs()
-                new URL(mcJarUrl).withInputStream { i -> dest.withOutputStream { it << i } }
-            }
-        }
-    }
-    tasks.matching { it.name == 'downloadServer' }.all { t ->
-        t.actions = []
-        t.doLast {
-            def dest = new File(gradle.gradleUserHomeDir,
-                "caches/minecraft/net/minecraft/minecraft_server/${proj.mc_version}/minecraft_server-${proj.mc_version}.jar")
-            if (!dest.exists()) {
-                dest.parentFile.mkdirs()
-                new URL(mcServerUrl).withInputStream { i -> dest.withOutputStream { it << i } }
-            }
-        }
-    }
-    tasks.matching { it.name == 'getVersionJson' }.all { t ->
-        t.actions = []
-        t.doLast {
-            def dest = new File(gradle.gradleUserHomeDir,
-                "caches/minecraft/versionJsons/${proj.mc_version}.json")
-            if (!dest.exists()) {
-                dest.parentFile.mkdirs()
-                new URL(mcJsonUrl).withInputStream { i -> dest.withOutputStream { it << i } }
-            }
-        }
-    }
-}
-
-repositories {
-    mavenCentral()
-    mavenLocal()
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
 }
 
 dependencies {
-        // Waila API is bundled locally to avoid external maven dependency
-        compileOnly files('src/api/java')
-    compile fileTree(dir: 'libs', include: '*.jar')
+    implementation "net.neoforged:neoforge:${neo_version}"
 }
 
-minecraft {
-    version = "${mc_version}-${forge_version}"
-    runDir = "run"
+tasks.withType(ProcessResources).configureEach {
+    def replaceProperties = [
+        minecraft_version      : minecraft_version,
+        minecraft_version_range: minecraft_version_range,
+        neo_version            : neo_version,
+        neo_version_range      : neo_version_range,
+        loader_version_range   : loader_version_range,
+        mod_id                 : mod_id,
+        mod_name               : mod_name,
+        mod_license            : mod_license,
+        mod_version            : mod_version,
+        mod_authors            : mod_authors,
+        mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
 
-    replace "@VERSION@", project.version
-    replaceIn "Reference.java"
-
-    if (project.hasProperty('mappings_version'))
-        mappings = project.mappings_version
-}
-
-processResources {
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
-
-    from(sourceSets.main.resources.srcDirs) {
-        include '**/*.info'
-        include '**/*.properties'
-
-        expand 'version': project.version, 'mcversion': project.minecraft.version
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
     }
-    from(sourceSets.main.resources.srcDirs) {
-        exclude '**/*.info'
-        exclude '**/*.properties'
-    }
-}
-
-jar {
-    classifier = ''
-    manifest.mainAttributes(
-            "Built-By": System.getProperty('user.name'),
-            "Created-By": "${System.getProperty('java.vm.version')} + (${System.getProperty('java.vm.vendor')})",
-            "Implementation-Title": project.name,
-            "Implementation-Version": project.version,
-            "Git-Hash": gitHash
-    )
-}
-
-// Source jar
-task sourceJar(type: Jar) {
-    from sourceSets.main.allSource
-    classifier = 'sources'
-}
-
-// Javadoc jar
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    from javadoc.destinationDir
-    classifier = 'javadoc'
-}
-
-// Deobfuscated jar
-task deobfJar(type: Jar) {
-    from sourceSets.main.output
-    classifier = 'deobf'
-}
-
-tasks.build.dependsOn sourceJar, javadocJar, deobfJar
-
-tasks.withType(JavaCompile) { task ->
-    task.options.encoding = 'UTF-8'
-    task.sourceCompatibility = '1.8'
-    task.targetCompatibility = '1.8'
 }
 
 publishing {
-    tasks.publish.dependsOn 'build'
     publications {
-        mavenJava(MavenPublication) {
+        register('mavenJava', MavenPublication) {
             from components.java
-            artifact sourceJar
-            artifact javadocJar
-            artifact deobfJar
         }
     }
     repositories {
-        if (project.hasProperty('maven_repo')) {
-            maven { url maven_repo }
-        } else {
-            mavenLocal()
+        maven {
+            url "file://${project.projectDir}/repo"
         }
     }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
 }

@@ -1,12 +1,17 @@
 package invmod.common.entity;
 
 import invmod.common.util.IPosition;
-import net.minecraft.block.Block;
-import net.minecraft.entity.ai.EntityMoveHelper;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.MathHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LadderBlock;
+import net.minecraft.world.level.block.VineBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class IMMoveHelper extends EntityMoveHelper {
+public class IMMoveHelper extends MoveControl {
     protected EntityIMLiving a;
     protected double b;
     protected double c;
@@ -20,9 +25,9 @@ public class IMMoveHelper extends EntityMoveHelper {
         super(par1EntityLiving);
         this.needsUpdate = false;
         this.a = par1EntityLiving;
-        this.b = par1EntityLiving.posX;
-        this.c = par1EntityLiving.posY;
-        this.d = par1EntityLiving.posZ;
+        this.b = par1EntityLiving.getX();
+        this.c = par1EntityLiving.getY();
+        this.d = par1EntityLiving.getZ();
         this.setSpeed = (this.targetSpeed = 0.0D);
     }
 
@@ -52,7 +57,7 @@ public class IMMoveHelper extends EntityMoveHelper {
 
     public void onUpdateMoveHelper() {
         if (!this.needsUpdate) {
-            this.a.setMoveForward(0.0F);
+            this.a.setZza(0.0F);
             this.a.setMoveState(MoveState.STANDING);
             return;
         }
@@ -61,20 +66,25 @@ public class IMMoveHelper extends EntityMoveHelper {
         this.a.setMoveState(result);
     }
 
+    @Override
+    public void tick() {
+        onUpdateMoveHelper();
+    }
+
     protected MoveState doGroundMovement() {
         this.needsUpdate = false;
         this.targetSpeed = this.setSpeed;
-        boolean isInLiquid = (this.a.isInWater()) || (this.a.handleLavaMovement());
-        double dX = this.b - this.a.posX;
-        double dZ = this.d - this.a.posZ;
-        double dY = this.c - (!isInLiquid ? MathHelper.floor_double(this.a.boundingBox.minY + 0.5D) : this.a.posY);
+        boolean isInLiquid = this.a.isInWater() || this.a.isInLava();
+        double dX = this.b - this.a.getX();
+        double dZ = this.d - this.a.getZ();
+        double dY = this.c - (!isInLiquid ? Mth.floor(this.a.getBoundingBox().minY + 0.5D) : this.a.getY());
 
         float newYaw = (float) (Math.atan2(dZ, dX) * 180.0D / 3.141592653589793D) - 90.0F;
         int ladderPos = -1;
         if ((Math.abs(dX) < 0.8D) && (Math.abs(dZ) < 0.8D) && ((dY > 0.0D) || (this.a.isHoldingOntoLadder()))) {
-            ladderPos = getClimbFace(this.a.posX, this.a.posY, this.a.posZ);
+            ladderPos = getClimbFace(this.a.getX(), this.a.getY(), this.a.getZ());
             if (ladderPos == -1) {
-                ladderPos = getClimbFace(this.a.posX, this.a.posY + 1.0D, this.a.posZ);
+                ladderPos = getClimbFace(this.a.getX(), this.a.getY() + 1.0D, this.a.getZ());
             }
 
             switch (ladderPos) {
@@ -99,7 +109,7 @@ public class IMMoveHelper extends EntityMoveHelper {
         }
 
         if ((dXZSq > 0.04D) || (ladderPos != -1)) {
-            this.a.rotationYaw = correctRotation(this.a.rotationYaw, newYaw, this.a.getTurnRate());
+            this.a.setYRot(correctRotation(this.a.getYRot(), newYaw, this.a.getTurnRate()));
             double moveSpeed;
             if ((distanceSquared >= 0.064D) || (this.a.isSprinting()))
                 moveSpeed = this.targetSpeed;
@@ -109,11 +119,11 @@ public class IMMoveHelper extends EntityMoveHelper {
             if ((this.a.isInWater()) && (moveSpeed < 0.6D)) {
                 moveSpeed = 0.6000000238418579D;
             }
-            this.a.setAIMoveSpeed((float) moveSpeed);
+            this.a.setSpeed((float) moveSpeed);
         }
 
-        double w = Math.max(this.a.width * 0.5F + 1.0F, 1.0D);
-        w = this.a.width * 0.5F + 1.0F;
+        double w = Math.max(this.a.getBbWidth() * 0.5F + 1.0F, 1.0D);
+        w = this.a.getBbWidth() * 0.5F + 1.0F;
         if ((dY > 0.0D) && ((dX * dX + dZ * dZ <= w * w) || (isInLiquid))) {
             this.a.getJumpHelper().setJumping();
             if (ladderPos != -1)
@@ -137,31 +147,32 @@ public class IMMoveHelper extends EntityMoveHelper {
     }
 
     protected int getClimbFace(double x, double y, double z) {
-        int mobX = MathHelper.floor_double(x);
-        int mobY = MathHelper.floor_double(y);
-        int mobZ = MathHelper.floor_double(z);
+        int mobX = Mth.floor(x);
+        int mobY = Mth.floor(y);
+        int mobZ = Mth.floor(z);
 
-        Block block = this.a.worldObj.getBlock(mobX, mobY, mobZ);
-        if (block == Blocks.ladder) {
-            int meta = this.a.worldObj.getBlockMetadata(mobX, mobY, mobZ);
-            if (meta == 2)
+        BlockPos pos = new BlockPos(mobX, mobY, mobZ);
+        BlockState state = this.a.level().getBlockState(pos);
+        Block block = state.getBlock();
+        if (block == Blocks.LADDER) {
+            Direction facing = state.getValue(LadderBlock.FACING);
+            if (facing == Direction.NORTH)
                 return 2;
-            if (meta == 3)
+            if (facing == Direction.SOUTH)
                 return 3;
-            if (meta == 4)
+            if (facing == Direction.WEST)
                 return 0;
-            if (meta == 5)
+            if (facing == Direction.EAST)
                 return 1;
-        } else if (block == Blocks.vine) {
-            int meta = this.a.worldObj.getBlockMetadata(mobX, mobY, mobZ);
-            if (meta == 1)
+        } else if (block == Blocks.VINE) {
+            if (state.getValue(VineBlock.NORTH))
                 return 2;
-            if (meta == 4)
+            if (state.getValue(VineBlock.SOUTH))
                 return 3;
-            if (meta == 2)
-                return 1;
-            if (meta == 8)
+            if (state.getValue(VineBlock.WEST))
                 return 0;
+            if (state.getValue(VineBlock.EAST))
+                return 1;
         }
         return -1;
     }

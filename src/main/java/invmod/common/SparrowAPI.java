@@ -1,6 +1,7 @@
 package invmod.common;
 
-import net.minecraft.entity.Entity;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 
 public abstract interface SparrowAPI {
     public abstract boolean isStupidToAttack();
@@ -29,7 +30,7 @@ public abstract interface SparrowAPI {
 
     public abstract Entity getPetOwner();
 
-    public abstract String getName();
+    public abstract Component getName();
 
     public abstract Entity getAttackingTarget();
 

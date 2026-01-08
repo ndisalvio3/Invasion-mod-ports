@@ -3,7 +3,7 @@ package invmod.common.entity;
 import invmod.common.IBlockAccessExtended;
 import invmod.common.nexus.INexusAccess;
 import invmod.common.util.Distance;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.level.BlockGetter;
 
 public class NavigatorEngy extends NavigatorIM {
     private final EntityIMPigEngy pigEntity;

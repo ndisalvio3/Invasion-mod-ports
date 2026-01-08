@@ -3,7 +3,7 @@ package invmod.common.entity.ai;
 import invmod.common.entity.EntityIMThrower;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.Mth;
 
 import java.util.Random;
 

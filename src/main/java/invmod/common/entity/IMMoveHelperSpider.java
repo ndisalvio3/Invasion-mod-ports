@@ -1,6 +1,6 @@
 package invmod.common.entity;
 
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.Mth;
 
 public class IMMoveHelperSpider extends IMMoveHelper {
     public IMMoveHelperSpider(EntityIMLiving par1EntityLiving) {

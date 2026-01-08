@@ -1,21 +1,21 @@
 package invmod.common.entity;
 
 import invmod.common.IPathfindable;
-import net.minecraft.entity.Entity;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.BlockGetter;
 
 public abstract interface IPathSource {
-    public abstract Path createPath(IPathfindable paramIPathfindable, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, float paramFloat1, float paramFloat2, IBlockAccess paramIBlockAccess);
+    public abstract Path createPath(IPathfindable paramIPathfindable, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, float paramFloat1, float paramFloat2, BlockGetter paramIBlockAccess);
 
-    public abstract Path createPath(EntityIMLiving paramEntityIMLiving, Entity paramEntity, float paramFloat1, float paramFloat2, IBlockAccess paramIBlockAccess);
+    public abstract Path createPath(EntityIMLiving paramEntityIMLiving, Entity paramEntity, float paramFloat1, float paramFloat2, BlockGetter paramIBlockAccess);
 
-    public abstract Path createPath(EntityIMLiving paramEntityIMLiving, int paramInt1, int paramInt2, int paramInt3, float paramFloat1, float paramFloat2, IBlockAccess paramIBlockAccess);
+    public abstract Path createPath(EntityIMLiving paramEntityIMLiving, int paramInt1, int paramInt2, int paramInt3, float paramFloat1, float paramFloat2, BlockGetter paramIBlockAccess);
 
-    public abstract void createPath(IPathResult paramIPathResult, IPathfindable paramIPathfindable, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, float paramFloat, IBlockAccess paramIBlockAccess);
+    public abstract void createPath(IPathResult paramIPathResult, IPathfindable paramIPathfindable, int paramInt1, int paramInt2, int paramInt3, int paramInt4, int paramInt5, int paramInt6, float paramFloat, BlockGetter paramIBlockAccess);
 
-    public abstract void createPath(IPathResult paramIPathResult, EntityIMLiving paramEntityIMLiving, Entity paramEntity, float paramFloat, IBlockAccess paramIBlockAccess);
+    public abstract void createPath(IPathResult paramIPathResult, EntityIMLiving paramEntityIMLiving, Entity paramEntity, float paramFloat, BlockGetter paramIBlockAccess);
 
-    public abstract void createPath(IPathResult paramIPathResult, EntityIMLiving paramEntityIMLiving, int paramInt1, int paramInt2, int paramInt3, float paramFloat, IBlockAccess paramIBlockAccess);
+    public abstract void createPath(IPathResult paramIPathResult, EntityIMLiving paramEntityIMLiving, int paramInt1, int paramInt2, int paramInt3, float paramFloat, BlockGetter paramIBlockAccess);
 
     public abstract int getSearchDepth();
 

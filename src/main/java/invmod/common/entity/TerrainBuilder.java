@@ -2,8 +2,8 @@ package invmod.common.entity;
 
 import invmod.common.INotifyTask;
 import invmod.common.util.IPosition;
-import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.ArrayList;
 import java.util.List;

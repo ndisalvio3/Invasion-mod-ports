@@ -2,9 +2,9 @@ package invmod.common.entity;
 
 import invmod.common.IPathfindable;
 import invmod.common.util.CoordsInt;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.BlockGetter;
 
 public class PathCreator implements IPathSource {
     private int searchDepth;
@@ -39,7 +39,7 @@ public class PathCreator implements IPathSource {
         this.quickFailDepth = depth;
     }
 
-    public Path createPath(IPathfindable entity, int x, int y, int z, int x2, int y2, int z2, float targetRadius, float maxSearchRange, IBlockAccess terrainMap) {
+    public Path createPath(IPathfindable entity, int x, int y, int z, int x2, int y2, int z2, float targetRadius, float maxSearchRange, BlockGetter terrainMap) {
         long time = System.nanoTime();
         Path path = PathfinderIM.createPath(entity, x, y, z, x2, y2, z2, targetRadius, maxSearchRange, terrainMap, this.searchDepth, this.quickFailDepth);
         int elapsed = (int) (System.nanoTime() - time);
@@ -50,34 +50,34 @@ public class PathCreator implements IPathSource {
         return path;
     }
 
-    public Path createPath(EntityIMLiving entity, Entity target, float targetRadius, float maxSearchRange, IBlockAccess terrainMap) {
-        return createPath(entity, MathHelper.floor_double(target.posX + 0.5D - entity.width / 2.0F), MathHelper.floor_double(target.posY), MathHelper.floor_double(target.posZ + 0.5D - entity.width / 2.0F), targetRadius, maxSearchRange, terrainMap);
+    public Path createPath(EntityIMLiving entity, Entity target, float targetRadius, float maxSearchRange, BlockGetter terrainMap) {
+        return createPath(entity, Mth.floor(target.getX() + 0.5D - entity.getBbWidth() / 2.0F), Mth.floor(target.getY()), Mth.floor(target.getZ() + 0.5D - entity.getBbWidth() / 2.0F), targetRadius, maxSearchRange, terrainMap);
     }
 
-    public Path createPath(EntityIMLiving entity, int x, int y, int z, float targetRadius, float maxSearchRange, IBlockAccess terrainMap) {
+    public Path createPath(EntityIMLiving entity, int x, int y, int z, float targetRadius, float maxSearchRange, BlockGetter terrainMap) {
         CoordsInt size = entity.getCollideSize();
         int startZ;
         int startX;
         int startY;
         if ((size.getXCoord() <= 1) && (size.getZCoord() <= 1)) {
             startX = entity.getXCoord();
-            startY = MathHelper.floor_double(entity.boundingBox.minY);
+            startY = Mth.floor(entity.getBoundingBox().minY);
             startZ = entity.getZCoord();
         } else {
-            startX = MathHelper.floor_double(entity.boundingBox.minX);
-            startY = MathHelper.floor_double(entity.boundingBox.minY);
-            startZ = MathHelper.floor_double(entity.boundingBox.minZ);
+            startX = Mth.floor(entity.getBoundingBox().minX);
+            startY = Mth.floor(entity.getBoundingBox().minY);
+            startZ = Mth.floor(entity.getBoundingBox().minZ);
         }
-        return createPath(entity, startX, startY, startZ, MathHelper.floor_double(x + 0.5F - entity.width / 2.0F), y, MathHelper.floor_double(z + 0.5F - entity.width / 2.0F), targetRadius, maxSearchRange, terrainMap);
+        return createPath(entity, startX, startY, startZ, Mth.floor(x + 0.5F - entity.getBbWidth() / 2.0F), y, Mth.floor(z + 0.5F - entity.getBbWidth() / 2.0F), targetRadius, maxSearchRange, terrainMap);
     }
 
-    public void createPath(IPathResult observer, IPathfindable entity, int x, int y, int z, int x2, int y2, int z2, float maxSearchRange, IBlockAccess terrainMap) {
+    public void createPath(IPathResult observer, IPathfindable entity, int x, int y, int z, int x2, int y2, int z2, float maxSearchRange, BlockGetter terrainMap) {
     }
 
-    public void createPath(IPathResult observer, EntityIMLiving entity, Entity target, float maxSearchRange, IBlockAccess terrainMap) {
+    public void createPath(IPathResult observer, EntityIMLiving entity, Entity target, float maxSearchRange, BlockGetter terrainMap) {
     }
 
-    public void createPath(IPathResult observer, EntityIMLiving entity, int x, int y, int z, float maxSearchRange, IBlockAccess terrainMap) {
+    public void createPath(IPathResult observer, EntityIMLiving entity, int x, int y, int z, float maxSearchRange, BlockGetter terrainMap) {
     }
 
     public boolean canPathfindNice(IPathSource.PathPriority priority, float maxSearchRange, int searchDepth, int quickFailDepth) {

@@ -1,6 +1,6 @@
 package invmod.common.util;
 
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 
 import java.util.Comparator;
 
@@ -16,8 +16,8 @@ public class ComparatorEntityDistance implements Comparator<Entity> {
     }
 
     public int compare(Entity entity1, Entity entity2) {
-        double d1 = (this.x - entity1.posX) * (this.x - entity1.posX) + (this.y - entity1.posY) * (this.y - entity1.posY) + (this.z - entity1.posZ) * (this.z - entity1.posZ);
-        double d2 = (this.x - entity2.posX) * (this.x - entity2.posX) + (this.y - entity2.posY) * (this.y - entity2.posY) + (this.z - entity2.posZ) * (this.z - entity2.posZ);
+        double d1 = (this.x - entity1.getX()) * (this.x - entity1.getX()) + (this.y - entity1.getY()) * (this.y - entity1.getY()) + (this.z - entity1.getZ()) * (this.z - entity1.getZ());
+        double d2 = (this.x - entity2.getX()) * (this.x - entity2.getX()) + (this.y - entity2.getY()) * (this.y - entity2.getY()) + (this.z - entity2.getZ()) * (this.z - entity2.getZ());
         if (d1 > d2)
             return -1;
         if (d1 < d2) {

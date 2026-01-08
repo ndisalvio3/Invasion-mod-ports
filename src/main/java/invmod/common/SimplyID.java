@@ -1,8 +1,11 @@
 package invmod.common;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.*;
 import java.util.HashSet;
@@ -16,13 +19,14 @@ public class SimplyID {
     private static PrintWriter writer = null;
 
     public static String getNextSimplyID(Entity par1Entity) {
-        loadSession(par1Entity.worldObj);
+        loadSession(par1Entity.level());
 
         nextSimplyID = 0;
 
         int i = nextSimplyID;
         while (true) {
-            String id = EntityList.getEntityString(par1Entity) + nextSimplyID++;
+            ResourceLocation key = EntityType.getKey(par1Entity.getType());
+            String id = (key == null ? "unknown" : key.toString()) + nextSimplyID++;
             if (loadedIDs.add(id)) {
                 writeIDToFile(id);
                 return id;
@@ -30,21 +34,25 @@ public class SimplyID {
         }
     }
 
-    public static void loadSession(World worldObj) {
-        if ((loadedWorld == null) || (!worldObj.getSaveHandler().getWorldDirectoryName().equals(loadedWorld)))
-            resetSimplyIDTo(worldObj);
+    public static void loadSession(Level level) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        String worldDir = serverLevel.getServer().getWorldPath(LevelResource.ROOT).toString();
+        if ((loadedWorld == null) || (!worldDir.equals(loadedWorld))) {
+            resetSimplyIDTo(serverLevel);
+        }
     }
 
-    public static void resetSimplyIDTo(World world) {
+    public static void resetSimplyIDTo(ServerLevel level) {
         if (writer != null) {
             writer.flush();
             writer.close();
         }
         loadedIDs.clear();
 
-        loadedWorld = world.getSaveHandler().getWorldDirectoryName();
-        String directory = "saves/" + loadedWorld + "/";
-        file = new File(directory + "savedIDs.txt");
+        loadedWorld = level.getServer().getWorldPath(LevelResource.ROOT).toString();
+        file = level.getServer().getWorldPath(LevelResource.ROOT).resolve("savedIDs.txt").toFile();
         try {
             writer = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
         } catch (FileNotFoundException e) {
@@ -137,8 +145,8 @@ public class SimplyID {
         loadedIDs.remove(deletedID);
     }
 
-    public static void deleteID(World world, String string) {
-        loadSession(world);
+    public static void deleteID(Level level, String string) {
+        loadSession(level);
 
         deleteID(string, Boolean.valueOf(true));
     }

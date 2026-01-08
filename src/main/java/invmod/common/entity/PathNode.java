@@ -1,7 +1,7 @@
 package invmod.common.entity;
 
 import invmod.common.util.IPosition;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.Mth;
 
 public class PathNode
         implements IPosition {
@@ -39,14 +39,14 @@ public class PathNode
         float f = pathpoint.xCoord - this.xCoord;
         float f1 = pathpoint.yCoord - this.yCoord;
         float f2 = pathpoint.zCoord - this.zCoord;
-        return MathHelper.sqrt_float(f * f + f1 * f1 + f2 * f2);
+        return Mth.sqrt(f * f + f1 * f1 + f2 * f2);
     }
 
     public float distanceTo(float x, float y, float z) {
         float f = x - this.xCoord;
         float f1 = y - this.yCoord;
         float f2 = z - this.zCoord;
-        return MathHelper.sqrt_float(f * f + f1 * f1 + f2 * f2);
+        return Mth.sqrt(f * f + f1 * f1 + f2 * f2);
     }
 
     public boolean equals(Object obj) {

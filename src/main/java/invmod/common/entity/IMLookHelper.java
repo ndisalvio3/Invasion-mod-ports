@@ -4,7 +4,7 @@ import invmod.common.util.MathUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.ai.EntityLookHelper;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.Mth;
 
 public class IMLookHelper extends EntityLookHelper {
     private final EntityIMLiving a;

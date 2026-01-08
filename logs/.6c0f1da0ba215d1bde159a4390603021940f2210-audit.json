@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/mnt/Data/Coding/Personal/Invasion-mod-ports/logs/.6c0f1da0ba215d1bde159a4390603021940f2210-audit.json",
+    "files": [
+        {
+            "date": 1767884496011,
+            "name": "/mnt/Data/Coding/Personal/Invasion-mod-ports/logs/mcp-puppeteer-2026-01-08.log",
+            "hash": "266ecf038a973f6eff63b580b033c8d84f83ce38690ed7d220e08e59163d4f8a"
+        }
+    ],
+    "hashType": "sha256"
+}

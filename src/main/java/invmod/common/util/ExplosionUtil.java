@@ -1,13 +1,13 @@
 package invmod.common.util;
 
 import invmod.Invasion;
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.MathHelper;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.material.Material;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.util.Mth;
 import net.minecraft.world.ChunkPosition;
 import net.minecraft.world.Explosion;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
 
 import java.util.Iterator;
 

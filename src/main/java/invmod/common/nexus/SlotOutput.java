@@ -1,15 +1,16 @@
 package invmod.common.nexus;
 
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class SlotOutput extends Slot {
-    public SlotOutput(IInventory iinventory, int i, int j, int k) {
-        super(iinventory, i, j, k);
+    public SlotOutput(Container container, int slot, int x, int y) {
+        super(container, slot, x, y);
     }
 
-    public boolean isItemValid(ItemStack itemstack) {
+    @Override
+    public boolean mayPlace(ItemStack stack) {
         return false;
     }
 }

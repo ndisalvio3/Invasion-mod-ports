@@ -3,12 +3,12 @@ package invmod.common.entity;
 import invmod.common.IBlockAccessExtended;
 import invmod.common.nexus.INexusAccess;
 import invmod.common.util.MathUtil;
-import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 
 public abstract class EntityIMFlying extends EntityIMLiving {
     private static final int META_TARGET_X = 29;

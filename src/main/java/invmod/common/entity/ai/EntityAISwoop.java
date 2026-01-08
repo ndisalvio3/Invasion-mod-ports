@@ -8,7 +8,7 @@ import invmod.common.util.MathUtil;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
+import net.minecraft.world.phys.Vec3;
 
 public class EntityAISwoop extends EntityAIBase {
     private static final int INITIAL_LINEUP_TIME = 25;

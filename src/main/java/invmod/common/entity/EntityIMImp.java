@@ -1,80 +1,111 @@
 package invmod.common.entity;
 
 import invmod.Invasion;
-import invmod.common.entity.ai.*;
-import invmod.common.nexus.INexusAccess;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.ai.*;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
+public class EntityIMImp extends Monster {
+    private static final EntityDataAccessor<Integer> DATA_TIER = SynchedEntityData.defineId(EntityIMImp.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_FLAVOUR = SynchedEntityData.defineId(EntityIMImp.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TEXTURE = SynchedEntityData.defineId(EntityIMImp.class, EntityDataSerializers.INT);
 
-public class EntityIMImp extends EntityIMMob {
     private int tier;
+    private int flavour;
 
-    public EntityIMImp(World world, INexusAccess nexus) {
-        super(world, nexus);
-        setBaseMoveSpeedStat(0.3F);
-        this.attackStrength = 3;
+    public EntityIMImp(EntityType<? extends EntityIMImp> type, Level level) {
+        super(type, level);
         this.tier = 1;
-        setMaxHealthAndHealth(Invasion.getMobHealth(this));
-        setName("Imp");
-        setGender(1);
-        setJumpHeight(1);
-        setCanClimb(true);
-
-        setAI();
+        this.flavour = 0;
     }
 
-    public EntityIMImp(World world) {
-        this(world, null);
-    }
-
-    @Override
-    public String getSpecies() {
-        return "Imp";
+    public static AttributeSupplier.Builder createAttributes() {
+        return Monster.createMonsterAttributes()
+            .add(Attributes.MAX_HEALTH, 12.0D)
+            .add(Attributes.MOVEMENT_SPEED, 0.35D)
+            .add(Attributes.ATTACK_DAMAGE, 2.0D)
+            .add(Attributes.FOLLOW_RANGE, Invasion.getNightMobSightRange());
     }
 
     @Override
+    protected void registerGoals() {
+        goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, true));
+        goalSelector.addGoal(5, new RandomStrollGoal(this, 1.0D));
+        goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
+
+        targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
+    }
+
+    public void setTier(int tier) {
+        this.tier = tier;
+        entityData.set(DATA_TIER, tier);
+        double health = 12.0D + Math.max(0, tier - 1) * 4.0D;
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(health);
+        setHealth((float) health);
+    }
+
     public int getTier() {
-        return this.tier;
+        return tier;
     }
 
-    protected void setAI() {
-        //added entityaiswimming and increased all other tasksordernumers with 1
-        this.tasks = new EntityAITasks(this.worldObj.theProfiler);
-        this.tasks.addTask(0, new EntityAISwimming(this));
-        this.tasks.addTask(1, new EntityAIKillEntity(this, EntityPlayer.class, 40));
-        this.tasks.addTask(1, new EntityAIKillEntity(this, EntityPlayerMP.class, 40));
-        this.tasks.addTask(2, new EntityAIAttackNexus(this));
-        this.tasks.addTask(3, new EntityAIWaitForEngy(this, 4.0F, true));
-        this.tasks.addTask(4, new EntityAIKillEntity(this, EntityLiving.class, 40));
-        this.tasks.addTask(5, new EntityAIGoToNexus(this));
-        this.tasks.addTask(6, new EntityAIWanderIM(this));
-        this.tasks.addTask(7, new EntityAIWatchClosest(this, EntityPlayer.class, 8.0F));
-        this.tasks.addTask(8, new EntityAIWatchClosest(this, EntityIMCreeper.class, 12.0F));
-        this.tasks.addTask(8, new EntityAILookIdle(this));
+    public void setFlavour(int flavour) {
+        this.flavour = flavour;
+        entityData.set(DATA_FLAVOUR, flavour);
+    }
 
+    public int getFlavour() {
+        return flavour;
+    }
 
-        this.targetTasks = new EntityAITasks(this.worldObj.theProfiler);
-        this.targetTasks.addTask(0, new EntityAITargetRetaliate(this, EntityLiving.class, this.getAggroRange()));
-        this.targetTasks.addTask(1, new EntityAISimpleTarget(this, EntityPlayer.class, this.getSenseRange(), false));
-        this.targetTasks.addTask(2, new EntityAISimpleTarget(this, EntityPlayer.class, this.getAggroRange(), true));
-        this.targetTasks.addTask(5, new EntityAIHurtByTarget(this, false));
-        this.targetTasks.addTask(3, new EntityAITargetOnNoNexusPath(this, EntityIMPigEngy.class, 3.5F));
+    public void setTextureId(int textureId) {
+        entityData.set(DATA_TEXTURE, textureId);
+    }
 
+    public int getTextureId() {
+        return entityData.get(DATA_TEXTURE);
     }
 
     @Override
-    public boolean attackEntityAsMob(Entity entity) {
-        entity.setFire(3);
-        return super.attackEntityAsMob(entity);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_TIER, tier);
+        builder.define(DATA_FLAVOUR, flavour);
+        builder.define(DATA_TEXTURE, 0);
     }
 
     @Override
-    public String toString() {
-        return "IMImp-T" + this.getTier();
+    public void readAdditionalSaveData(CompoundTag tag) {
+        setTier(tag.getIntOr("Tier", 1));
+        setFlavour(tag.getIntOr("Flavour", 0));
+        setTextureId(tag.getIntOr("Texture", 0));
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        tag.putInt("Tier", getTier());
+        tag.putInt("Flavour", getFlavour());
+        tag.putInt("Texture", getTextureId());
+    }
+
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        return super.hurtServer(level, source, amount);
     }
 }

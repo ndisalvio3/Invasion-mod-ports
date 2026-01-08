@@ -1,12 +1,19 @@
 package invmod.common.nexus;
 
 import invmod.Invasion;
-import invmod.common.entity.EntityIMLiving;
-import invmod.common.entity.EntityIMZombie;
-import net.minecraft.entity.EntityList;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class IMWaveSpawner implements ISpawnerAccess {
@@ -129,7 +136,7 @@ public class IMWaveSpawner implements ISpawnerAccess {
     }
 
     public boolean isReady() {
-        if ((!this.active) && (this.nexus != null) && (this.nexus.getWorld() != null)) {
+        if ((!this.active) && (this.nexus != null) && (this.nexus.getLevel() != null)) {
             return true;
         }
 
@@ -156,10 +163,10 @@ public class IMWaveSpawner implements ISpawnerAccess {
         return this.currentWave.getTotalMobAmount();
     }
 
-    public void askForRespawn(EntityIMLiving entity) {
+    public void askForRespawn(Entity entity) {
         if (this.spawnPointContainer.getNumberOfSpawnPoints(SpawnType.HUMANOID) > 10) {
             SpawnPoint spawnPoint = this.spawnPointContainer.getRandomSpawnPoint(SpawnType.HUMANOID);
-            entity.setLocationAndAngles(spawnPoint.getXCoord(), spawnPoint.getYCoord(), spawnPoint.getZCoord(), 0.0F, 0.0F);
+            entity.setPos(spawnPoint.getXCoord(), spawnPoint.getYCoord(), spawnPoint.getZCoord());
         }
     }
 
@@ -167,7 +174,23 @@ public class IMWaveSpawner implements ISpawnerAccess {
         if (this.debugMode) {
             Invasion.log(message);
         }
-        Invasion.sendMessageToPlayers(this.nexus.getBoundPlayers(), message);
+        if (this.nexus == null) {
+            return;
+        }
+        Level level = this.nexus.getLevel();
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        Map<String, Long> boundPlayers = this.nexus.getBoundPlayers();
+        if (boundPlayers == null || boundPlayers.isEmpty()) {
+            return;
+        }
+        for (String playerName : boundPlayers.keySet()) {
+            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayerByName(playerName);
+            if (player != null) {
+                player.sendSystemMessage(Component.literal(message));
+            }
+        }
     }
 
     public void noSpawnPointNotice() {
@@ -191,12 +214,12 @@ public class IMWaveSpawner implements ISpawnerAccess {
 
     @Override
     public boolean attemptSpawn(EntityConstruct mobConstruct, int minAngle, int maxAngle) {
-        if (this.nexus.getWorld() == null) {
+        if (this.nexus.getLevel() == null) {
             if (this.spawnMode) {
                 return false;
             }
         }
-        EntityIMLiving mob = this.mobBuilder.createMobFromConstruct(mobConstruct, this.nexus.getWorld(), this.nexus);
+        Entity mob = this.mobBuilder.createMobFromConstruct(mobConstruct, this.nexus.getLevel(), this.nexus);
         if (mob == null) {
             Invasion.log("Invalid entity construct");
             return false;
@@ -225,46 +248,48 @@ public class IMWaveSpawner implements ISpawnerAccess {
                 return true;
             }
 
-            mob.setLocationAndAngles(spawnPoint.getXCoord(), spawnPoint.getYCoord(), spawnPoint.getZCoord(), 0.0F, 0.0F);
-            if (mob.getCanSpawnHere()) {
+            mob.setPos(spawnPoint.getXCoord(), spawnPoint.getYCoord(), spawnPoint.getZCoord());
+            if (isValidSpawnPosition(this.nexus.getLevel(), spawnPoint.getXCoord(), spawnPoint.getYCoord(), spawnPoint.getZCoord())) {
                 this.successfulSpawns += 1;
-                this.nexus.getWorld().spawnEntityInWorld(mob);
+                this.nexus.getLevel().addFreshEntity(mob);
                 if (this.debugMode) {
-                    Invasion.log("[Spawn] Time: " + this.currentWave.getTimeInWave() / 1000 + "  Type: " + mob.toString() + "  Coords: " + mob.posX + ", " + mob.posY + ", " + mob.posZ + "  θ" + spawnPoint.getAngle() + "  Specified: " + minAngle + "," + maxAngle);
+                    Invasion.log("[Spawn] Time: " + this.currentWave.getTimeInWave() / 1000 + "  Type: " + mob + "  Coords: " + mob.getX() + ", " + mob.getY() + ", " + mob.getZ() + "  θ" + spawnPoint.getAngle() + "  Specified: " + minAngle + "," + maxAngle);
                 }
 
                 return true;
             }
         }
-        Invasion.log("Could not find valid spawn for '" + EntityList.getEntityString(mob) + "' after " + spawnTries + " tries");
+        ResourceLocation key = EntityType.getKey(mob.getType());
+        Invasion.log("Could not find valid spawn for '" + (key == null ? "unknown" : key) + "' after " + spawnTries + " tries");
         return false;
     }
 
     private void generateSpawnPoints() {
-        if (this.nexus.getWorld() == null) {
+        if (this.nexus.getLevel() == null) {
             return;
         }
-        EntityIMZombie zombie = new EntityIMZombie(this.nexus.getWorld(), this.nexus);
+        Level level = this.nexus.getLevel();
         List spawnPoints = new ArrayList();
         int x = this.nexus.getXCoord();
         int y = this.nexus.getYCoord();
         int z = this.nexus.getZCoord();
         for (int vertical = 0; vertical < 128; vertical = vertical > 0 ? vertical * -1 : vertical * -1 + 1) {
-            if (y + vertical <= 252) {
+            int maxBuildHeight = ((LevelHeightAccessor) level).getMaxY();
+            if (y + vertical <= maxBuildHeight - 4) {
                 for (int i = 0; i <= this.spawnRadius * 0.7D + 1.0D; i++) {
                     int j = (int) Math.round(this.spawnRadius * Math.cos(Math.asin(i / this.spawnRadius)));
 
-                    addValidSpawn(zombie, spawnPoints, x + i, y + vertical, z + j);
-                    addValidSpawn(zombie, spawnPoints, x + j, y + vertical, z + i);
+                    addValidSpawn(level, spawnPoints, x + i, y + vertical, z + j);
+                    addValidSpawn(level, spawnPoints, x + j, y + vertical, z + i);
 
-                    addValidSpawn(zombie, spawnPoints, x + i, y + vertical, z - j);
-                    addValidSpawn(zombie, spawnPoints, x + j, y + vertical, z - i);
+                    addValidSpawn(level, spawnPoints, x + i, y + vertical, z - j);
+                    addValidSpawn(level, spawnPoints, x + j, y + vertical, z - i);
 
-                    addValidSpawn(zombie, spawnPoints, x - i, y + vertical, z + j);
-                    addValidSpawn(zombie, spawnPoints, x - j, y + vertical, z + i);
+                    addValidSpawn(level, spawnPoints, x - i, y + vertical, z + j);
+                    addValidSpawn(level, spawnPoints, x - j, y + vertical, z + i);
 
-                    addValidSpawn(zombie, spawnPoints, x - i, y + vertical, z - j);
-                    addValidSpawn(zombie, spawnPoints, x - j, y + vertical, z - i);
+                    addValidSpawn(level, spawnPoints, x - i, y + vertical, z - j);
+                    addValidSpawn(level, spawnPoints, x - j, y + vertical, z - i);
                 }
 
             }
@@ -295,19 +320,21 @@ public class IMWaveSpawner implements ISpawnerAccess {
         Invasion.log("Num. Spawn Points: " + Integer.toString(this.spawnPointContainer.getNumberOfSpawnPoints(SpawnType.HUMANOID)));
     }
 
-    private void addValidSpawn(EntityIMLiving entity, List<SpawnPoint> spawnPoints, int x, int y, int z) {
-        entity.setLocationAndAngles(x, y, z, 0.0F, 0.0F);
-        if (entity.getCanSpawnHere()) {
+    private void addValidSpawn(Level level, List<SpawnPoint> spawnPoints, int x, int y, int z) {
+        if (isValidSpawnPosition(level, x, y, z)) {
             int angle = (int) (Math.atan2(this.nexus.getZCoord() - z, this.nexus.getXCoord() - x) * 180.0D / 3.141592653589793D);
             spawnPoints.add(new SpawnPoint(x, y, z, angle, SpawnType.HUMANOID));
         }
     }
 
-    private void checkAddSpawn(EntityIMLiving entity, int x, int y, int z) {
-        entity.setLocationAndAngles(x, y, z, 0.0F, 0.0F);
-        if (entity.getCanSpawnHere()) {
-            int angle = (int) (Math.atan2(this.nexus.getZCoord() - z, this.nexus.getXCoord() - x) * 180.0D / 3.141592653589793D);
-            this.spawnPointContainer.addSpawnPointXZ(new SpawnPoint(x, y, z, angle, SpawnType.HUMANOID));
+    private boolean isValidSpawnPosition(Level level, int x, int y, int z) {
+        BlockPos pos = new BlockPos(x, y, z);
+        if (!level.getBlockState(pos).isAir()) {
+            return false;
         }
+        if (!level.getBlockState(pos.below()).isSolid()) {
+            return false;
+        }
+        return level.getBlockState(pos.above()).isAir();
     }
 }

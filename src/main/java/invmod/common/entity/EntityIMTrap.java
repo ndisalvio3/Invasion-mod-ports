@@ -1,16 +1,22 @@
 package invmod.common.entity;
 
-import invmod.Invasion;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.World;
+import com.whammich.invasion.registry.ModItems;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.List;
 
@@ -19,208 +25,120 @@ public class EntityIMTrap extends Entity {
     public static final int TRAP_RIFT = 1;
     public static final int TRAP_FIRE = 2;
     private static final int ARM_TIME = 60;
-    private static final int META_CHANGED = 29;
-    private static final int META_TYPE = 30;
-    private static final int META_EMPTY = 31;
-    private int trapType;
+
+    private static final EntityDataAccessor<Integer> DATA_TRAP_TYPE = SynchedEntityData.defineId(EntityIMTrap.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_EMPTY = SynchedEntityData.defineId(EntityIMTrap.class, EntityDataSerializers.BOOLEAN);
+
     private int ticks;
-    private boolean isEmpty;
-    private byte metaChanged;
-    private boolean fromLoaded;
 
-    public EntityIMTrap(World world) {
-        super(world);
-        setSize(0.5F, 0.28F);
-        this.yOffset = 0.0F;
-        this.ticks = 0;
-        this.isEmpty = false;
-        this.isImmuneToFire = true;
-        this.trapType = 0;
-        if (world.isRemote)
-            this.metaChanged = 1;
-        else {
-            this.metaChanged = 0;
-        }
-        this.dataWatcher.addObject(29, Byte.valueOf(this.metaChanged));
-        this.dataWatcher.addObject(30, Integer.valueOf(this.trapType));
-        this.dataWatcher.addObject(31, Byte.valueOf((byte) (this.isEmpty ? 0 : 1)));
+    public EntityIMTrap(EntityType<? extends EntityIMTrap> type, Level level) {
+        super(type, level);
     }
 
-    public EntityIMTrap(World world, double x, double y, double z) {
-        this(world, x, y, z, 0);
-    }
-
-    public EntityIMTrap(World world, double x, double y, double z, int trapType) {
-        this(world);
-        this.trapType = trapType;
-        this.dataWatcher.updateObject(30, Integer.valueOf(trapType));
-        setLocationAndAngles(x, y, z, 0.0F, 0.0F);
-    }
 
     @Override
-    public void onUpdate() {
-        super.onUpdate();
-        this.ticks += 1;
-        if (this.worldObj.isRemote) {
-            if ((this.metaChanged != this.dataWatcher.getWatchableObjectByte(29)) || (this.ticks % 20 == 0)) {
-                this.metaChanged = this.dataWatcher.getWatchableObjectByte(29);
-                this.trapType = this.dataWatcher.getWatchableObjectInt(30);
-                boolean wasEmpty = this.isEmpty;
-                this.isEmpty = (this.dataWatcher.getWatchableObjectByte(31) == 0);
-                if ((this.isEmpty) && (!wasEmpty) && (this.trapType == 1))
-                    doRiftParticles();
-            }
+    public void tick() {
+        super.tick();
+        ticks++;
+        if (level().isClientSide) {
             return;
         }
 
         if (!isValidPlacement()) {
-            EntityItem entityitem = new EntityItem(this.worldObj, this.posX, this.posY, this.posZ, new ItemStack(Invasion.itemIMTrap, 1, 0));
-            entityitem.delayBeforeCanPickup = 10;
-            this.worldObj.spawnEntityInWorld(entityitem);
-            setDead();
-        }
-
-        if ((this.worldObj.isRemote) || ((!this.isEmpty) && (this.ticks < 60))) {
+            if (level() instanceof ServerLevel serverLevel) {
+                spawnAtLocation(serverLevel, ModItems.TRAP_EMPTY.get());
+            }
+            discard();
             return;
         }
 
-        List<EntityLivingBase> entities = this.worldObj.getEntitiesWithinAABB(EntityLivingBase.class, this.boundingBox);
-        if ((entities.size() > 0) && (!this.isEmpty)) {
-            for (EntityLivingBase entity : entities) {
+        if (isEmpty() || ticks < ARM_TIME) {
+            return;
+        }
+
+        List<LivingEntity> entities = level().getEntitiesOfClass(LivingEntity.class, getBoundingBox());
+        if (!entities.isEmpty()) {
+            for (LivingEntity entity : entities) {
                 if (trapEffect(entity)) {
-                    setEmpty();
-                    return;
+                    setEmpty(true);
+                    break;
                 }
             }
         }
     }
 
-    public boolean trapEffect(EntityLivingBase triggerEntity) {
-        if (this.trapType == 0) {
-            triggerEntity.attackEntityFrom(DamageSource.generic, 4.0F);
-        } else if (this.trapType == 1) {
-            triggerEntity.attackEntityFrom(DamageSource.magic, (triggerEntity instanceof EntityPlayer) ? 12.0F : 38.0F);
-
-            List<EntityLivingBase> entities = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, this.boundingBox.expand(1.899999976158142D, 1.0D, 1.899999976158142D));
-            for (Entity entity : entities) {
-                entity.attackEntityFrom(DamageSource.magic, 8.0F);
-                if ((entity instanceof EntityIMLiving)) {
-                    ((EntityIMLiving) entity).stunEntity(60);
-                }
-            }
-            this.worldObj.playSoundAtEntity(this, "random.break", 1.5F, 1.0F * (this.rand.nextFloat() * 0.25F + 0.55F));
-        } else if (this.trapType == 2) {
-            this.worldObj.playSoundAtEntity(this, "invmod:fireball" + 1, 1.5F, 1.15F / (this.rand.nextFloat() * 0.3F + 1.0F));
-            doFireball(1.1F, 8);
+    private boolean trapEffect(LivingEntity triggerEntity) {
+        int type = getTrapType();
+        DamageSource source;
+        if (type == TRAP_RIFT) {
+            source = damageSources().magic();
+            triggerEntity.hurt(source, triggerEntity instanceof Player ? 12.0F : 38.0F);
+        } else if (type == TRAP_FIRE) {
+            source = damageSources().onFire();
+            triggerEntity.hurt(source, 8.0F);
+            triggerEntity.igniteForSeconds(4.0F);
+        } else {
+            source = damageSources().generic();
+            triggerEntity.hurt(source, 4.0F);
         }
-
         return true;
     }
 
+    private boolean isValidPlacement() {
+        BlockPos below = blockPosition().below();
+        BlockState belowState = level().getBlockState(below);
+        return belowState.isSolidRender();
+    }
+
     @Override
-    public void onCollideWithPlayer(EntityPlayer entityPlayer) {
-        if ((!this.worldObj.isRemote) && (this.ticks > 30) && (this.isEmpty)) {
-            if (entityPlayer.inventory.addItemStackToInventory(new ItemStack(Invasion.itemIMTrap, 1, 0))) {
-                this.worldObj.playSoundAtEntity(this, "random.pop", 0.2F, ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.7F + 1.0F) * 2.0F);
-                entityPlayer.onItemPickup(this, 1);
-                setDead();
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        if (!level().isClientSide && isEmpty()) {
+            ItemStack stack = new ItemStack(ModItems.TRAP_EMPTY.get());
+            if (player.addItem(stack)) {
+                discard();
+                return InteractionResult.SUCCESS;
             }
         }
+        return InteractionResult.PASS;
     }
-
-    @Override
-    public boolean interactFirst(EntityPlayer entityPlayer) {
-        if ((this.worldObj.isRemote) || (this.isEmpty)) {
-            return false;
-        }
-        ItemStack curItem = entityPlayer.inventory.getCurrentItem();
-        if ((curItem != null) && (curItem.getItem() == Invasion.itemProbe) && (curItem.getItemDamage() >= 1)) {
-            EntityItem entityitem = new EntityItem(this.worldObj, this.posX, this.posY, this.posZ, new ItemStack(Invasion.itemIMTrap, 1, this.trapType));
-            entityitem.delayBeforeCanPickup = 5;
-            this.worldObj.spawnEntityInWorld(entityitem);
-            setDead();
-            return true;
-        }
-        return false;
-    }
-
 
     public boolean isEmpty() {
-        return this.isEmpty;
+        return entityData.get(DATA_EMPTY);
+    }
+
+    public void setEmpty(boolean empty) {
+        entityData.set(DATA_EMPTY, empty);
+        ticks = 0;
     }
 
     public int getTrapType() {
-        return this.trapType;
+        return entityData.get(DATA_TRAP_TYPE);
     }
 
-    public boolean isValidPlacement() {
-        //set bool of blocknormalcubedefault to true, donno why
-        return (this.worldObj.isBlockNormalCubeDefault(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY) - 1, MathHelper.floor_double(this.posZ), true)) && (this.worldObj.getEntitiesWithinAABB(EntityIMTrap.class, this.boundingBox).size() < 2);
-    }
-
-    @Override
-    public boolean canBeCollidedWith() {
-        return true;
+    public void setTrapType(int trapType) {
+        entityData.set(DATA_TRAP_TYPE, trapType);
     }
 
     @Override
-    public void entityInit() {
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        setEmpty(tag.getBooleanOr("Empty", false));
+        setTrapType(tag.getIntOr("TrapType", TRAP_DEFAULT));
     }
 
     @Override
-    public float getShadowSize() {
-        return 0.0F;
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.putBoolean("Empty", isEmpty());
+        tag.putInt("TrapType", getTrapType());
     }
 
     @Override
-    protected void readEntityFromNBT(NBTTagCompound nbttagcompound) {
-        this.isEmpty = nbttagcompound.getBoolean("isEmpty");
-        this.trapType = nbttagcompound.getInteger("type");
-        this.dataWatcher.updateObject(31, Byte.valueOf((byte) (this.isEmpty ? 0 : 1)));
-        this.dataWatcher.updateObject(30, Integer.valueOf(this.trapType));
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        return false;
     }
 
     @Override
-    protected void writeEntityToNBT(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setBoolean("isEmpty", this.isEmpty);
-        nbttagcompound.setInteger("type", this.trapType);
-    }
-
-    private void setEmpty() {
-        this.isEmpty = true;
-        this.ticks = 0;
-        this.dataWatcher.updateObject(31, Byte.valueOf((byte) (this.isEmpty ? 0 : 1)));
-        this.dataWatcher.updateObject(29, Byte.valueOf((byte) (this.dataWatcher.getWatchableObjectByte(29) == 0 ? 1 : 0)));
-    }
-
-    private void doFireball(float size, int initialDamage) {
-        int x = MathHelper.floor_double(this.posX);
-        int y = MathHelper.floor_double(this.posY);
-        int z = MathHelper.floor_double(this.posZ);
-        int min = 0 - (int) size;
-        int max = 0 + (int) size;
-        for (int i = min; i <= max; i++) {
-            for (int j = min; j <= max; j++) {
-                for (int k = min; k <= max; k++) {
-                    if ((this.worldObj.getBlock(x + i, y + j, z + k) == Blocks.air) || (this.worldObj.getBlock(x + i, y + j, z + k).getMaterial().getCanBurn())) {
-                        this.worldObj.setBlock(x + i, y + j, z + k, Blocks.fire);
-                    }
-                }
-            }
-        }
-
-        List<EntityLivingBase> entities = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, this.boundingBox.expand(size, size, size));
-        for (Entity entity : entities) {
-            entity.setFire(8);
-            entity.attackEntityFrom(DamageSource.onFire, initialDamage);
-        }
-    }
-
-    private void doRiftParticles() {
-        for (int i = 0; i < 300; i++) {
-            float x = this.rand.nextFloat() * 6.0F - 3.0F;
-            float z = this.rand.nextFloat() * 6.0F - 3.0F;
-            this.worldObj.spawnParticle("portal", this.posX + x, this.posY + 2.0D, this.posZ + z, -x / 3.0F, -2.0D, -z / 3.0F);
-        }
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_TRAP_TYPE, TRAP_DEFAULT);
+        builder.define(DATA_EMPTY, Boolean.FALSE);
     }
 }

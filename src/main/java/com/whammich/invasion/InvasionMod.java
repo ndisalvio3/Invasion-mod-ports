@@ -1,44 +1,58 @@
 package com.whammich.invasion;
 
-import com.whammich.invasion.client.gui.CreativeTabInvasion;
-import com.whammich.invasion.proxies.CommonProxy;
-import com.whammich.invasion.register.ItemRegistry;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.SidedProxy;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-import cpw.mods.fml.common.event.FMLInterModComms;
-import cpw.mods.fml.common.event.FMLPostInitializationEvent;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import net.minecraft.creativetab.CreativeTabs;
+import com.mojang.logging.LogUtils;
+import com.whammich.invasion.config.InvasionConfig;
+import com.whammich.invasion.registry.ModRegistries;
+import com.whammich.invasion.registry.ModEntities;
+import com.whammich.invasion.network.NetworkHandler;
+import invmod.common.entity.EntityIMZombie;
+import invmod.common.entity.EntityIMSpider;
+import invmod.common.entity.EntityIMWolf;
+import invmod.common.entity.EntityIMZombiePigman;
+import invmod.common.entity.EntityIMSkeleton;
+import invmod.common.entity.EntityIMImp;
+import invmod.common.entity.EntityIMThrower;
+import invmod.common.entity.EntityIMBird;
+import invmod.common.entity.EntityIMBurrower;
+import invmod.common.InvasionCommand;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import org.slf4j.Logger;
 
-import java.io.File;
-
-@Mod(modid = Reference.MODID, name = Reference.NAME, version = Reference.VERSION, dependencies = Reference.DEPEND, guiFactory = Reference.GUIFACTORY)
+@Mod(Reference.MODID)
 public class InvasionMod {
+    public static final Logger LOGGER = LogUtils.getLogger();
 
-    @SidedProxy(clientSide = Reference.CLIENTPROXY, serverSide = Reference.COMMONPROXY)
-    public static CommonProxy proxy;
-
-    public static CreativeTabs tabInvasion = new CreativeTabInvasion(Reference.PREFIX + ".creativeTab");
-
-    @Mod.Instance
-    public static InvasionMod instance;
-
-    @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
-        ConfigHandler.init(new File(event.getModConfigurationDirectory() + "/InvasionMod.cfg"));
+    public InvasionMod(IEventBus modEventBus, ModContainer modContainer) {
+        modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(this::registerCommands);
+        modEventBus.addListener(this::registerAttributes);
+        modContainer.registerConfig(ModConfig.Type.COMMON, InvasionConfig.SPEC);
+        NetworkHandler.register(modEventBus);
+        ModRegistries.register(modEventBus);
     }
 
-    @Mod.EventHandler
-    public void init(FMLInitializationEvent event) {
-
-        ItemRegistry.registerItems();
-
-        FMLInterModComms.sendMessage("Waila", "register", "invmod.common.util.IMWailaProvider.callbackRegister");
+    private void commonSetup(final FMLCommonSetupEvent event) {
     }
 
-    @Mod.EventHandler
-    public void postInit(FMLPostInitializationEvent event) {
+    private void registerCommands(RegisterCommandsEvent event) {
+        InvasionCommand.register(event.getDispatcher());
+    }
 
+    private void registerAttributes(EntityAttributeCreationEvent event) {
+        event.put(ModEntities.IM_ZOMBIE.get(), EntityIMZombie.createAttributes().build());
+        event.put(ModEntities.IM_SPIDER.get(), EntityIMSpider.createAttributes().build());
+        event.put(ModEntities.IM_WOLF.get(), EntityIMWolf.createAttributes().build());
+        event.put(ModEntities.IM_ZOMBIE_PIGMAN.get(), EntityIMZombiePigman.createAttributes().build());
+        event.put(ModEntities.IM_SKELETON.get(), EntityIMSkeleton.createAttributes().build());
+        event.put(ModEntities.IM_IMP.get(), EntityIMImp.createAttributes().build());
+        event.put(ModEntities.IM_THROWER.get(), EntityIMThrower.createAttributes().build());
+        event.put(ModEntities.IM_BIRD.get(), EntityIMBird.createAttributes().build());
+        event.put(ModEntities.IM_BURROWER.get(), EntityIMBurrower.createAttributes().build());
     }
 }

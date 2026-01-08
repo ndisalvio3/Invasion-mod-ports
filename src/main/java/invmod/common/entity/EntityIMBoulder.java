@@ -2,331 +2,228 @@ package invmod.common.entity;
 
 import invmod.Invasion;
 import invmod.common.nexus.TileEntityNexus;
-import invmod.common.util.ExplosionUtil;
-import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.*;
-import net.minecraft.world.Explosion;
-import net.minecraft.world.World;
-
-import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.gameevent.GameEvent.Context;
+import net.minecraft.world.level.gameevent.PositionSource;
+import net.minecraft.world.level.gameevent.PositionSourceType;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 
 public class EntityIMBoulder extends Entity {
+    private static final int DEFAULT_LIFE = 60;
+
     public boolean doesArrowBelongToPlayer;
     public int arrowShake;
-    public EntityLivingBase shootingEntity;
+    public LivingEntity shootingEntity;
     public boolean arrowCritical;
-    private int xTile;
-    private int yTile;
-    private int zTile;
-    private Block inTile;
-    private int inData;
+    private BlockPos inGroundPos;
+    private BlockState inGroundState;
     private boolean inGround;
     private int life;
     private int ticksInGround;
     private int ticksInAir;
 
-    public EntityIMBoulder(World world) {
-        super(world);
-        this.xTile = -1;
-        this.yTile = -1;
-        this.zTile = -1;
-        this.inTile = Blocks.air;
-        this.inData = 0;
-        this.life = 60;
-        this.inGround = false;
-        this.doesArrowBelongToPlayer = false;
-        this.arrowShake = 0;
-        this.ticksInAir = 0;
-        this.arrowCritical = false;
-        setSize(0.5F, 0.5F);
+    public EntityIMBoulder(EntityType<? extends EntityIMBoulder> type, Level level) {
+        super(type, level);
+        this.life = DEFAULT_LIFE;
     }
 
-    public EntityIMBoulder(World world, double d, double d1, double d2) {
-        super(world);
-        this.xTile = -1;
-        this.yTile = -1;
-        this.zTile = -1;
-        this.inTile = Blocks.air;
-        this.inData = 0;
-        this.life = 60;
-        this.inGround = false;
-        this.doesArrowBelongToPlayer = false;
-        this.arrowShake = 0;
-        this.ticksInAir = 0;
-        this.arrowCritical = false;
-        setSize(0.5F, 0.5F);
-        setPosition(d, d1, d2);
-        this.yOffset = 0.0F;
-    }
+    public void setupBoulder(LivingEntity shooter, float speed, float variance) {
+        this.shootingEntity = shooter;
+        this.doesArrowBelongToPlayer = shooter instanceof Player;
+        setPos(shooter.getX(), shooter.getEyeY(), shooter.getZ());
+        setYRot(shooter.getYRot());
+        setXRot(shooter.getXRot());
 
-    public EntityIMBoulder(World world, EntityLivingBase entityliving, float f) {
-        super(world);
-        this.xTile = -1;
-        this.yTile = -1;
-        this.zTile = -1;
-        this.inTile = Blocks.air;
-        this.inData = 0;
-        this.life = 60;
-        this.inGround = false;
-        this.doesArrowBelongToPlayer = false;
-        this.arrowShake = 0;
+        Vec3 direction = Vec3.directionFromRotation(shooter.getXRot(), shooter.getYRot());
+        double vx = direction.x * speed + random.nextGaussian() * variance;
+        double vy = direction.y * speed + random.nextGaussian() * variance;
+        double vz = direction.z * speed + random.nextGaussian() * variance;
+        setDeltaMovement(vx, vy, vz);
+        updateRotationFromDelta();
+        this.ticksInGround = 0;
         this.ticksInAir = 0;
-        this.arrowCritical = false;
-        this.shootingEntity = entityliving;
-        this.doesArrowBelongToPlayer = (entityliving instanceof EntityPlayer);
-        setSize(0.5F, 0.5F);
-        setLocationAndAngles(entityliving.posX, entityliving.posY + entityliving.getEyeHeight(), entityliving.posZ, entityliving.rotationYaw, entityliving.rotationPitch);
-        this.posX -= MathHelper.cos(this.rotationYaw / 180.0F * 3.141593F) * 0.16F;
-        this.posY -= 0.1D;
-        this.posZ -= MathHelper.sin(this.rotationYaw / 180.0F * 3.141593F) * 0.16F;
-        setPosition(this.posX, this.posY, this.posZ);
-        this.yOffset = 0.0F;
-        this.motionX = (-MathHelper.sin(this.rotationYaw / 180.0F * 3.141593F) * MathHelper.cos(this.rotationPitch / 180.0F * 3.141593F));
-        this.motionZ = (MathHelper.cos(this.rotationYaw / 180.0F * 3.141593F) * MathHelper.cos(this.rotationPitch / 180.0F * 3.141593F));
-        this.motionY = (-MathHelper.sin(this.rotationPitch / 180.0F * 3.141593F));
-        setBoulderHeading(this.motionX, this.motionY, this.motionZ, f, 1.0F);
     }
 
     @Override
-    protected void entityInit() {
-    }
+    public void tick() {
+        super.tick();
 
-    public void setBoulderHeading(double x, double y, double z, float speed, float variance) {
-        float distance = MathHelper.sqrt_double(x * x + y * y + z * z);
-        x /= distance;
-        y /= distance;
-        z /= distance;
-
-        x += this.rand.nextGaussian() * variance;
-        y += this.rand.nextGaussian() * variance;
-        z += this.rand.nextGaussian() * variance;
-        x *= speed;
-        y *= speed;
-        z *= speed;
-        this.motionX = x;
-        this.motionY = y;
-        this.motionZ = z;
-        float xzDistance = MathHelper.sqrt_double(x * x + z * z);
-        this.prevRotationYaw = (this.rotationYaw = (float) (Math.atan2(x, z) * 180.0D / 3.141592653589793D));
-        this.prevRotationPitch = (this.rotationPitch = (float) (Math.atan2(y, xzDistance) * 180.0D / 3.141592653589793D));
-        this.ticksInGround = 0;
-    }
-
-    public void setVelocity(double d, double d1, double d2) {
-        this.motionX = d;
-        this.motionY = d1;
-        this.motionZ = d2;
-        if ((this.prevRotationPitch == 0.0F) && (this.prevRotationYaw == 0.0F)) {
-            float f = MathHelper.sqrt_double(d * d + d2 * d2);
-            this.prevRotationYaw = (this.rotationYaw = (float) (Math.atan2(d, d2) * 180.0D / 3.141592741012573D));
-            this.prevRotationPitch = (this.rotationPitch = (float) (Math.atan2(d1, f) * 180.0D / 3.141592741012573D));
-            this.prevRotationPitch = this.rotationPitch;
-            this.prevRotationYaw = this.rotationYaw;
-            setLocationAndAngles(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
-            this.ticksInGround = 0;
-        }
-    }
-
-    public void onUpdate() {
-        super.onUpdate();
-        if ((this.prevRotationPitch == 0.0F) && (this.prevRotationYaw == 0.0F)) {
-            float f = MathHelper.sqrt_double(this.motionX * this.motionX + this.motionZ * this.motionZ);
-            this.prevRotationYaw = (this.rotationYaw = (float) (Math.atan2(this.motionX, this.motionZ) * 180.0D / 3.141592653589793D));
-            this.prevRotationPitch = (this.rotationPitch = (float) (Math.atan2(this.motionY, f) * 180.0D / 3.141592653589793D));
-        }
-
-        Block block = this.worldObj.getBlock(this.xTile, this.yTile, this.zTile);
-        if (block != Blocks.air) {
-            block.setBlockBoundsBasedOnState(this.worldObj, this.xTile, this.yTile, this.zTile);
-            AxisAlignedBB axisalignedbb = block.getCollisionBoundingBoxFromPool(this.worldObj, this.xTile, this.yTile, this.zTile);
-            if ((axisalignedbb != null) && (axisalignedbb.isVecInside(Vec3.createVectorHelper(this.posX, this.posY, this.posZ)))) {
-                this.inGround = true;
-            }
-
-        }
-
-        if ((this.inGround) || (this.life-- <= 0)) {
-            setDead();
+        if (life-- <= 0 || inGround) {
+            discard();
             return;
         }
 
-        this.ticksInAir += 1;
-
-        Vec3 vec3d = Vec3.createVectorHelper(this.posX, this.posY, this.posZ);
-        Vec3 vec3d1 = Vec3.createVectorHelper(this.posX + this.motionX, this.posY + this.motionY, this.posZ + this.motionZ);
-        //after update required one less vec, chose false, could also be true
-        MovingObjectPosition movingobjectposition = this.worldObj.rayTraceBlocks(vec3d, vec3d1, false);
-        vec3d = Vec3.createVectorHelper(this.posX, this.posY, this.posZ);
-        vec3d1 = Vec3.createVectorHelper(this.posX + this.motionX, this.posY + this.motionY, this.posZ + this.motionZ);
-        if (movingobjectposition != null) {
-            vec3d1 = Vec3.createVectorHelper(movingobjectposition.hitVec.xCoord, movingobjectposition.hitVec.yCoord, movingobjectposition.hitVec.zCoord);
+        if (getDeltaMovement().lengthSqr() == 0.0D) {
+            return;
         }
 
-        Entity entity = null;
-        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, this.boundingBox.addCoord(this.motionX, this.motionY, this.motionZ).expand(1.0D, 1.0D, 1.0D));
-        double d = 0.0D;
-        for (int l = 0; l < list.size(); l++) {
-            Entity entity1 = (Entity) list.get(l);
-            if ((entity1.canBeCollidedWith()) && ((entity1 != this.shootingEntity) || (this.ticksInAir >= 5))) {
-                float f5 = 0.3F;
-                AxisAlignedBB axisalignedbb1 = entity1.boundingBox.expand(f5, f5, f5);
-                MovingObjectPosition movingobjectposition1 = axisalignedbb1.calculateIntercept(vec3d, vec3d1);
-                if (movingobjectposition1 != null) {
-                    double d1 = vec3d.distanceTo(movingobjectposition1.hitVec);
-                    if ((d1 < d) || (d == 0.0D)) {
-                        entity = entity1;
-                        d = d1;
-                    }
-                }
+        ticksInAir++;
+
+        Vec3 start = position();
+        Vec3 delta = getDeltaMovement();
+        Vec3 end = start.add(delta);
+
+        HitResult blockHit = level().clip(new net.minecraft.world.level.ClipContext(
+            start,
+            end,
+            net.minecraft.world.level.ClipContext.Block.COLLIDER,
+            net.minecraft.world.level.ClipContext.Fluid.NONE,
+            this
+        ));
+
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
+            level(),
+            this,
+            start,
+            end,
+            getBoundingBox().expandTowards(delta).inflate(1.0D),
+            entity -> entity.isPickable() && entity != this.shootingEntity
+        );
+
+        HitResult hitResult = blockHit;
+        if (entityHit != null) {
+            double entityDist = start.distanceTo(entityHit.getLocation());
+            double blockDist = blockHit == null ? Double.POSITIVE_INFINITY : start.distanceTo(blockHit.getLocation());
+            if (entityDist <= blockDist) {
+                hitResult = entityHit;
             }
         }
-        if (entity != null) {
-            movingobjectposition = new MovingObjectPosition(entity);
-        }
-        if (movingobjectposition != null) {
-            if (movingobjectposition.entityHit != null) {
-                int damage = (int) (Math.max(this.ticksInAir / 20.0F, 1.0F) * 6.0F);
-                if (damage > 14) damage = 14;
-                if (movingobjectposition.entityHit.attackEntityFrom(DamageSource.causeMobDamage(this.shootingEntity), damage)) {
-                    if ((movingobjectposition.entityHit instanceof EntityLiving)) {
-                        if (!this.worldObj.isRemote) {
-                            EntityLiving entityLiving = (EntityLiving) movingobjectposition.entityHit;
-                            entityLiving.setArrowCountInEntity(entityLiving.getArrowCountInEntity() + 1);
-                        }
-                    }
-                    this.worldObj.playSoundAtEntity(this, "random.explode", 1.0F, 0.9F / (this.rand.nextFloat() * 0.2F + 0.9F));
-                    setDead();
-                }
-            } else {
-                this.xTile = movingobjectposition.blockX;
-                this.yTile = movingobjectposition.blockY;
-                this.zTile = movingobjectposition.blockZ;
-                this.inTile = this.worldObj.getBlock(this.xTile, this.yTile, this.zTile);
-                this.inData = this.worldObj.getBlockMetadata(this.xTile, this.yTile, this.zTile);
-                this.motionX = ((float) (movingobjectposition.hitVec.xCoord - this.posX));
-                this.motionY = ((float) (movingobjectposition.hitVec.yCoord - this.posY));
-                this.motionZ = ((float) (movingobjectposition.hitVec.zCoord - this.posZ));
-                float f2 = MathHelper.sqrt_double(this.motionX * this.motionX + this.motionY * this.motionY + this.motionZ * this.motionZ);
-                this.posX -= this.motionX / f2 * 0.05D;
-                this.posY -= this.motionY / f2 * 0.05D;
-                this.posZ -= this.motionZ / f2 * 0.05D;
-                this.worldObj.playSoundAtEntity(this, "random.explode", 1.0F, 0.9F / (this.rand.nextFloat() * 0.2F + 0.9F));
-                this.inGround = true;
-                this.arrowCritical = false;
 
-                Block block2 = this.worldObj.getBlock(this.xTile, this.yTile, this.zTile);
-                if (block2 == Invasion.blockNexus) {
-                    TileEntityNexus tileEntityNexus = (TileEntityNexus) this.worldObj.getTileEntity(this.xTile, this.yTile, this.zTile);
-                    if (tileEntityNexus != null) {
-                        tileEntityNexus.attackNexus(2);
-                    }
-                } else if (block2 != Blocks.bedrock) {
-                    if ((block2 != null) && (block2 != Invasion.blockNexus) && (block2 != Blocks.chest)) {
-                        if ((EntityIMLiving.getBlockSpecial(block2) == BlockSpecial.DEFLECTION_1) && (this.rand.nextInt(2) == 0)) {
-                            setDead();
-                            return;
-                        }
-                        //check if mobgriefing is enabled
-                        boolean mobgriefing = this.worldObj.getGameRules().getGameRuleBooleanValue("mobGriefing");
-
-
-//            int meta = this.worldObj.getBlockMetadata(this.xTile, this.yTile, this.zTile);
-//            block=Blocks.air;
-//            block.onBlockDestroyedByPlayer(this.worldObj, this.xTile, this.yTile, this.zTile, meta);
-//            block.dropBlockAsItem(this.worldObj, this.xTile, this.yTile, this.zTile, meta, 0);
-                        if (!this.worldObj.isRemote) {
-                            //this.worldObj.createExplosion(null, this.xTile, this.yTile, this.zTile, 0.5F, true);
-
-                            Explosion explosion = new Explosion(this.worldObj, this, this.xTile, this.yTile, this.zTile, 0.5F);
-                            explosion.isFlaming = false;
-                            explosion.isSmoking = mobgriefing;
-                            explosion.doExplosionA();
-                            ExplosionUtil.doExplosionB(this.worldObj, explosion, false);
-                        }
-
-                    }
-
-                }
+        if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
+            if (hitResult instanceof EntityHitResult entityHitResult) {
+                handleEntityHit(entityHitResult);
+            } else if (hitResult instanceof BlockHitResult blockHitResult) {
+                handleBlockHit(blockHitResult);
             }
-
-
         }
 
-        if (this.arrowCritical) {
-            for (int i1 = 0; i1 < 4; i1++) {
-                this.worldObj.spawnParticle("crit", this.posX + this.motionX * i1 / 4.0D, this.posY + this.motionY * i1 / 4.0D, this.posZ + this.motionZ * i1 / 4.0D, -this.motionX, -this.motionY + 0.2D, -this.motionZ);
+        if (arrowCritical) {
+            for (int i = 0; i < 4; i++) {
+                Vec3 pos = position().add(delta.scale(i / 4.0D));
+                level().addParticle(net.minecraft.core.particles.ParticleTypes.CRIT, pos.x, pos.y, pos.z, -delta.x, -delta.y + 0.2D, -delta.z);
             }
-
         }
 
-        this.posX += this.motionX;
-        this.posY += this.motionY;
-        this.posZ += this.motionZ;
+        setPos(getX() + delta.x, getY() + delta.y, getZ() + delta.z);
+        updateRotationFromDelta();
 
-        float xyVelocity = MathHelper.sqrt_double(this.motionX * this.motionX + this.motionZ * this.motionZ);
-        this.rotationYaw = ((float) (Math.atan2(this.motionX, this.motionZ) * 180.0D / 3.141592653589793D));
-        for (this.rotationPitch = ((float) (Math.atan2(this.motionY, xyVelocity) * 180.0D / 3.141592653589793D)); this.rotationPitch - this.prevRotationPitch < -180.0F; this.prevRotationPitch -= 360.0F)
-            ;
-        while (this.rotationPitch - this.prevRotationPitch >= 180.0F) this.prevRotationPitch += 360.0F;
-        while (this.rotationYaw - this.prevRotationYaw < -180.0F) this.prevRotationYaw -= 360.0F;
-        while (this.rotationYaw - this.prevRotationYaw >= 180.0F) this.prevRotationYaw += 360.0F;
-        this.rotationPitch = (this.prevRotationPitch + (this.rotationPitch - this.prevRotationPitch) * 0.2F);
-        this.rotationYaw = (this.prevRotationYaw + (this.rotationYaw - this.prevRotationYaw) * 0.2F);
         float airResistance = 1.0F;
-        float gravityAcel = 0.025F;
         if (isInWater()) {
-            for (int k1 = 0; k1 < 4; k1++) {
-                float f7 = 0.25F;
-                this.worldObj.spawnParticle("bubble", this.posX - this.motionX * f7, this.posY - this.motionY * f7, this.posZ - this.motionZ * f7, this.motionX, this.motionY, this.motionZ);
+            for (int i = 0; i < 4; i++) {
+                Vec3 pos = position().subtract(delta.scale(0.25D));
+                level().addParticle(net.minecraft.core.particles.ParticleTypes.BUBBLE, pos.x, pos.y, pos.z, delta.x, delta.y, delta.z);
             }
-
             airResistance = 0.8F;
         }
-        this.motionX *= airResistance;
-        this.motionY *= airResistance;
-        this.motionZ *= airResistance;
-        this.motionY -= gravityAcel;
-        setPosition(this.posX, this.posY, this.posZ);
+
+        setDeltaMovement(delta.x * airResistance, delta.y * airResistance - 0.025F, delta.z * airResistance);
+    }
+
+    private void handleEntityHit(EntityHitResult entityHit) {
+        int damage = (int) (Math.max(ticksInAir / 20.0F, 1.0F) * 6.0F);
+        if (damage > 14) {
+            damage = 14;
+        }
+        DamageSource source = shootingEntity != null ? damageSources().mobAttack(shootingEntity) : damageSources().generic();
+        entityHit.getEntity().hurt(source, damage);
+        level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 0.9F / (random.nextFloat() * 0.2F + 0.9F));
+        discard();
+    }
+
+    private void handleBlockHit(BlockHitResult blockHit) {
+        BlockPos pos = blockHit.getBlockPos();
+        BlockState state = level().getBlockState(pos);
+        this.inGroundPos = pos;
+        this.inGroundState = state;
+        this.inGround = true;
+        Vec3 hit = blockHit.getLocation();
+        Vec3 delta = getDeltaMovement();
+        double length = delta.length();
+        if (length > 0.0D) {
+            setPos(hit.x - delta.x / length * 0.05D, hit.y - delta.y / length * 0.05D, hit.z - delta.z / length * 0.05D);
+        }
+
+        level().playSound(null, pos, SoundEvents.GENERIC_EXPLODE.value(), net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 0.9F / (random.nextFloat() * 0.2F + 0.9F));
+        if (state.getBlock() == Invasion.blockNexus) {
+            BlockEntity blockEntity = level().getBlockEntity(pos);
+            if (blockEntity instanceof TileEntityNexus tileEntityNexus) {
+                tileEntityNexus.attackNexus(2);
+            }
+        } else if (state.getBlock() != Blocks.BEDROCK && state.getBlock() != Blocks.CHEST) {
+            if (level() instanceof ServerLevel serverLevel) {
+                boolean mobGriefing = serverLevel.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
+                Level.ExplosionInteraction interaction = mobGriefing ? Level.ExplosionInteraction.MOB : Level.ExplosionInteraction.NONE;
+                serverLevel.explode(this, hit.x, hit.y, hit.z, 0.5F, interaction);
+            }
+        }
+    }
+
+    private void updateRotationFromDelta() {
+        Vec3 delta = getDeltaMovement();
+        double xz = Math.sqrt(delta.x * delta.x + delta.z * delta.z);
+        if (xz == 0.0D && delta.y == 0.0D) {
+            return;
+        }
+        setYRot((float) (Math.atan2(delta.x, delta.z) * 180.0D / Math.PI));
+        setXRot((float) (Math.atan2(delta.y, xz) * 180.0D / Math.PI));
+        yRotO = getYRot();
+        xRotO = getXRot();
     }
 
     @Override
-    public void writeEntityToNBT(NBTTagCompound nbttagcompound) {
-        nbttagcompound.setShort("xTile", (short) this.xTile);
-        nbttagcompound.setShort("yTile", (short) this.yTile);
-        nbttagcompound.setShort("zTile", (short) this.zTile);
-        nbttagcompound.setByte("inTile", (byte) (Block.getIdFromBlock(this.inTile)));
-        nbttagcompound.setByte("inData", (byte) this.inData);
-        nbttagcompound.setByte("shake", (byte) this.arrowShake);
-        nbttagcompound.setByte("inGround", (byte) (this.inGround ? 1 : 0));
-        nbttagcompound.setBoolean("player", this.doesArrowBelongToPlayer);
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
     }
 
     @Override
-    public void readEntityFromNBT(NBTTagCompound nbttagcompound) {
-        this.xTile = nbttagcompound.getShort("xTile");
-        this.yTile = nbttagcompound.getShort("yTile");
-        this.zTile = nbttagcompound.getShort("zTile");
-        this.inTile = Block.getBlockById((nbttagcompound.getByte("inTile") & 0xFF));
-        this.inData = (nbttagcompound.getByte("inData") & 0xFF);
-        this.arrowShake = (nbttagcompound.getByte("shake") & 0xFF);
-        this.inGround = (nbttagcompound.getByte("inGround") == 1);
-        this.doesArrowBelongToPlayer = nbttagcompound.getBoolean("player");
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        this.inGround = tag.getBooleanOr("InGround", false);
+        this.life = tag.getIntOr("Life", DEFAULT_LIFE);
+        this.ticksInGround = tag.getIntOr("TicksInGround", 0);
+        this.ticksInAir = tag.getIntOr("TicksInAir", 0);
+        this.arrowShake = tag.getIntOr("ArrowShake", 0);
+        this.doesArrowBelongToPlayer = tag.getBooleanOr("BelongsToPlayer", false);
+        if (tag.contains("InGroundPos")) {
+            this.inGroundPos = BlockPos.of(tag.getLongOr("InGroundPos", 0L));
+            this.inGroundState = level().getBlockState(inGroundPos);
+        }
     }
 
     @Override
-    public void onCollideWithPlayer(EntityPlayer entityplayer) {
-        if (this.worldObj.isRemote) ;
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        tag.putBoolean("InGround", inGround);
+        tag.putInt("Life", life);
+        tag.putInt("TicksInGround", ticksInGround);
+        tag.putInt("TicksInAir", ticksInAir);
+        tag.putInt("ArrowShake", arrowShake);
+        tag.putBoolean("BelongsToPlayer", doesArrowBelongToPlayer);
+        if (inGroundPos != null) {
+            tag.putLong("InGroundPos", inGroundPos.asLong());
+        }
     }
 
     @Override
-    public float getShadowSize() {
-        return 0.0F;
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        return false;
     }
 
     public int getFlightTime() {

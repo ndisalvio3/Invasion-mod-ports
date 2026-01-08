@@ -1,27 +1,27 @@
 package invmod.common.entity;
 
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 
-public abstract interface INavigationFlying extends INavigation {
-    public abstract void setMovementType(MoveType paramMoveType);
+public interface INavigationFlying extends INavigation {
+    void setMovementType(MoveType moveType);
 
-    public abstract void setLandingPath();
+    void setLandingPath();
 
-    public abstract void setCirclingPath(Entity paramEntity, float paramFloat1, float paramFloat2);
+    void setCirclingPath(Entity entity, float radius, float height);
 
-    public abstract void setCirclingPath(double paramDouble1, double paramDouble2, double paramDouble3, float paramFloat1, float paramFloat2);
+    void setCirclingPath(double x, double y, double z, float radius, float height);
 
-    public abstract float getDistanceToCirclingRadius();
+    float getDistanceToCirclingRadius();
 
-    public abstract boolean isCircling();
+    boolean isCircling();
 
-    public abstract void setFlySpeed(float paramFloat);
+    void setFlySpeed(float speed);
 
-    public abstract void setPitchBias(float paramFloat1, float paramFloat2);
+    void setPitchBias(float min, float max);
 
-    public abstract void enableDirectTarget(boolean paramBoolean);
+    void enableDirectTarget(boolean enabled);
 
-    public static enum MoveType {
+    enum MoveType {
         PREFER_WALKING, MIXED, PREFER_FLYING;
     }
 }

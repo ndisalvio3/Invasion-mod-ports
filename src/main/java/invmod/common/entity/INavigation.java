@@ -1,7 +1,7 @@
 package invmod.common.entity;
 
 import invmod.common.INotifyTask;
-import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.Entity;
 
 public abstract interface INavigation extends INotifyTask {
     public abstract PathAction getCurrentWorkingAction();

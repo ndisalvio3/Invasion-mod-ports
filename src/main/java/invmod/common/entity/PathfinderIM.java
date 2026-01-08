@@ -1,14 +1,15 @@
 package invmod.common.entity;
 
 import invmod.common.IPathfindable;
-import net.minecraft.util.IntHashMap;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.level.BlockGetter;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PathfinderIM {
     private static PathfinderIM pathfinder = new PathfinderIM();
-    private IBlockAccess worldMap;
+    private BlockGetter worldMap;
     private NodeContainer path;
-    private IntHashMap pointMap;
+    private Map<Integer, PathNode> pointMap;
     private PathNode[] pathOptions;
     private PathNode finalTarget;
     private float targetRadius;
@@ -19,21 +20,21 @@ public class PathfinderIM {
 
     public PathfinderIM() {
         this.path = new NodeContainer();
-        this.pointMap = new IntHashMap();
+        this.pointMap = new HashMap<>();
         this.pathOptions = new PathNode[32];
     }
 
-    public static synchronized Path createPath(IPathfindable entity, int x, int y, int z, int x2, int y2, int z2, float targetRadius, float maxSearchRange, IBlockAccess iblockaccess, int searchDepth, int quickFailDepth) {
+    public static synchronized Path createPath(IPathfindable entity, int x, int y, int z, int x2, int y2, int z2, float targetRadius, float maxSearchRange, BlockGetter iblockaccess, int searchDepth, int quickFailDepth) {
         return pathfinder.createEntityPathTo(entity, x, y, z, x2, y2, z2, targetRadius, maxSearchRange, iblockaccess, searchDepth, quickFailDepth);
     }
 
-    public Path createEntityPathTo(IPathfindable entity, int x, int y, int z, int x2, int y2, int z2, float targetRadius, float maxSearchRange, IBlockAccess iblockaccess, int searchDepth, int quickFailDepth) {
+    public Path createEntityPathTo(IPathfindable entity, int x, int y, int z, int x2, int y2, int z2, float targetRadius, float maxSearchRange, BlockGetter iblockaccess, int searchDepth, int quickFailDepth) {
         this.worldMap = iblockaccess;
         this.nodeLimit = searchDepth;
         this.nodesOpened = 1;
         this.searchRange = maxSearchRange;
         this.path.clearPath();
-        this.pointMap.clearMap();
+        this.pointMap.clear();
         PathNode start = openPoint(x, y, z);
         PathNode target = openPoint(x2, y2, z2);
         this.finalTarget = target;
@@ -114,10 +115,10 @@ public class PathfinderIM {
 
     protected PathNode openPoint(int x, int y, int z, PathAction action) {
         int hash = PathNode.makeHash(x, y, z, action);
-        PathNode pathpoint = (PathNode) this.pointMap.lookup(hash);
+        PathNode pathpoint = this.pointMap.get(hash);
         if (pathpoint == null) {
             pathpoint = new PathNode(x, y, z, action);
-            this.pointMap.addKey(hash, pathpoint);
+            this.pointMap.put(hash, pathpoint);
             this.nodesOpened += 1;
         }
 
