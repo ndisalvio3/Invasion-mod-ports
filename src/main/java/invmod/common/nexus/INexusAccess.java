@@ -61,6 +61,9 @@ public interface INexusAccess {
         return java.util.Collections.emptyList();
     }
 
+    default void registerMob(invmod.common.entity.EntityIMLiving mob) {
+    }
+
     default java.util.Map<String, Long> getBoundPlayers() {
         return java.util.Collections.emptyMap();
     }

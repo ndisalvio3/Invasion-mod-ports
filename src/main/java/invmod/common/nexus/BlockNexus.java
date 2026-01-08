@@ -1,5 +1,7 @@
 package invmod.common.nexus;
 
+import com.whammich.invasion.registry.ModBlockEntities;
+import invmod.Invasion;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
@@ -10,6 +12,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -41,11 +45,24 @@ public class BlockNexus extends Block implements EntityBlock {
 
         BlockEntity entity = level.getBlockEntity(pos);
         if (entity instanceof TileEntityNexus nexus) {
+            Invasion.setNexusClicked(nexus);
+            nexus.bindPlayer(player);
             player.openMenu(nexus);
             return InteractionResult.CONSUME;
         }
 
         return InteractionResult.PASS;
+    }
+
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        if (level.isClientSide) {
+            return null;
+        }
+        if (type == ModBlockEntities.NEXUS.get()) {
+            return (tickLevel, pos, tickState, entity) -> TileEntityNexus.tick(tickLevel, pos, tickState, (TileEntityNexus) entity);
+        }
+        return null;
     }
 
     @Override

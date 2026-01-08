@@ -136,6 +136,10 @@ public final class Invasion {
         focusNexus = nexus;
     }
 
+    public static void setActiveNexus(TileEntityNexus nexus) {
+        activeNexus = nexus;
+    }
+
     public static int getGuiIdNexus() {
         return 0;
     }
