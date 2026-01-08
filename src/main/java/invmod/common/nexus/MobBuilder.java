@@ -71,9 +71,11 @@ public class MobBuilder {
             burrower.setTextureId(construct.getTexture());
         }
 
-        if (entity instanceof EntityIMLiving living) {
-            living.acquiredByNexus(nexus);
-            nexus.registerMob(living);
+        if (entity instanceof invmod.common.entity.IHasNexus hasNexus) {
+            hasNexus.acquiredByNexus(nexus);
+            if (entity instanceof EntityIMLiving living) {
+                nexus.registerMob(living);
+            }
         }
     }
 }

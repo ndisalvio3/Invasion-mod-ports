@@ -1,6 +1,8 @@
 package invmod.common.entity;
 
 import invmod.Invasion;
+import invmod.common.entity.ai.AttackNexusGoal;
+import invmod.common.nexus.INexusAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -13,13 +15,14 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Skeleton;
 import net.minecraft.world.level.Level;
 
-public class EntityIMSkeleton extends Skeleton {
+public class EntityIMSkeleton extends Skeleton implements IHasNexus {
     private static final EntityDataAccessor<Integer> DATA_TIER = SynchedEntityData.defineId(EntityIMSkeleton.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_FLAVOUR = SynchedEntityData.defineId(EntityIMSkeleton.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TEXTURE = SynchedEntityData.defineId(EntityIMSkeleton.class, EntityDataSerializers.INT);
 
     private int tier;
     private int flavour;
+    private INexusAccess nexus;
 
     public EntityIMSkeleton(EntityType<? extends EntityIMSkeleton> type, Level level) {
         super(type, level);
@@ -33,6 +36,12 @@ public class EntityIMSkeleton extends Skeleton {
             .add(Attributes.MOVEMENT_SPEED, 0.25D)
             .add(Attributes.ATTACK_DAMAGE, 3.0D)
             .add(Attributes.FOLLOW_RANGE, Invasion.getNightMobSightRange());
+    }
+
+    @Override
+    protected void registerGoals() {
+        super.registerGoals();
+        goalSelector.addGoal(3, new AttackNexusGoal(this, this, 2, 2.5D));
     }
 
     public void setTier(int tier) {
@@ -62,6 +71,16 @@ public class EntityIMSkeleton extends Skeleton {
 
     public int getTextureId() {
         return entityData.get(DATA_TEXTURE);
+    }
+
+    @Override
+    public INexusAccess getNexus() {
+        return nexus;
+    }
+
+    @Override
+    public void acquiredByNexus(INexusAccess nexus) {
+        this.nexus = nexus;
     }
 
     @Override

@@ -1,10 +1,11 @@
 package invmod.common.entity.ai;
 
-import invmod.common.entity.EntityIMLiving;
 import invmod.common.entity.EntityIMZombie;
+import invmod.common.entity.IHasNexus;
 import invmod.common.nexus.BlockNexus;
 import invmod.common.nexus.INexusAccess;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -12,15 +13,17 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import java.util.EnumSet;
 
 public class AttackNexusGoal extends Goal {
-    private final EntityIMLiving attacker;
+    private final Mob attacker;
+    private final IHasNexus nexusHolder;
     private final int damage;
     private final double reach;
     private int attackCooldown;
     private BlockPos targetPos;
     private INexusAccess targetNexus;
 
-    public AttackNexusGoal(EntityIMLiving attacker, int damage, double reach) {
+    public AttackNexusGoal(Mob attacker, IHasNexus nexusHolder, int damage, double reach) {
         this.attacker = attacker;
+        this.nexusHolder = nexusHolder;
         this.damage = damage;
         this.reach = reach;
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
@@ -55,8 +58,8 @@ public class AttackNexusGoal extends Goal {
     }
 
     private boolean locateNexusTarget() {
-        if (attacker.getNexus() != null) {
-            targetNexus = attacker.getNexus();
+        if (nexusHolder.getNexus() != null) {
+            targetNexus = nexusHolder.getNexus();
             targetPos = new BlockPos(targetNexus.getXCoord(), targetNexus.getYCoord(), targetNexus.getZCoord());
             return isInRange(targetPos);
         }

@@ -1,6 +1,8 @@
 package invmod.common.entity;
 
 import invmod.Invasion;
+import invmod.common.entity.ai.AttackNexusGoal;
+import invmod.common.nexus.INexusAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -13,13 +15,14 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Spider;
 import net.minecraft.world.level.Level;
 
-public class EntityIMSpider extends Spider {
+public class EntityIMSpider extends Spider implements IHasNexus {
     private static final EntityDataAccessor<Integer> DATA_TIER = SynchedEntityData.defineId(EntityIMSpider.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_FLAVOUR = SynchedEntityData.defineId(EntityIMSpider.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TEXTURE = SynchedEntityData.defineId(EntityIMSpider.class, EntityDataSerializers.INT);
 
     private int tier;
     private int flavour;
+    private INexusAccess nexus;
 
     public EntityIMSpider(EntityType<? extends EntityIMSpider> type, Level level) {
         super(type, level);
@@ -33,6 +36,12 @@ public class EntityIMSpider extends Spider {
             .add(Attributes.MOVEMENT_SPEED, 0.3D)
             .add(Attributes.ATTACK_DAMAGE, 2.0D)
             .add(Attributes.FOLLOW_RANGE, Invasion.getNightMobSightRange());
+    }
+
+    @Override
+    protected void registerGoals() {
+        super.registerGoals();
+        goalSelector.addGoal(3, new AttackNexusGoal(this, this, 2, 2.5D));
     }
 
     public void setTier(int tier) {
@@ -62,6 +71,16 @@ public class EntityIMSpider extends Spider {
 
     public int getTextureId() {
         return entityData.get(DATA_TEXTURE);
+    }
+
+    @Override
+    public INexusAccess getNexus() {
+        return nexus;
+    }
+
+    @Override
+    public void acquiredByNexus(INexusAccess nexus) {
+        this.nexus = nexus;
     }
 
     @Override

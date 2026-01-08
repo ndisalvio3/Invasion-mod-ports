@@ -1,7 +1,9 @@
 package invmod.common.entity;
 
 import invmod.Invasion;
+import invmod.common.entity.ai.AttackNexusGoal;
 import invmod.common.entity.ai.IMNearestAttackableTargetGoal;
+import invmod.common.nexus.INexusAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -20,13 +22,14 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
-public class EntityIMThrower extends Monster {
+public class EntityIMThrower extends Monster implements IHasNexus {
     private static final EntityDataAccessor<Integer> DATA_TIER = SynchedEntityData.defineId(EntityIMThrower.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_FLAVOUR = SynchedEntityData.defineId(EntityIMThrower.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TEXTURE = SynchedEntityData.defineId(EntityIMThrower.class, EntityDataSerializers.INT);
 
     private int tier;
     private int flavour;
+    private INexusAccess nexus;
 
     public EntityIMThrower(EntityType<? extends EntityIMThrower> type, Level level) {
         super(type, level);
@@ -46,6 +49,7 @@ public class EntityIMThrower extends Monster {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, true));
+        goalSelector.addGoal(3, new AttackNexusGoal(this, this, 2, 2.5D));
         goalSelector.addGoal(5, new RandomStrollGoal(this, 0.8D));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
@@ -81,6 +85,16 @@ public class EntityIMThrower extends Monster {
 
     public int getTextureId() {
         return entityData.get(DATA_TEXTURE);
+    }
+
+    @Override
+    public INexusAccess getNexus() {
+        return nexus;
+    }
+
+    @Override
+    public void acquiredByNexus(INexusAccess nexus) {
+        this.nexus = nexus;
     }
 
     @Override

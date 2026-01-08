@@ -76,7 +76,7 @@ public class EntityIMZombie extends EntityIMMob {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, true));
-        goalSelector.addGoal(3, new AttackNexusGoal(this, 2, 2.5D));
+        goalSelector.addGoal(3, new AttackNexusGoal(this, this, 2, 2.5D));
         goalSelector.addGoal(5, new RandomStrollGoal(this, 0.8D));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
