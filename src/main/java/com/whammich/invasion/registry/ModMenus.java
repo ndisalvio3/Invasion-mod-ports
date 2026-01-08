@@ -8,6 +8,9 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 public final class ModMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<ContainerNexus>> NEXUS = ModRegistries.MENUS.register("nexus", () -> IMenuTypeExtension.create(ContainerNexus::new));
 
+    public static void init() {
+    }
+
     private ModMenus() {
     }
 }

@@ -63,6 +63,9 @@ public final class ModItems {
         "im_burrower_spawn_egg", () -> new SpawnEggItem(ModEntities.IM_BURROWER.get(), new Item.Properties())
     );
 
+    public static void init() {
+    }
+
     private ModItems() {
     }
 }

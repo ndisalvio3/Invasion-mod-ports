@@ -145,6 +145,9 @@ public final class ModEntities {
             .build(ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(Reference.MODID, "im_sfx")))
     );
 
+    public static void init() {
+    }
+
     private ModEntities() {
     }
 }

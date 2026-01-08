@@ -16,6 +16,9 @@ public final class ModBlocks {
 
     public static final DeferredItem<BlockItem> NEXUS_ITEM = ModRegistries.ITEMS.register("nexus", () -> new BlockItem(NEXUS.get(), new Item.Properties()));
 
+    public static void init() {
+    }
+
     private ModBlocks() {
     }
 }

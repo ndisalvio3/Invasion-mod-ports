@@ -10,6 +10,9 @@ public final class ModBlockEntities {
         () -> new BlockEntityType<>(TileEntityNexus::new, ModBlocks.NEXUS.get())
     );
 
+    public static void init() {
+    }
+
     private ModBlockEntities() {
     }
 }

@@ -23,6 +23,14 @@ public final class ModRegistries {
     }
 
     public static void register(IEventBus bus) {
+        ModBlocks.init();
+        ModItems.init();
+        ModEntities.init();
+        ModBlockEntities.init();
+        ModMenus.init();
+        ModSounds.init();
+        ModCreativeTabs.init();
+
         ITEMS.register(bus);
         BLOCKS.register(bus);
         ENTITY_TYPES.register(bus);

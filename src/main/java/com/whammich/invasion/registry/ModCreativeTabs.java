@@ -47,6 +47,9 @@ public final class ModCreativeTabs {
         })
         .build());
 
+    public static void init() {
+    }
+
     private ModCreativeTabs() {
     }
 }
