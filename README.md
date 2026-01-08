@@ -18,6 +18,10 @@ export PATH="$JAVA_HOME/bin:$PATH"
 ## Work Tracking & Documentation
 - Jira: https://nicholas.atlassian.net (project `DEV`).
 - Confluence: space list unavailable via API (404); confirm access if needed.
+- At the start of a new chat, check Jira immediately and begin work.
+- If there are any issues in To Do or In Progress, work on them first without asking for direction.
+- Only ask for guidance when there are no open issues to work on.
+- Move the issue to In Progress as soon as work begins.
 - Track all work in Jira; do not recreate TODO files.
 - Use sub-tasks as needed.
 - Use issue comments as needed for clarifications and updates.
@@ -31,7 +35,6 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - If the build fails, fix it before proceeding; do not defer or leave it unresolved.
 - Each commit must be fully working and include a detailed commit message that stays within the scope of the issue worked on.
 - Whenever a Markdown file is modified, beautify it before continuing.
-- Always check Jira for available issues and work on them before asking what to do next.
 
 ## Validation
 - Playtest full cycle (night spawns, wave timing, spawn points, difficulty scaling).
