@@ -59,7 +59,7 @@ public final class Invasion {
     }
 
     public static boolean isDebug() {
-        return getConfigSnapshot().enableLogging();
+        return getConfigSnapshot().debugMode();
     }
 
     public static MobBuilder getMobBuilder() {
@@ -92,11 +92,50 @@ public final class Invasion {
         return getConfigSnapshot().destructedBlocksDrop();
     }
 
+    public static boolean getMobsDropSmallRemnants() {
+        return getConfigSnapshot().mobsDropSmallRemnants();
+    }
+
+    public static boolean getCraftItemsEnabled() {
+        return getConfigSnapshot().craftItemsEnabled();
+    }
+
+    public static int getGuiIdNexus() {
+        return getConfigSnapshot().guiIdNexus();
+    }
+
+    public static int getMinContinuousModeDays() {
+        return getConfigSnapshot().minContinuousModeDays();
+    }
+
+    public static int getMaxContinuousModeDays() {
+        return getConfigSnapshot().maxContinuousModeDays();
+    }
+
+    public static boolean getNightSpawnsEnabled() {
+        return getConfigSnapshot().nightSpawnsEnabled();
+    }
+
+    public static int getNightMobSpawnChance() {
+        return getConfigSnapshot().nightMobSpawnChance();
+    }
+
+    public static int getNightMobMaxGroupSize() {
+        return getConfigSnapshot().nightMobMaxGroupSize();
+    }
+
+    public static int getMobLimitOverride() {
+        return getConfigSnapshot().mobLimitOverride();
+    }
+
     public static int getMobHealth(Entity mob) {
         return 20;
     }
 
     public static Entity[] getNightMobSpawns1(Level level) {
+        if (!getNightSpawnsEnabled()) {
+            return new Entity[0];
+        }
         return new Entity[0];
     }
 
@@ -158,10 +197,6 @@ public final class Invasion {
 
     public static void applyServerConfig(InvasionConfigSnapshot snapshot) {
         serverConfigSnapshot = snapshot;
-    }
-
-    public static int getGuiIdNexus() {
-        return 0;
     }
 
     private static InvasionConfigSnapshot getConfigSnapshot() {
