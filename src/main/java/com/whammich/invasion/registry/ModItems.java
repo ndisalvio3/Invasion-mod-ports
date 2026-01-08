@@ -10,6 +10,7 @@ import com.whammich.invasion.items.ItemTrap;
 import com.whammich.invasion.items.ItemWandDebug;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 
 public final class ModItems {
@@ -64,6 +65,24 @@ public final class ModItems {
     );
 
     public static void init() {
+    }
+
+    public static void registerDispenserBehaviors() {
+        registerSpawnEggDispenserBehavior(IM_ZOMBIE_EGG.get());
+        registerSpawnEggDispenserBehavior(IM_SPIDER_EGG.get());
+        registerSpawnEggDispenserBehavior(IM_WOLF_EGG.get());
+        registerSpawnEggDispenserBehavior(IM_ZOMBIE_PIGMAN_EGG.get());
+        registerSpawnEggDispenserBehavior(IM_SKELETON_EGG.get());
+        registerSpawnEggDispenserBehavior(IM_IMP_EGG.get());
+        registerSpawnEggDispenserBehavior(IM_THROWER_EGG.get());
+        registerSpawnEggDispenserBehavior(IM_BIRD_EGG.get());
+        registerSpawnEggDispenserBehavior(IM_BURROWER_EGG.get());
+    }
+
+    private static void registerSpawnEggDispenserBehavior(SpawnEggItem egg) {
+        if (!DispenserBlock.DISPENSER_REGISTRY.containsKey(egg)) {
+            DispenserBlock.registerBehavior(egg, SpawnEggItem.DEFAULT_DISPENSE_BEHAVIOR);
+        }
     }
 
     private ModItems() {

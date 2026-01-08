@@ -3,6 +3,7 @@ package com.whammich.invasion;
 import com.mojang.logging.LogUtils;
 import com.whammich.invasion.config.InvasionConfig;
 import com.whammich.invasion.registry.ModRegistries;
+import com.whammich.invasion.registry.ModItems;
 import com.whammich.invasion.registry.ModEntities;
 import com.whammich.invasion.network.NetworkHandler;
 import invmod.Invasion;
@@ -43,7 +44,10 @@ public class InvasionMod {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        event.enqueueWork(Invasion::bindRegistries);
+        event.enqueueWork(() -> {
+            Invasion.bindRegistries();
+            ModItems.registerDispenserBehaviors();
+        });
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
