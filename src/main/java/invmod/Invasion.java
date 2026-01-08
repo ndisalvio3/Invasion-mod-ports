@@ -1,7 +1,8 @@
 package invmod;
 
 import com.mojang.logging.LogUtils;
-import com.whammich.invasion.config.InvasionConfig;
+import com.whammich.invasion.config.InvasionConfigSnapshot;
+import com.whammich.invasion.network.NetworkHandler;
 import invmod.common.ConfigInvasion;
 import invmod.common.nexus.TileEntityNexus;
 import invmod.common.nexus.MobBuilder;
@@ -45,6 +46,7 @@ public final class Invasion {
     private static final MobBuilder MOB_BUILDER = new MobBuilder();
     private static TileEntityNexus focusNexus;
     private static TileEntityNexus activeNexus;
+    private static volatile InvasionConfigSnapshot serverConfigSnapshot;
 
     private Invasion() {
     }
@@ -54,7 +56,7 @@ public final class Invasion {
     }
 
     public static boolean isDebug() {
-        return InvasionConfig.COMMON.enableLogging.get();
+        return getConfigSnapshot().enableLogging();
     }
 
     public static MobBuilder getMobBuilder() {
@@ -62,19 +64,19 @@ public final class Invasion {
     }
 
     public static int getNightMobSightRange() {
-        return InvasionConfig.COMMON.nightMobSightRange.get();
+        return getConfigSnapshot().nightMobSightRange();
     }
 
     public static int getNightMobSenseRange() {
-        return InvasionConfig.COMMON.nightMobSenseRange.get();
+        return getConfigSnapshot().nightMobSenseRange();
     }
 
     public static boolean getNightMobsBurnInDay() {
-        return InvasionConfig.COMMON.nightMobsBurnInDay.get();
+        return getConfigSnapshot().nightMobsBurnInDay();
     }
 
     public static boolean getDestructedBlocksDrop() {
-        return InvasionConfig.COMMON.destructedBlocksDrop.get();
+        return getConfigSnapshot().destructedBlocksDrop();
     }
 
     public static int getMobHealth(Entity mob) {
@@ -106,10 +108,11 @@ public final class Invasion {
 
     public static void broadcastToAll(String message) {
         LOGGER.info(message);
+        NetworkHandler.broadcastMessage(message);
     }
 
     public static boolean getUpdateNotifications() {
-        return InvasionConfig.COMMON.updateMessagesEnabled.get();
+        return getConfigSnapshot().updateMessagesEnabled();
     }
 
     public static String getLatestVersionNumber() {
@@ -140,7 +143,19 @@ public final class Invasion {
         activeNexus = nexus;
     }
 
+    public static void applyServerConfig(InvasionConfigSnapshot snapshot) {
+        serverConfigSnapshot = snapshot;
+    }
+
     public static int getGuiIdNexus() {
         return 0;
+    }
+
+    private static InvasionConfigSnapshot getConfigSnapshot() {
+        InvasionConfigSnapshot snapshot = serverConfigSnapshot;
+        if (snapshot != null) {
+            return snapshot;
+        }
+        return InvasionConfigSnapshot.fromConfig();
     }
 }

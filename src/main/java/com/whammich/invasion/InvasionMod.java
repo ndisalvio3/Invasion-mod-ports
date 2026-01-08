@@ -20,8 +20,11 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 
 @Mod(Reference.MODID)
@@ -35,6 +38,7 @@ public class InvasionMod {
         modContainer.registerConfig(ModConfig.Type.COMMON, InvasionConfig.SPEC);
         NetworkHandler.register(modEventBus);
         ModRegistries.register(modEventBus);
+        NeoForge.EVENT_BUS.addListener(this::onPlayerLoggedIn);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -54,5 +58,11 @@ public class InvasionMod {
         event.put(ModEntities.IM_THROWER.get(), EntityIMThrower.createAttributes().build());
         event.put(ModEntities.IM_BIRD.get(), EntityIMBird.createAttributes().build());
         event.put(ModEntities.IM_BURROWER.get(), EntityIMBurrower.createAttributes().build());
+    }
+
+    private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            NetworkHandler.sendConfigSync(player);
+        }
     }
 }
