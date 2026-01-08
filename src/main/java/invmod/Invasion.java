@@ -52,6 +52,9 @@ public final class Invasion {
     }
 
     public static void log(String message) {
+        if (message == null || !getConfigSnapshot().enableLogging()) {
+            return;
+        }
         LOGGER.info(message);
     }
 
