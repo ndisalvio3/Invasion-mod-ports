@@ -1,17 +1,21 @@
 package invmod.common.nexus;
 
+import com.whammich.invasion.Reference;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
-public class GuiNexus extends AbstractContainerScreen<ContainerNexus> {
-    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath("invasion", "textures/nexusgui.png");
+public class NexusScreen extends AbstractContainerScreen<ContainerNexus> {
+    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
+        Reference.MODID,
+        "textures/nexusgui.png"
+    );
     private static final int TEXTURE_SIZE = 256;
 
-    public GuiNexus(ContainerNexus menu, Inventory inventory, Component title) {
+    public NexusScreen(ContainerNexus menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 166;

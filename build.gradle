@@ -105,7 +105,7 @@ sourceSets {
             include 'invmod/common/nexus/BlockNexus.java'
             include 'invmod/common/nexus/TileEntityNexus.java'
             include 'invmod/common/nexus/ContainerNexus.java'
-            include 'invmod/common/nexus/GuiNexus.java'
+            include 'invmod/common/nexus/NexusScreen.java'
             include 'invmod/common/nexus/MobBuilder.java'
             include 'invmod/common/nexus/EntityConstruct.java'
             include 'invmod/common/nexus/EntityPattern.java'

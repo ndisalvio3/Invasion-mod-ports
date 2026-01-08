@@ -1,7 +1,7 @@
 package com.whammich.invasion;
 
 import com.whammich.invasion.registry.ModMenus;
-import invmod.common.nexus.GuiNexus;
+import invmod.common.nexus.NexusScreen;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -14,6 +14,6 @@ public final class ClientMenuScreens {
 
     @SubscribeEvent
     public static void registerMenuScreens(RegisterMenuScreensEvent event) {
-        event.register(ModMenus.NEXUS.get(), GuiNexus::new);
+        event.register(ModMenus.NEXUS.get(), NexusScreen::new);
     }
 }
