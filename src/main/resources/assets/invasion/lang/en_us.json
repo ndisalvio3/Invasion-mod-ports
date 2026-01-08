@@ -1,5 +1,13 @@
 {
   "gui.invasion.config.title": "Invasion Mod Configuration",
+  "gui.invasion.nexus.level": "Nexus - Level %s",
+  "gui.invasion.nexus.kills": "%s mobs killed",
+  "gui.invasion.nexus.radius": "R: %s",
+  "gui.invasion.nexus.activated": "Activated!",
+  "gui.invasion.nexus.wave": "Wave %s",
+  "gui.invasion.nexus.power": "Power:",
+  "gui.invasion.nexus.activating": "Activating...",
+  "gui.invasion.nexus.confirm": "Are you sure?",
   "itemGroup.invasion": "Invasion Mod",
   "item.invasion.catalyst_mixture_unstable": "Unstable Catalyst Mixture",
   "item.invasion.catalyst_mixture_stable": "Stable Catalyst Mixture",

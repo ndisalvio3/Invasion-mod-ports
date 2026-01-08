@@ -44,22 +44,22 @@ public class GuiNexus extends AbstractContainerScreen<ContainerNexus> {
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, "Nexus - Level " + menu.getNexusLevel(), 46, 6, 4210752, false);
-        graphics.drawString(font, menu.getNexusKills() + " mobs killed", 96, 60, 4210752, false);
-        graphics.drawString(font, "R: " + menu.getSpawnRadius(), 142, 72, 4210752, false);
+        graphics.drawString(font, Component.translatable("gui.invasion.nexus.level", menu.getNexusLevel()), 46, 6, 4210752, false);
+        graphics.drawString(font, Component.translatable("gui.invasion.nexus.kills", menu.getNexusKills()), 96, 60, 4210752, false);
+        graphics.drawString(font, Component.translatable("gui.invasion.nexus.radius", menu.getSpawnRadius()), 142, 72, 4210752, false);
 
         if (menu.getMode() == 1 || menu.getMode() == 3) {
-            graphics.drawString(font, "Activated!", 13, 62, 4210752, false);
-            graphics.drawString(font, "Wave " + menu.getCurrentWave(), 55, 37, 4210752, false);
+            graphics.drawString(font, Component.translatable("gui.invasion.nexus.activated"), 13, 62, 4210752, false);
+            graphics.drawString(font, Component.translatable("gui.invasion.nexus.wave", menu.getCurrentWave()), 55, 37, 4210752, false);
         } else if (menu.getMode() == 2) {
-            graphics.drawString(font, "Power:", 56, 31, 4210752, false);
-            graphics.drawString(font, String.valueOf(menu.getNexusPowerLevel()), 61, 44, 4210752, false);
+            graphics.drawString(font, Component.translatable("gui.invasion.nexus.power"), 56, 31, 4210752, false);
+            graphics.drawString(font, Component.literal(String.valueOf(menu.getNexusPowerLevel())), 61, 44, 4210752, false);
         }
 
         if (menu.isActivating() && menu.getMode() == 0) {
-            graphics.drawString(font, "Activating...", 13, 62, 4210752, false);
+            graphics.drawString(font, Component.translatable("gui.invasion.nexus.activating"), 13, 62, 4210752, false);
             if (menu.getMode() != 4) {
-                graphics.drawString(font, "Are you sure?", 8, 72, 4210752, false);
+                graphics.drawString(font, Component.translatable("gui.invasion.nexus.confirm"), 8, 72, 4210752, false);
             }
         }
     }
