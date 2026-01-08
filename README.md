@@ -22,6 +22,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - Jira: https://nicholas.atlassian.net (project `DEV`).
 - Do not use Confluence.
 - At the start of a new chat, check Jira immediately and begin work.
+- Prioritize issues in In Progress over To Do.
 - If there are any issues in To Do or In Progress, work on them first without asking for direction.
 - Only ask for guidance when there are no open issues to work on.
 - Move the issue to In Progress as soon as work begins.
@@ -47,4 +48,5 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## Completion Checklist
 - Run Build & Test and Validation before moving an issue to Completed.
+- Upon commit, move the issue from In Progress to Completed.
 - Commit and push each issue's changes before starting the next task.
