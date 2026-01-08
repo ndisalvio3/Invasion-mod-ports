@@ -31,7 +31,10 @@ public final class ModItems {
     public static final DeferredItem<ItemProbe> NEXUS_ADJUSTER = ModRegistries.ITEMS.register("nexus_adjuster", () -> new ItemProbe(ItemProbe.Type.NEXUS_ADJUSTER, new Item.Properties().stacksTo(1)));
     public static final DeferredItem<ItemProbe> MATERIAL_PROBE = ModRegistries.ITEMS.register("material_probe", () -> new ItemProbe(ItemProbe.Type.MATERIAL, new Item.Properties().stacksTo(1)));
     public static final DeferredItem<ItemStrangeBone> STRANGE_BONE = ModRegistries.ITEMS.register("strange_bone", () -> new ItemStrangeBone(new Item.Properties()));
-    public static final DeferredItem<ItemBowSearing> SEARING_BOW = ModRegistries.ITEMS.register("searing_bow", () -> new ItemBowSearing(new Item.Properties().durability(384)));
+    public static final DeferredItem<ItemBowSearing> SEARING_BOW = ModRegistries.ITEMS.register(
+        "searing_bow",
+        () -> new ItemBowSearing(new Item.Properties().durability(384).repairable(RIFT_FLUX.get()))
+    );
     public static final DeferredItem<ItemTrap> TRAP_EMPTY = ModRegistries.ITEMS.register("trap_empty", () -> new ItemTrap(ItemTrap.Type.EMPTY, new Item.Properties().stacksTo(16)));
     public static final DeferredItem<ItemTrap> TRAP_RIFT = ModRegistries.ITEMS.register("trap_rift", () -> new ItemTrap(ItemTrap.Type.RIFT, new Item.Properties().stacksTo(16)));
     public static final DeferredItem<ItemTrap> TRAP_FLAME = ModRegistries.ITEMS.register("trap_flame", () -> new ItemTrap(ItemTrap.Type.FLAME, new Item.Properties().stacksTo(16)));
