@@ -1,5 +1,6 @@
 package invmod.common.entity;
 
+import com.whammich.invasion.registry.ModSounds;
 import invmod.Invasion;
 import invmod.common.IBlockAccessExtended;
 import invmod.common.entity.ai.AttackNexusGoal;
@@ -11,6 +12,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
@@ -31,11 +33,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.BlockGetter;
 import invmod.common.entity.PathAction;
 import invmod.common.entity.PathNode;
 
@@ -81,6 +83,29 @@ public class EntityIMZombie extends EntityIMMob {
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
         targetSelector.addGoal(2, new IMNearestAttackableTargetGoal<>(this, Player.class, Invasion.getNightMobSenseRange(), false));
         targetSelector.addGoal(3, new IMNearestAttackableTargetGoal<>(this, Player.class, Invasion.getNightMobSightRange(), true));
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        if (getTier() == 3) {
+            return ModSounds.BIG_ZOMBIE.get();
+        }
+        return SoundEvents.ZOMBIE_AMBIENT;
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return SoundEvents.ZOMBIE_HURT;
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return SoundEvents.ZOMBIE_DEATH;
+    }
+
+    @Override
+    protected void playStepSound(BlockPos pos, BlockState state) {
+        playSound(SoundEvents.ZOMBIE_STEP, 0.15F, 1.0F);
     }
 
     public void setTier(int tier) {
@@ -393,7 +418,10 @@ public class EntityIMZombie extends EntityIMMob {
         if (!isBlockTypeDestructible(state, targetPos)) {
             return;
         }
-        level().destroyBlock(targetPos, Invasion.getDestructedBlocksDrop(), this);
+        if (level().destroyBlock(targetPos, Invasion.getDestructedBlocksDrop(), this)) {
+            SoundEvent scrape = getScrapeSound();
+            level().playSound(null, targetPos, scrape, getSoundSource(), 0.7F, 0.9F + random.nextFloat() * 0.2F);
+        }
     }
 
     private boolean isBlockTypeDestructible(BlockState state, BlockPos pos) {
@@ -411,6 +439,7 @@ public class EntityIMZombie extends EntityIMMob {
     }
 
     private void doFireball() {
+        level().playSound(null, blockPosition(), ModSounds.FIREBALL.get(), getSoundSource(), 1.0F, 0.9F + random.nextFloat() * 0.2F);
         int baseX = Mth.floor(getX());
         int baseY = Mth.floor(getY());
         int baseZ = Mth.floor(getZ());
@@ -430,6 +459,15 @@ public class EntityIMZombie extends EntityIMMob {
             entity.setRemainingFireTicks(8 * 20);
         }
         hurt(damageSources().inFire(), 500.0F);
+    }
+
+    private SoundEvent getScrapeSound() {
+        int roll = random.nextInt(3);
+        return switch (roll) {
+            case 1 -> ModSounds.SCRAPE_2.get();
+            case 2 -> ModSounds.SCRAPE_3.get();
+            default -> ModSounds.SCRAPE_1.get();
+        };
     }
 
     private int readTagInt(CompoundTag tag, String primary, String fallback, int defaultValue) {

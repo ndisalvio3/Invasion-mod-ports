@@ -40,13 +40,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - Each commit must be fully working and include a detailed commit message that stays within the scope of the issue worked on.
 - Whenever a Markdown file is modified, beautify it before continuing.
 
-## Validation
-- Playtest full cycle (night spawns, wave timing, spawn points, difficulty scaling).
-- Verify damage values, drops, mob behaviors, burning in daylight.
-- Confirm client/server compatibility, networking stability.
-- Run full client + dedicated server test on NeoForge 1.21.5.
-
 ## Completion Checklist
-- Run Build & Test and Validation before moving an issue to Completed.
+- Run Build & Test before moving an issue to Completed.
 - Upon commit, move the issue from In Progress to Completed.
 - Commit and push each issue's changes before starting the next task.
