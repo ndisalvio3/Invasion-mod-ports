@@ -17,7 +17,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## Work Tracking & Documentation
 - Jira: https://nicholas.atlassian.net (project `DEV`).
-- Confluence: space list unavailable via API (404); confirm access if needed.
+- Do not use Confluence.
 - At the start of a new chat, check Jira immediately and begin work.
 - If there are any issues in To Do or In Progress, work on them first without asking for direction.
 - Only ask for guidance when there are no open issues to work on.
@@ -26,13 +26,12 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - Use sub-tasks as needed.
 - Track all work on a specific issue via sub-tasks.
 - Use issue comments as needed for clarifications and updates.
-- Capture decisions, designs, and implementation notes in Confluence.
 - Keep tickets current with professional status updates and clear acceptance criteria.
 
 ## Repository Guidelines
 - Keep commits focused and avoid modifying `AGENTS.md` except to update instructions.
 - Prefer small, focused changes and follow existing naming/style conventions.
-- Document behavior changes in Jira and Confluence.
+- Document behavior changes in Jira.
 - If the build fails, fix it before proceeding; do not defer or leave it unresolved.
 - Each commit must be fully working and include a detailed commit message that stays within the scope of the issue worked on.
 - Whenever a Markdown file is modified, beautify it before continuing.
