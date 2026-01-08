@@ -35,6 +35,15 @@ public final class ModCreativeTabs {
             output.accept(ModItems.TRAP_EMPTY.get());
             output.accept(ModItems.TRAP_RIFT.get());
             output.accept(ModItems.TRAP_FLAME.get());
+            output.accept(ModItems.IM_ZOMBIE_EGG.get());
+            output.accept(ModItems.IM_SPIDER_EGG.get());
+            output.accept(ModItems.IM_WOLF_EGG.get());
+            output.accept(ModItems.IM_ZOMBIE_PIGMAN_EGG.get());
+            output.accept(ModItems.IM_SKELETON_EGG.get());
+            output.accept(ModItems.IM_IMP_EGG.get());
+            output.accept(ModItems.IM_THROWER_EGG.get());
+            output.accept(ModItems.IM_BIRD_EGG.get());
+            output.accept(ModItems.IM_BURROWER_EGG.get());
         })
         .build());
 
