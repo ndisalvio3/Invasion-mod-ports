@@ -28,7 +28,9 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - Keep commits focused and avoid modifying `AGENTS.md` except to update instructions.
 - Prefer small, focused changes and follow existing naming/style conventions.
 - Document behavior changes in Jira and Confluence.
-- If the build fails due to missing dependencies or network restrictions, note it in your PR summary.
+- If the build fails, fix it before proceeding; do not defer or leave it unresolved.
+- Each commit must be fully working and include a detailed commit message that stays within the scope of the issue worked on.
+- Whenever a Markdown file is modified, beautify it before continuing.
 
 ## Validation
 - Playtest full cycle (night spawns, wave timing, spawn points, difficulty scaling).
