@@ -31,6 +31,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 - If the build fails, fix it before proceeding; do not defer or leave it unresolved.
 - Each commit must be fully working and include a detailed commit message that stays within the scope of the issue worked on.
 - Whenever a Markdown file is modified, beautify it before continuing.
+- Always check Jira for available issues and work on them before asking what to do next.
 
 ## Validation
 - Playtest full cycle (night spawns, wave timing, spawn points, difficulty scaling).
