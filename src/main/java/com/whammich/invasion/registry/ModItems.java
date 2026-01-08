@@ -8,8 +8,9 @@ import com.whammich.invasion.items.ItemStrangeBone;
 import com.whammich.invasion.items.ItemSwordInfused;
 import com.whammich.invasion.items.ItemTrap;
 import com.whammich.invasion.items.ItemWandDebug;
-import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 
@@ -57,7 +58,10 @@ public final class ModItems {
 
     public static final DeferredItem<ItemSwordInfused> INFUSED_SWORD = ModRegistries.ITEMS.register("infused_sword", () -> new ItemSwordInfused(new Item.Properties().durability(40).stacksTo(1)));
     public static final DeferredItem<ItemWandDebug> DEBUG_WAND = ModRegistries.ITEMS.register("debug_wand", () -> new ItemWandDebug(new Item.Properties().stacksTo(1)));
-    public static final DeferredItem<ItemHammerEngineer> ENGINEER_HAMMER = ModRegistries.ITEMS.register("engineer_hammer", () -> new ItemHammerEngineer(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<ItemHammerEngineer> ENGINEER_HAMMER = ModRegistries.ITEMS.register(
+        "engineer_hammer",
+        () -> new ItemHammerEngineer(new Item.Properties().durability(250).repairable(Items.IRON_INGOT).stacksTo(1))
+    );
     public static final DeferredItem<ItemProbe> NEXUS_ADJUSTER = ModRegistries.ITEMS.register("nexus_adjuster", () -> new ItemProbe(ItemProbe.Type.NEXUS_ADJUSTER, new Item.Properties().stacksTo(1)));
     public static final DeferredItem<ItemProbe> MATERIAL_PROBE = ModRegistries.ITEMS.register("material_probe", () -> new ItemProbe(ItemProbe.Type.MATERIAL, new Item.Properties().stacksTo(1)));
     public static final DeferredItem<ItemStrangeBone> STRANGE_BONE = ModRegistries.ITEMS.register("strange_bone", () -> new ItemStrangeBone(new Item.Properties()));
