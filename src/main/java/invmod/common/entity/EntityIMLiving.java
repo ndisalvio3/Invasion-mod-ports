@@ -9,6 +9,9 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import invmod.common.util.CoordsInt;
 
@@ -37,6 +40,65 @@ public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus,
 
     @Override
     public void getPathOptionsFromNode(BlockGetter level, PathNode node, PathfinderIM pathfinder) {
+        int height = Math.max(1, Mth.ceil(getBbHeight()));
+        int x = node.xCoord;
+        int y = node.yCoord;
+        int z = node.zCoord;
+        addAdjacentOptions(level, pathfinder, height, x, y, z);
+    }
+
+    protected void addAdjacentOptions(BlockGetter level, PathfinderIM pathfinder, int height, int x, int y, int z) {
+        addPathOption(level, pathfinder, height, x + 1, y, z);
+        addPathOption(level, pathfinder, height, x - 1, y, z);
+        addPathOption(level, pathfinder, height, x, y, z + 1);
+        addPathOption(level, pathfinder, height, x, y, z - 1);
+    }
+
+    protected void addPathOption(BlockGetter level, PathfinderIM pathfinder, int height, int x, int y, int z) {
+        if (canMoveTo(level, height, x, y, z)) {
+            pathfinder.addNode(x, y, z, isSwimming(level, x, y, z) ? PathAction.SWIM : PathAction.NONE);
+            return;
+        }
+        if (canMoveTo(level, height, x, y + 1, z)) {
+            pathfinder.addNode(x, y + 1, z, isSwimming(level, x, y + 1, z) ? PathAction.SWIM : PathAction.NONE);
+            return;
+        }
+        if (canMoveTo(level, height, x, y - 1, z)) {
+            pathfinder.addNode(x, y - 1, z, isSwimming(level, x, y - 1, z) ? PathAction.SWIM : PathAction.NONE);
+        }
+    }
+
+    protected boolean canMoveTo(BlockGetter level, int height, int x, int y, int z) {
+        if (!isPositionClear(level, height, x, y, z)) {
+            return false;
+        }
+        if (isSwimming(level, x, y, z)) {
+            return true;
+        }
+        return hasSolidGround(level, x, y - 1, z);
+    }
+
+    protected boolean isSwimming(BlockGetter level, int x, int y, int z) {
+        BlockPos pos = new BlockPos(x, y, z);
+        return !level.getFluidState(pos).isEmpty();
+    }
+
+    protected boolean hasSolidGround(BlockGetter level, int x, int y, int z) {
+        BlockPos pos = new BlockPos(x, y, z);
+        BlockState state = level.getBlockState(pos);
+        return !state.getCollisionShape(level, pos).isEmpty();
+    }
+
+    protected boolean isPositionClear(BlockGetter level, int height, int x, int y, int z) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int i = 0; i < height; i++) {
+            pos.set(x, y + i, z);
+            BlockState state = level.getBlockState(pos);
+            if (!state.getCollisionShape(level, pos).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
