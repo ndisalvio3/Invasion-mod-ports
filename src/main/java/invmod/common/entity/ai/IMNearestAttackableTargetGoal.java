@@ -31,7 +31,21 @@ public class IMNearestAttackableTargetGoal<T extends LivingEntity> extends Targe
     public boolean canUse() {
         AABB searchArea = mob.getBoundingBox().inflate(range, range / 2.0D, range);
         List<T> candidates = mob.level().getEntitiesOfClass(targetClass, searchArea);
-        target = mob.level().getNearestEntity(candidates, targetConditions, mob, mob.getX(), mob.getEyeY(), mob.getZ());
+        if (!(mob.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+            return false;
+        }
+        target = null;
+        double nearestDistance = Double.MAX_VALUE;
+        for (T candidate : candidates) {
+            if (!targetConditions.test(serverLevel, mob, candidate)) {
+                continue;
+            }
+            double distance = mob.distanceToSqr(candidate);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                target = candidate;
+            }
+        }
         return target != null;
     }
 

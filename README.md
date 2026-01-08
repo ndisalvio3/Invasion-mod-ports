@@ -14,6 +14,9 @@ export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
 - `./gradlew build` compiles the code and runs any tests.
+- Always run `./gradlew build` after code changes before reporting results.
+- Build must pass before committing or moving a Jira issue from In Progress to Completed.
+- Scope guard: if the build fails for any reason, troubleshoot and fix it before committing or completing the issue; do not defer or leave failures unresolved.
 
 ## Work Tracking & Documentation
 - Jira: https://nicholas.atlassian.net (project `DEV`).

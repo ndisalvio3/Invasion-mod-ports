@@ -48,7 +48,7 @@ public class EntityIMEgg extends Entity {
                 getX(),
                 getY(),
                 getZ(),
-                SoundEvents.TURTLE_EGG_HATCH.value(),
+                SoundEvents.TURTLE_EGG_HATCH,
                 SoundSource.HOSTILE,
                 1.0F,
                 1.0F,

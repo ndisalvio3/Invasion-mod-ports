@@ -54,7 +54,7 @@ public class EntityIMBolt extends Entity {
                     getX(),
                     getY(),
                     getZ(),
-                    SoundEvents.LIGHTNING_BOLT_IMPACT.value(),
+                    SoundEvents.LIGHTNING_BOLT_IMPACT,
                     SoundSource.HOSTILE,
                     0.8F,
                     1.0F + (random.nextFloat() - 0.5F) * 0.2F
