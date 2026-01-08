@@ -1,10 +1,15 @@
 package com.whammich.invasion.items;
 
+import invmod.common.nexus.TileEntityNexus;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class ItemWandDebug extends Item {
     public ItemWandDebug(Properties properties) {
@@ -13,10 +18,35 @@ public class ItemWandDebug extends Item {
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
-        if (!context.getLevel().isClientSide) {
+        Level level = context.getLevel();
+        if (!level.isClientSide) {
             Player player = context.getPlayer();
             if (player != null) {
-                player.displayClientMessage(Component.literal("Debug wand used at " + context.getClickedPos()), true);
+                BlockPos pos = context.getClickedPos();
+                BlockState state = level.getBlockState(pos);
+                BlockEntity blockEntity = level.getBlockEntity(pos);
+                if (blockEntity instanceof TileEntityNexus nexus) {
+                    player.displayClientMessage(
+                        Component.literal(
+                            "Nexus debug: active=" + nexus.isActive()
+                                + " level=" + nexus.getNexusLevel()
+                                + " wave=" + nexus.getCurrentWave()
+                                + " power=" + nexus.getNexusPowerLevel()
+                                + " radius=" + nexus.getSpawnRadius()
+                        ),
+                        true
+                    );
+                } else {
+                    String blockEntityId = blockEntity != null ? blockEntity.getType().toString() : "none";
+                    player.displayClientMessage(
+                        Component.literal(
+                            "Block debug: " + state.getBlock().getName().getString()
+                                + " pos=" + pos.getX() + "," + pos.getY() + "," + pos.getZ()
+                                + " be=" + blockEntityId
+                        ),
+                        true
+                    );
+                }
             }
         }
         return InteractionResult.SUCCESS;
