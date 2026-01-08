@@ -154,6 +154,10 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         return true;
     }
 
+    public boolean adjustSpawnRadius(int delta) {
+        return setSpawnRadius(spawnRadius + delta);
+    }
+
     @Override
     public int getNexusKills() {
         return nexusKills;
@@ -181,12 +185,30 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         this.nexusLevel = nexusLevel;
     }
 
+    public boolean addNexusLevel(int amount) {
+        if (amount <= 0) {
+            return false;
+        }
+        nexusLevel += amount;
+        setChanged();
+        return true;
+    }
+
     public int getNexusPowerLevel() {
         return powerLevel;
     }
 
     void setNexusPowerLevel(int powerLevel) {
         this.powerLevel = powerLevel;
+    }
+
+    public boolean addPowerLevel(int amount) {
+        if (amount <= 0) {
+            return false;
+        }
+        powerLevel = Math.max(0, powerLevel + amount);
+        setChanged();
+        return true;
     }
 
     @Override

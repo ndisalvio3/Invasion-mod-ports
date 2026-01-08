@@ -14,16 +14,46 @@ import net.minecraft.world.level.block.DispenserBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 
 public final class ModItems {
-    public static final DeferredItem<Item> CATALYST_MIXTURE_UNSTABLE = ModRegistries.ITEMS.register("catalyst_mixture_unstable", () -> new ItemMaterials(new Item.Properties()));
-    public static final DeferredItem<Item> CATALYST_MIXTURE_STABLE = ModRegistries.ITEMS.register("catalyst_mixture_stable", () -> new ItemMaterials(new Item.Properties()));
-    public static final DeferredItem<Item> NEXUS_CATALYST_UNSTABLE = ModRegistries.ITEMS.register("nexus_catalyst_unstable", () -> new ItemMaterials(new Item.Properties()));
-    public static final DeferredItem<Item> NEXUS_CATALYST_STABLE = ModRegistries.ITEMS.register("nexus_catalyst_stable", () -> new ItemMaterials(new Item.Properties()));
-    public static final DeferredItem<Item> CATALYST_STRONG = ModRegistries.ITEMS.register("catalyst_strong", () -> new ItemMaterials(new Item.Properties()));
-    public static final DeferredItem<Item> DAMPING_AGENT_WEAK = ModRegistries.ITEMS.register("damping_agent_weak", () -> new ItemMaterials(new Item.Properties()));
-    public static final DeferredItem<Item> DAMPING_AGENT_STRONG = ModRegistries.ITEMS.register("damping_agent_strong", () -> new ItemMaterials(new Item.Properties()));
-    public static final DeferredItem<Item> SMALL_REMNANTS = ModRegistries.ITEMS.register("small_remnants", () -> new ItemMaterials(new Item.Properties()));
-    public static final DeferredItem<Item> RIFT_FLUX = ModRegistries.ITEMS.register("rift_flux", () -> new ItemMaterials(new Item.Properties()));
-    public static final DeferredItem<Item> PHASE_CRYSTAL = ModRegistries.ITEMS.register("phase_crystal", () -> new ItemMaterials(new Item.Properties()));
+    public static final DeferredItem<Item> CATALYST_MIXTURE_UNSTABLE = ModRegistries.ITEMS.register(
+        "catalyst_mixture_unstable",
+        () -> new ItemMaterials(ItemMaterials.Type.CATALYST_MIXTURE_UNSTABLE, new Item.Properties())
+    );
+    public static final DeferredItem<Item> CATALYST_MIXTURE_STABLE = ModRegistries.ITEMS.register(
+        "catalyst_mixture_stable",
+        () -> new ItemMaterials(ItemMaterials.Type.CATALYST_MIXTURE_STABLE, new Item.Properties())
+    );
+    public static final DeferredItem<Item> NEXUS_CATALYST_UNSTABLE = ModRegistries.ITEMS.register(
+        "nexus_catalyst_unstable",
+        () -> new ItemMaterials(ItemMaterials.Type.NEXUS_CATALYST_UNSTABLE, new Item.Properties())
+    );
+    public static final DeferredItem<Item> NEXUS_CATALYST_STABLE = ModRegistries.ITEMS.register(
+        "nexus_catalyst_stable",
+        () -> new ItemMaterials(ItemMaterials.Type.NEXUS_CATALYST_STABLE, new Item.Properties())
+    );
+    public static final DeferredItem<Item> CATALYST_STRONG = ModRegistries.ITEMS.register(
+        "catalyst_strong",
+        () -> new ItemMaterials(ItemMaterials.Type.CATALYST_STRONG, new Item.Properties())
+    );
+    public static final DeferredItem<Item> DAMPING_AGENT_WEAK = ModRegistries.ITEMS.register(
+        "damping_agent_weak",
+        () -> new ItemMaterials(ItemMaterials.Type.DAMPING_AGENT_WEAK, new Item.Properties())
+    );
+    public static final DeferredItem<Item> DAMPING_AGENT_STRONG = ModRegistries.ITEMS.register(
+        "damping_agent_strong",
+        () -> new ItemMaterials(ItemMaterials.Type.DAMPING_AGENT_STRONG, new Item.Properties())
+    );
+    public static final DeferredItem<Item> SMALL_REMNANTS = ModRegistries.ITEMS.register(
+        "small_remnants",
+        () -> new ItemMaterials(ItemMaterials.Type.SMALL_REMNANTS, new Item.Properties())
+    );
+    public static final DeferredItem<Item> RIFT_FLUX = ModRegistries.ITEMS.register(
+        "rift_flux",
+        () -> new ItemMaterials(ItemMaterials.Type.RIFT_FLUX, new Item.Properties())
+    );
+    public static final DeferredItem<Item> PHASE_CRYSTAL = ModRegistries.ITEMS.register(
+        "phase_crystal",
+        () -> new ItemMaterials(ItemMaterials.Type.PHASE_CRYSTAL, new Item.Properties())
+    );
 
     public static final DeferredItem<ItemSwordInfused> INFUSED_SWORD = ModRegistries.ITEMS.register("infused_sword", () -> new ItemSwordInfused(new Item.Properties().durability(40).stacksTo(1)));
     public static final DeferredItem<ItemWandDebug> DEBUG_WAND = ModRegistries.ITEMS.register("debug_wand", () -> new ItemWandDebug(new Item.Properties().stacksTo(1)));
