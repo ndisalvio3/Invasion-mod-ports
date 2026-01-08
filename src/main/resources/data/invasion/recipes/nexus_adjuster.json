@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "invasion:material_probe"
+    },
+    {
+      "item": "invasion:nexus_catalyst_stable"
+    }
+  ],
+  "result": {
+    "item": "invasion:nexus_adjuster"
+  }
+}

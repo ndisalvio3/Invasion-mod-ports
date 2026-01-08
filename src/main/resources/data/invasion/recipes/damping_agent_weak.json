@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "invasion:small_remnants"
+    }
+  ],
+  "result": {
+    "item": "invasion:damping_agent_weak"
+  }
+}

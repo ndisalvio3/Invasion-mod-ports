@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "invasion:nexus_adjuster",
+    "invasion:material_probe",
+    "invasion:debug_wand",
+    "invasion:engineer_hammer"
+  ]
+}

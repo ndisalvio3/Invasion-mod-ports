@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:bone"
+    },
+    {
+      "item": "invasion:rift_flux"
+    }
+  ],
+  "result": {
+    "item": "invasion:strange_bone"
+  }
+}

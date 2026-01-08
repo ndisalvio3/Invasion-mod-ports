@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "OOO",
+    "OCO",
+    "OOO"
+  ],
+  "key": {
+    "O": {
+      "item": "minecraft:obsidian"
+    },
+    "C": {
+      "item": "invasion:nexus_catalyst_stable"
+    }
+  },
+  "result": {
+    "item": "invasion:nexus"
+  }
+}

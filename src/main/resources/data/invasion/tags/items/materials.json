@@ -1,0 +1,16 @@
+{
+  "replace": false,
+  "values": [
+    "invasion:catalyst_mixture_unstable",
+    "invasion:catalyst_mixture_stable",
+    "invasion:nexus_catalyst_unstable",
+    "invasion:nexus_catalyst_stable",
+    "invasion:catalyst_strong",
+    "invasion:damping_agent_weak",
+    "invasion:damping_agent_strong",
+    "invasion:small_remnants",
+    "invasion:rift_flux",
+    "invasion:phase_crystal",
+    "invasion:strange_bone"
+  ]
+}

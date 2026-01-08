@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "invasion:damping_agent_weak"
+    },
+    {
+      "item": "invasion:phase_crystal"
+    }
+  ],
+  "result": {
+    "item": "invasion:damping_agent_strong"
+  }
+}

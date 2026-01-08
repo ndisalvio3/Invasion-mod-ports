@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:amethyst_shard"
+    },
+    {
+      "item": "invasion:rift_flux"
+    }
+  ],
+  "result": {
+    "item": "invasion:phase_crystal"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "invasion:trap_empty"
+    },
+    {
+      "item": "invasion:rift_flux"
+    }
+  ],
+  "result": {
+    "item": "invasion:trap_rift"
+  }
+}

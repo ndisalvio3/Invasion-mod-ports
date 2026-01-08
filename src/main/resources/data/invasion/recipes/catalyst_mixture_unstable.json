@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "invasion:rift_flux"
+    },
+    {
+      "item": "invasion:small_remnants"
+    },
+    {
+      "item": "minecraft:gunpowder"
+    }
+  ],
+  "result": {
+    "item": "invasion:catalyst_mixture_unstable"
+  }
+}

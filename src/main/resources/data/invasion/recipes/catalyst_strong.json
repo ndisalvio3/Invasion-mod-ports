@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "invasion:nexus_catalyst_stable"
+    },
+    {
+      "item": "invasion:phase_crystal"
+    }
+  ],
+  "result": {
+    "item": "invasion:catalyst_strong"
+  }
+}
