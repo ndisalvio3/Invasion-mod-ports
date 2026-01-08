@@ -1,6 +1,7 @@
 package com.whammich.invasion.items;
 
 import invmod.common.nexus.TileEntityNexus;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -39,17 +40,65 @@ public class ItemProbe extends Item {
         }
 
         BlockState state = level.getBlockState(context.getClickedPos());
-        if (type == Type.NEXUS_ADJUSTER) {
-            BlockEntity blockEntity = level.getBlockEntity(context.getClickedPos());
-            if (blockEntity instanceof TileEntityNexus nexus) {
-                boolean newState = !nexus.isActive();
-                nexus.setActive(newState);
-                player.displayClientMessage(Component.literal("Nexus " + (newState ? "activated" : "deactivated")), true);
+        BlockEntity blockEntity = level.getBlockEntity(context.getClickedPos());
+        if (blockEntity instanceof TileEntityNexus nexus) {
+            if (type == Type.NEXUS_ADJUSTER) {
+                handleNexusAdjuster(player, nexus);
+                return InteractionResult.SUCCESS;
+            }
+            if (type == Type.MATERIAL) {
+                reportNexusStatus(player, nexus);
                 return InteractionResult.SUCCESS;
             }
         }
 
-        player.displayClientMessage(Component.literal("Block: " + state.getBlock().getName().getString()), true);
+        if (type == Type.MATERIAL) {
+        reportBlockInfo(player, state, level, context.getClickedPos());
         return InteractionResult.SUCCESS;
+        }
+
+        player.displayClientMessage(Component.literal("No nexus found."), true);
+        return InteractionResult.SUCCESS;
+    }
+
+    private void handleNexusAdjuster(Player player, TileEntityNexus nexus) {
+        if (player.isShiftKeyDown()) {
+            boolean newState = !nexus.isActive();
+            nexus.setActive(newState);
+            player.displayClientMessage(Component.literal("Nexus " + (newState ? "activated" : "deactivated")), true);
+        } else {
+            boolean adjusted = nexus.adjustSpawnRadius(2);
+            if (!adjusted) {
+                player.displayClientMessage(Component.literal("Nexus spawn radius locked while active."), true);
+            }
+        }
+        reportNexusStatus(player, nexus);
+    }
+
+    private void reportNexusStatus(Player player, TileEntityNexus nexus) {
+        player.displayClientMessage(
+            Component.literal(
+                "Nexus: active=" + nexus.isActive()
+                    + " level=" + nexus.getNexusLevel()
+                    + " power=" + nexus.getNexusPowerLevel()
+                    + " wave=" + nexus.getCurrentWave()
+                    + " radius=" + nexus.getSpawnRadius()
+                    + " kills=" + nexus.getNexusKills()
+            ),
+            true
+        );
+    }
+
+    private void reportBlockInfo(Player player, BlockState state, Level level, BlockPos pos) {
+        float hardness = state.getDestroySpeed(level, pos);
+        float resistance = state.getBlock().getExplosionResistance();
+        player.displayClientMessage(
+            Component.literal(
+                "Block: " + state.getBlock().getName().getString()
+                    + " hardness=" + hardness
+                    + " blastRes=" + resistance
+            ),
+            true
+        );
     }
 }
