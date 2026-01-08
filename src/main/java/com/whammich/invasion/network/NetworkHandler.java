@@ -13,6 +13,8 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class NetworkHandler {
+    private static final String PROTOCOL_VERSION = "2";
+
     private NetworkHandler() {
     }
 
@@ -21,7 +23,7 @@ public final class NetworkHandler {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("1");
+        PayloadRegistrar registrar = event.registrar(PROTOCOL_VERSION);
         registrar.playToClient(ConfigSyncPayload.TYPE, ConfigSyncPayload.STREAM_CODEC, NetworkHandler::handleConfigSync);
         registrar.playToClient(BroadcastMessagePayload.TYPE, BroadcastMessagePayload.STREAM_CODEC, NetworkHandler::handleBroadcastMessage);
     }
