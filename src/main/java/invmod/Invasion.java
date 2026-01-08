@@ -3,6 +3,8 @@ package invmod;
 import com.mojang.logging.LogUtils;
 import com.whammich.invasion.config.InvasionConfigSnapshot;
 import com.whammich.invasion.network.NetworkHandler;
+import com.whammich.invasion.registry.ModBlocks;
+import com.whammich.invasion.registry.ModItems;
 import invmod.common.nexus.TileEntityNexus;
 import invmod.common.nexus.MobBuilder;
 import net.minecraft.network.chat.Component;
@@ -30,13 +32,13 @@ public final class Invasion {
     public static final Map<String, Integer> mobHealthInvasion = new HashMap<>();
     public static final Map<String, Integer> mobHealthNightspawn = new HashMap<>();
 
-    public static final Block blockNexus = Blocks.AIR;
-    public static final Item itemSmallRemnants = Items.AIR;
-    public static final Item itemEngyHammer = Items.AIR;
-    public static final Item itemIMTrap = Items.AIR;
-    public static final Item itemProbe = Items.AIR;
-    public static final Item itemDebugWand = Items.AIR;
-    public static final Item itemStrangeBone = Items.AIR;
+    public static Block blockNexus = Blocks.AIR;
+    public static Item itemSmallRemnants = Items.AIR;
+    public static Item itemEngyHammer = Items.AIR;
+    public static Item itemIMTrap = Items.AIR;
+    public static Item itemProbe = Items.AIR;
+    public static Item itemDebugWand = Items.AIR;
+    public static Item itemStrangeBone = Items.AIR;
 
     public static String latestVersionNumber = "null";
     public static String recentNews = "null";
@@ -59,6 +61,16 @@ public final class Invasion {
 
     public static MobBuilder getMobBuilder() {
         return MOB_BUILDER;
+    }
+
+    public static void bindRegistries() {
+        blockNexus = ModBlocks.NEXUS.get();
+        itemSmallRemnants = ModItems.SMALL_REMNANTS.get();
+        itemEngyHammer = ModItems.ENGINEER_HAMMER.get();
+        itemIMTrap = ModItems.TRAP_EMPTY.get();
+        itemProbe = ModItems.MATERIAL_PROBE.get();
+        itemDebugWand = ModItems.DEBUG_WAND.get();
+        itemStrangeBone = ModItems.STRANGE_BONE.get();
     }
 
     public static int getNightMobSightRange() {
@@ -86,7 +98,7 @@ public final class Invasion {
     }
 
     public static ItemStack getRenderHammerItem() {
-        return new ItemStack(Items.AIR);
+        return new ItemStack(itemEngyHammer);
     }
 
     public static void sendMessageToPlayer(ServerPlayer player, String message) {

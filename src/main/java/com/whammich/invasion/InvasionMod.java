@@ -5,6 +5,7 @@ import com.whammich.invasion.config.InvasionConfig;
 import com.whammich.invasion.registry.ModRegistries;
 import com.whammich.invasion.registry.ModEntities;
 import com.whammich.invasion.network.NetworkHandler;
+import invmod.Invasion;
 import invmod.common.entity.EntityIMZombie;
 import invmod.common.entity.EntityIMSpider;
 import invmod.common.entity.EntityIMWolf;
@@ -42,6 +43,7 @@ public class InvasionMod {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(Invasion::bindRegistries);
     }
 
     private void registerCommands(RegisterCommandsEvent event) {
