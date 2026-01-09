@@ -328,6 +328,10 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         startInvasion(startWave);
     }
 
+    public void startInvasionFromUi() {
+        startInvasion(1);
+    }
+
     public void emergencyStop() {
         active = false;
         waveRestTimer = 0;

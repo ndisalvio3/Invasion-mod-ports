@@ -1,5 +1,6 @@
 package invmod.common.nexus;
 
+import com.whammich.invasion.network.NetworkHandler;
 import com.whammich.invasion.network.payload.NexusStatusPayload;
 import com.whammich.invasion.registry.ModMenus;
 import com.whammich.invasion.registry.ModBlocks;
@@ -34,6 +35,11 @@ public class ContainerNexus extends AbstractContainerMenu {
     private static final int DATA_GENERATION = 6;
     private static final int DATA_POWER_LEVEL = 7;
     private static final int DATA_COOK_TIME = 8;
+    public static final int BUTTON_START = 0;
+    public static final int BUTTON_STOP = 1;
+    public static final int BUTTON_RADIUS_UP = 2;
+    public static final int BUTTON_RADIUS_DOWN = 3;
+    public static final int BUTTON_STATUS = 4;
 
     private final ContainerLevelAccess access;
     private final TileEntityNexus nexus;
@@ -157,6 +163,61 @@ public class ContainerNexus extends AbstractContainerMenu {
         return getActivationTimer() > 0 && getActivationTimer() < 400;
     }
 
+    @Override
+    public boolean clickMenuButton(Player player, int id) {
+        if (player.level().isClientSide) {
+            return isKnownButton(id);
+        }
+        if (nexus == null || !isKnownButton(id)) {
+            return false;
+        }
+        switch (id) {
+            case BUTTON_START -> {
+                if (!nexus.isActive()) {
+                    nexus.startInvasionFromUi();
+                    NetworkHandler.sendItemInteraction(player, "Nexus activated.", true);
+                } else {
+                    NetworkHandler.sendItemInteraction(player, "Nexus already active.", true);
+                }
+            }
+            case BUTTON_STOP -> {
+                if (nexus.isActive()) {
+                    nexus.emergencyStop();
+                    NetworkHandler.sendItemInteraction(player, "Nexus stopped.", true);
+                } else {
+                    NetworkHandler.sendItemInteraction(player, "Nexus already inactive.", true);
+                }
+            }
+            case BUTTON_RADIUS_UP -> {
+                if (!nexus.adjustSpawnRadius(2)) {
+                    NetworkHandler.sendItemInteraction(player, "Nexus spawn radius locked while active.", true);
+                } else {
+                    NetworkHandler.sendItemInteraction(player, "Nexus spawn radius: " + nexus.getSpawnRadius(), true);
+                }
+            }
+            case BUTTON_RADIUS_DOWN -> {
+                if (!nexus.adjustSpawnRadius(-2)) {
+                    NetworkHandler.sendItemInteraction(player, "Nexus spawn radius locked while active.", true);
+                } else {
+                    NetworkHandler.sendItemInteraction(player, "Nexus spawn radius: " + nexus.getSpawnRadius(), true);
+                }
+            }
+            case BUTTON_STATUS -> NetworkHandler.sendItemInteraction(
+                player,
+                "Nexus: active=" + nexus.isActive()
+                    + " level=" + nexus.getNexusLevel()
+                    + " power=" + nexus.getNexusPowerLevel()
+                    + " wave=" + nexus.getCurrentWave()
+                    + " radius=" + nexus.getSpawnRadius()
+                    + " kills=" + nexus.getNexusKills(),
+                true
+            );
+            default -> {
+            }
+        }
+        return true;
+    }
+
     public int getMode() {
         return data.get(DATA_MODE);
     }
@@ -215,5 +276,13 @@ public class ContainerNexus extends AbstractContainerMenu {
         data.set(DATA_GENERATION, payload.generation());
         data.set(DATA_POWER_LEVEL, payload.powerLevel());
         data.set(DATA_COOK_TIME, payload.cookTime());
+    }
+
+    private boolean isKnownButton(int id) {
+        return id == BUTTON_START
+            || id == BUTTON_STOP
+            || id == BUTTON_RADIUS_UP
+            || id == BUTTON_RADIUS_DOWN
+            || id == BUTTON_STATUS;
     }
 }

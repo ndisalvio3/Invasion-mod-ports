@@ -1,6 +1,7 @@
 package invmod.common.nexus;
 
 import com.whammich.invasion.Reference;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.RenderType;
@@ -14,11 +15,45 @@ public class NexusScreen extends AbstractContainerScreen<ContainerNexus> {
         "textures/nexusgui.png"
     );
     private static final int TEXTURE_SIZE = 256;
+    private Button startButton;
+    private Button stopButton;
+    private Button radiusUpButton;
+    private Button radiusDownButton;
+    private Button statusButton;
 
     public NexusScreen(ContainerNexus menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         imageWidth = 176;
         imageHeight = 166;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        int x = leftPos;
+        int y = topPos;
+        startButton = addRenderableWidget(Button.builder(Component.literal("Start"), button -> sendButtonClick(ContainerNexus.BUTTON_START))
+            .bounds(x + 8, y + 6, 40, 14)
+            .build());
+        stopButton = addRenderableWidget(Button.builder(Component.literal("Stop"), button -> sendButtonClick(ContainerNexus.BUTTON_STOP))
+            .bounds(x + 50, y + 6, 40, 14)
+            .build());
+        radiusDownButton = addRenderableWidget(Button.builder(Component.literal("-"), button -> sendButtonClick(ContainerNexus.BUTTON_RADIUS_DOWN))
+            .bounds(x + 142, y + 88, 12, 12)
+            .build());
+        radiusUpButton = addRenderableWidget(Button.builder(Component.literal("+"), button -> sendButtonClick(ContainerNexus.BUTTON_RADIUS_UP))
+            .bounds(x + 156, y + 88, 12, 12)
+            .build());
+        statusButton = addRenderableWidget(Button.builder(Component.literal("Status"), button -> sendButtonClick(ContainerNexus.BUTTON_STATUS))
+            .bounds(x + 98, y + 6, 56, 14)
+            .build());
+        updateButtonStates();
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        updateButtonStates();
     }
 
     @Override
@@ -65,6 +100,25 @@ public class NexusScreen extends AbstractContainerScreen<ContainerNexus> {
             if (menu.getMode() != 4) {
                 graphics.drawString(font, Component.translatable("gui.invasion.nexus.confirm"), 8, 72, 4210752, false);
             }
+        }
+    }
+
+    private void sendButtonClick(int id) {
+        if (minecraft == null || minecraft.player == null || minecraft.gameMode == null) {
+            return;
+        }
+        if (menu.clickMenuButton(minecraft.player, id)) {
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, id);
+        }
+    }
+
+    private void updateButtonStates() {
+        boolean active = menu.getMode() != 0;
+        if (startButton != null) {
+            startButton.active = !active;
+        }
+        if (stopButton != null) {
+            stopButton.active = active;
         }
     }
 }
