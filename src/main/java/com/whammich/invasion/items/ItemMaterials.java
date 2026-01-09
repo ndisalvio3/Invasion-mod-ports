@@ -1,7 +1,8 @@
 package com.whammich.invasion.items;
 
+import com.whammich.invasion.network.NetworkHandler;
+import com.whammich.invasion.network.payload.CustomEffectPayload;
 import invmod.common.nexus.TileEntityNexus;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -66,7 +67,8 @@ public class ItemMaterials extends Item {
             context.getItemInHand().shrink(1);
         }
         if (player != null) {
-            player.displayClientMessage(Component.literal("Nexus material applied."), true);
+            NetworkHandler.sendItemInteraction(player, "Nexus material applied.", true);
+            NetworkHandler.sendCustomEffect(player, nexus.getBlockPos(), CustomEffectPayload.EffectType.NEXUS_MATERIAL_APPLIED);
         }
         return InteractionResult.SUCCESS;
     }

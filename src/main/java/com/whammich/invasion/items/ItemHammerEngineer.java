@@ -1,9 +1,10 @@
 package com.whammich.invasion.items;
 
+import com.whammich.invasion.network.NetworkHandler;
+import com.whammich.invasion.network.payload.CustomEffectPayload;
 import invmod.common.nexus.TileEntityNexus;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.ItemTags;
@@ -49,12 +50,14 @@ public class ItemHammerEngineer extends Item {
             if (nexus.addPowerLevel(NEXUS_REPAIR_AMOUNT)) {
                 level.playSound(null, pos, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.7F, 1.2F);
                 damageHammer(context.getItemInHand(), player, context.getHand());
-                player.displayClientMessage(
-                    Component.literal("Nexus repaired: +" + NEXUS_REPAIR_AMOUNT + " power"),
+                NetworkHandler.sendItemInteraction(
+                    player,
+                    "Nexus repaired: +" + NEXUS_REPAIR_AMOUNT + " power",
                     true
                 );
+                NetworkHandler.sendCustomEffect(player, pos, CustomEffectPayload.EffectType.NEXUS_REPAIR);
             } else {
-                player.displayClientMessage(Component.literal("Nexus repair failed."), true);
+                NetworkHandler.sendItemInteraction(player, "Nexus repair failed.", true);
             }
             return InteractionResult.SUCCESS;
         }
@@ -101,7 +104,7 @@ public class ItemHammerEngineer extends Item {
         }
 
         if (placeState == null) {
-            player.displayClientMessage(Component.literal("No build materials available."), true);
+            NetworkHandler.sendItemInteraction(player, "No build materials available.", true);
             return InteractionResult.PASS;
         }
 

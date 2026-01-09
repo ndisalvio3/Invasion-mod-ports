@@ -1,8 +1,8 @@
 package com.whammich.invasion.items;
 
+import com.whammich.invasion.network.NetworkHandler;
 import invmod.common.nexus.TileEntityNexus;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -26,24 +26,22 @@ public class ItemWandDebug extends Item {
                 BlockState state = level.getBlockState(pos);
                 BlockEntity blockEntity = level.getBlockEntity(pos);
                 if (blockEntity instanceof TileEntityNexus nexus) {
-                    player.displayClientMessage(
-                        Component.literal(
-                            "Nexus debug: active=" + nexus.isActive()
-                                + " level=" + nexus.getNexusLevel()
-                                + " wave=" + nexus.getCurrentWave()
-                                + " power=" + nexus.getNexusPowerLevel()
-                                + " radius=" + nexus.getSpawnRadius()
-                        ),
+                    NetworkHandler.sendItemInteraction(
+                        player,
+                        "Nexus debug: active=" + nexus.isActive()
+                            + " level=" + nexus.getNexusLevel()
+                            + " wave=" + nexus.getCurrentWave()
+                            + " power=" + nexus.getNexusPowerLevel()
+                            + " radius=" + nexus.getSpawnRadius(),
                         true
                     );
                 } else {
                     String blockEntityId = blockEntity != null ? blockEntity.getType().toString() : "none";
-                    player.displayClientMessage(
-                        Component.literal(
-                            "Block debug: " + state.getBlock().getName().getString()
-                                + " pos=" + pos.getX() + "," + pos.getY() + "," + pos.getZ()
-                                + " be=" + blockEntityId
-                        ),
+                    NetworkHandler.sendItemInteraction(
+                        player,
+                        "Block debug: " + state.getBlock().getName().getString()
+                            + " pos=" + pos.getX() + "," + pos.getY() + "," + pos.getZ()
+                            + " be=" + blockEntityId,
                         true
                     );
                 }

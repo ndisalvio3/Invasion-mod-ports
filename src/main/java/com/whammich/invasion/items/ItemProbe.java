@@ -1,8 +1,9 @@
 package com.whammich.invasion.items;
 
+import com.whammich.invasion.network.NetworkHandler;
+import com.whammich.invasion.network.payload.CustomEffectPayload;
 import invmod.common.nexus.TileEntityNexus;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -57,7 +58,7 @@ public class ItemProbe extends Item {
         return InteractionResult.SUCCESS;
         }
 
-        player.displayClientMessage(Component.literal("No nexus found."), true);
+        NetworkHandler.sendItemInteraction(player, "No nexus found.", true);
         return InteractionResult.SUCCESS;
     }
 
@@ -65,26 +66,28 @@ public class ItemProbe extends Item {
         if (player.isShiftKeyDown()) {
             boolean newState = !nexus.isActive();
             nexus.setActive(newState);
-            player.displayClientMessage(Component.literal("Nexus " + (newState ? "activated" : "deactivated")), true);
+            NetworkHandler.sendItemInteraction(player, "Nexus " + (newState ? "activated" : "deactivated"), true);
+            NetworkHandler.sendCustomEffect(player, nexus.getBlockPos(), CustomEffectPayload.EffectType.NEXUS_ADJUST);
         } else {
             boolean adjusted = nexus.adjustSpawnRadius(2);
             if (!adjusted) {
-                player.displayClientMessage(Component.literal("Nexus spawn radius locked while active."), true);
+                NetworkHandler.sendItemInteraction(player, "Nexus spawn radius locked while active.", true);
+            } else {
+                NetworkHandler.sendCustomEffect(player, nexus.getBlockPos(), CustomEffectPayload.EffectType.NEXUS_ADJUST);
             }
         }
         reportNexusStatus(player, nexus);
     }
 
     private void reportNexusStatus(Player player, TileEntityNexus nexus) {
-        player.displayClientMessage(
-            Component.literal(
-                "Nexus: active=" + nexus.isActive()
-                    + " level=" + nexus.getNexusLevel()
-                    + " power=" + nexus.getNexusPowerLevel()
-                    + " wave=" + nexus.getCurrentWave()
-                    + " radius=" + nexus.getSpawnRadius()
-                    + " kills=" + nexus.getNexusKills()
-            ),
+        NetworkHandler.sendItemInteraction(
+            player,
+            "Nexus: active=" + nexus.isActive()
+                + " level=" + nexus.getNexusLevel()
+                + " power=" + nexus.getNexusPowerLevel()
+                + " wave=" + nexus.getCurrentWave()
+                + " radius=" + nexus.getSpawnRadius()
+                + " kills=" + nexus.getNexusKills(),
             true
         );
     }
@@ -92,12 +95,11 @@ public class ItemProbe extends Item {
     private void reportBlockInfo(Player player, BlockState state, Level level, BlockPos pos) {
         float hardness = state.getDestroySpeed(level, pos);
         float resistance = state.getBlock().getExplosionResistance();
-        player.displayClientMessage(
-            Component.literal(
-                "Block: " + state.getBlock().getName().getString()
-                    + " hardness=" + hardness
-                    + " blastRes=" + resistance
-            ),
+        NetworkHandler.sendItemInteraction(
+            player,
+            "Block: " + state.getBlock().getName().getString()
+                + " hardness=" + hardness
+                + " blastRes=" + resistance,
             true
         );
     }
