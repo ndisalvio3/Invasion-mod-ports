@@ -1,5 +1,7 @@
 package invmod.common.entity;
 
+import com.whammich.invasion.network.AdvancedSpawnData;
+import com.whammich.invasion.network.NetworkHandler;
 import invmod.Invasion;
 import invmod.common.nexus.TileEntityNexus;
 import net.minecraft.core.BlockPos;
@@ -22,7 +24,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-public class EntityIMPrimedTNT extends Entity {
+public class EntityIMPrimedTNT extends Entity implements AdvancedSpawnData {
     private static final int DEFAULT_LIFE = 60;
 
     public boolean doesArrowBelongToPlayer;
@@ -35,6 +37,7 @@ public class EntityIMPrimedTNT extends Entity {
     private int life;
     private int ticksInGround;
     private int ticksInAir;
+    private boolean sentSpawnData;
 
     public EntityIMPrimedTNT(EntityType<? extends EntityIMPrimedTNT> type, Level level) {
         super(type, level);
@@ -61,6 +64,12 @@ public class EntityIMPrimedTNT extends Entity {
     @Override
     public void tick() {
         super.tick();
+        if (!level().isClientSide && !sentSpawnData) {
+            sentSpawnData = true;
+            CompoundTag tag = new CompoundTag();
+            writeSpawnData(tag);
+            NetworkHandler.sendEntitySpawnData(this, tag);
+        }
 
         if (life-- <= 0 || inGround) {
             discard();
@@ -218,6 +227,34 @@ public class EntityIMPrimedTNT extends Entity {
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
         return false;
+    }
+
+    @Override
+    public void writeSpawnData(CompoundTag tag) {
+        tag.putBoolean("BelongsToPlayer", doesArrowBelongToPlayer);
+        tag.putBoolean("ArrowCritical", arrowCritical);
+        tag.putInt("ArrowShake", arrowShake);
+        tag.putInt("TicksInAir", ticksInAir);
+        tag.putInt("Life", life);
+        if (shootingEntity != null) {
+            tag.putInt("ShooterId", shootingEntity.getId());
+        }
+    }
+
+    @Override
+    public void readSpawnData(CompoundTag tag) {
+        doesArrowBelongToPlayer = tag.getBooleanOr("BelongsToPlayer", false);
+        arrowCritical = tag.getBooleanOr("ArrowCritical", false);
+        arrowShake = tag.getIntOr("ArrowShake", 0);
+        ticksInAir = tag.getIntOr("TicksInAir", 0);
+        life = tag.getIntOr("Life", DEFAULT_LIFE);
+        int shooterId = tag.getIntOr("ShooterId", 0);
+        if (shooterId != 0 && level() != null) {
+            Entity entity = level().getEntity(shooterId);
+            if (entity instanceof LivingEntity living) {
+                shootingEntity = living;
+            }
+        }
     }
 
     public int getFlightTime() {

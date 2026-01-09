@@ -3,12 +3,15 @@ package com.whammich.invasion.network;
 import com.whammich.invasion.network.payload.BroadcastMessagePayload;
 import com.whammich.invasion.network.payload.ConfigSyncPayload;
 import com.whammich.invasion.network.payload.CustomEffectPayload;
+import com.whammich.invasion.network.payload.EntitySpawnDataPayload;
 import com.whammich.invasion.network.payload.ItemInteractionPayload;
 import invmod.Invasion;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
@@ -19,7 +22,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL_VERSION = "3";
+    private static final String PROTOCOL_VERSION = "4";
 
     private NetworkHandler() {
     }
@@ -34,6 +37,7 @@ public final class NetworkHandler {
         registrar.playToClient(BroadcastMessagePayload.TYPE, BroadcastMessagePayload.STREAM_CODEC, NetworkHandler::handleBroadcastMessage);
         registrar.playToClient(ItemInteractionPayload.TYPE, ItemInteractionPayload.STREAM_CODEC, NetworkHandler::handleItemInteraction);
         registrar.playToClient(CustomEffectPayload.TYPE, CustomEffectPayload.STREAM_CODEC, NetworkHandler::handleCustomEffect);
+        registrar.playToClient(EntitySpawnDataPayload.TYPE, EntitySpawnDataPayload.STREAM_CODEC, NetworkHandler::handleEntitySpawnData);
     }
 
     public static void sendConfigSync(net.minecraft.server.level.ServerPlayer player) {
@@ -60,6 +64,10 @@ public final class NetworkHandler {
         if (player instanceof ServerPlayer serverPlayer) {
             PacketDistributor.sendToPlayer(serverPlayer, new CustomEffectPayload(pos, effect));
         }
+    }
+
+    public static void sendEntitySpawnData(Entity entity, CompoundTag tag) {
+        PacketDistributor.sendToAllPlayers(new EntitySpawnDataPayload(entity.getId(), tag));
     }
 
     private static void handleConfigSync(ConfigSyncPayload payload, IPayloadContext context) {
@@ -102,6 +110,20 @@ public final class NetworkHandler {
                 case NEXUS_MATERIAL_APPLIED -> spawnParticles(level, random, ParticleTypes.ENCHANT, x, y, z, 10);
                 case NONE -> {
                 }
+            }
+        });
+    }
+
+    private static void handleEntitySpawnData(EntitySpawnDataPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player == null) {
+                return;
+            }
+            Level level = player.level();
+            Entity entity = level.getEntity(payload.entityId());
+            if (entity instanceof AdvancedSpawnData spawnData) {
+                spawnData.readSpawnData(payload.data());
             }
         });
     }

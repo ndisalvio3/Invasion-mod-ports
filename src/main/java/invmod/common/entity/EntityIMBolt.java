@@ -1,5 +1,7 @@
 package invmod.common.entity;
 
+import com.whammich.invasion.network.AdvancedSpawnData;
+import com.whammich.invasion.network.NetworkHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -11,7 +13,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 
-public class EntityIMBolt extends Entity {
+public class EntityIMBolt extends Entity implements AdvancedSpawnData {
     private static final EntityDataAccessor<Integer> DATA_TICKS_TO_RENDER = SynchedEntityData.defineId(EntityIMBolt.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_VEC_X = SynchedEntityData.defineId(EntityIMBolt.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_VEC_Y = SynchedEntityData.defineId(EntityIMBolt.class, EntityDataSerializers.FLOAT);
@@ -26,6 +28,7 @@ public class EntityIMBolt extends Entity {
     private float pitch;
     private double distance;
     private float widthVariance;
+    private boolean sentSpawnData;
 
     public EntityIMBolt(EntityType<? extends EntityIMBolt> type, Level level) {
         super(type, level);
@@ -46,6 +49,12 @@ public class EntityIMBolt extends Entity {
     @Override
     public void tick() {
         super.tick();
+        if (!level().isClientSide && !sentSpawnData) {
+            sentSpawnData = true;
+            CompoundTag tag = new CompoundTag();
+            writeSpawnData(tag);
+            NetworkHandler.sendEntitySpawnData(this, tag);
+        }
         this.age += 1;
         if ((this.age == 1) && (getSoundMade() == 1)) {
             if (!level().isClientSide) {
@@ -213,6 +222,26 @@ public class EntityIMBolt extends Entity {
         entityData.set(DATA_VEC_Y, y);
         entityData.set(DATA_VEC_Z, z);
         refreshHeading();
+    }
+
+    @Override
+    public void writeSpawnData(CompoundTag tag) {
+        tag.putInt("TicksToRender", getTicksToRender());
+        tag.putFloat("VecX", getVecX());
+        tag.putFloat("VecY", getVecY());
+        tag.putFloat("VecZ", getVecZ());
+        tag.putInt("SoundMade", getSoundMade());
+    }
+
+    @Override
+    public void readSpawnData(CompoundTag tag) {
+        setTicksToRender(tag.getIntOr("TicksToRender", 0));
+        setVec(
+            tag.getFloatOr("VecX", 0.0F),
+            tag.getFloatOr("VecY", 0.0F),
+            tag.getFloatOr("VecZ", 0.0F)
+        );
+        setSoundMade(tag.getIntOr("SoundMade", 0));
     }
 
     private void refreshHeading() {
