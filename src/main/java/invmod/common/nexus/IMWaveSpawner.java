@@ -6,10 +6,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.SpawnPlacements;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -249,7 +252,8 @@ public class IMWaveSpawner implements ISpawnerAccess {
             }
 
             mob.setPos(spawnPoint.getXCoord(), spawnPoint.getYCoord(), spawnPoint.getZCoord());
-            if (isValidSpawnPosition(this.nexus.getLevel(), spawnPoint.getXCoord(), spawnPoint.getYCoord(), spawnPoint.getZCoord())) {
+            if (this.nexus.getLevel() instanceof ServerLevel serverLevel
+                && isValidSpawnPosition(serverLevel, mob, spawnPoint.getXCoord(), spawnPoint.getYCoord(), spawnPoint.getZCoord())) {
                 this.successfulSpawns += 1;
                 this.nexus.getLevel().addFreshEntity(mob);
                 if (this.debugMode) {
@@ -321,13 +325,13 @@ public class IMWaveSpawner implements ISpawnerAccess {
     }
 
     private void addValidSpawn(Level level, List<SpawnPoint> spawnPoints, int x, int y, int z) {
-        if (isValidSpawnPosition(level, x, y, z)) {
+        if (isValidSpawnLocation(level, x, y, z)) {
             int angle = (int) (Math.atan2(this.nexus.getZCoord() - z, this.nexus.getXCoord() - x) * 180.0D / 3.141592653589793D);
             spawnPoints.add(new SpawnPoint(x, y, z, angle, SpawnType.HUMANOID));
         }
     }
 
-    private boolean isValidSpawnPosition(Level level, int x, int y, int z) {
+    private boolean isValidSpawnLocation(Level level, int x, int y, int z) {
         BlockPos pos = new BlockPos(x, y, z);
         if (!level.getBlockState(pos).isAir()) {
             return false;
@@ -336,5 +340,20 @@ public class IMWaveSpawner implements ISpawnerAccess {
             return false;
         }
         return level.getBlockState(pos.above()).isAir();
+    }
+
+    private boolean isValidSpawnPosition(ServerLevel level, Entity entity, int x, int y, int z) {
+        if (!(entity instanceof Mob mob)) {
+            return false;
+        }
+        BlockPos pos = new BlockPos(x, y, z);
+        mob.setPos(x + 0.5D, y, z + 0.5D);
+        if (!SpawnPlacements.isSpawnPositionOk(mob.getType(), level, pos)) {
+            return false;
+        }
+        if (!SpawnPlacements.checkSpawnRules(mob.getType(), level, EntitySpawnReason.EVENT, pos, level.getRandom())) {
+            return false;
+        }
+        return mob.checkSpawnObstruction(level);
     }
 }
