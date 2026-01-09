@@ -1,5 +1,6 @@
 package invmod.common.nexus;
 
+import com.whammich.invasion.network.NetworkHandler;
 import com.whammich.invasion.registry.ModBlockEntities;
 import invmod.Invasion;
 import invmod.common.entity.EntityIMLiving;
@@ -22,6 +23,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.extensions.IMenuProviderExtension;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -342,7 +345,18 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     }
 
     public void createBolt(int x, int y, int z, int time) {
-        if (level != null) {
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            NetworkHandler.sendParticleSound(
+                serverLevel,
+                new BlockPos(x, y, z),
+                ParticleTypes.ELECTRIC_SPARK,
+                6,
+                SoundEvents.LIGHTNING_BOLT_IMPACT,
+                SoundSource.BLOCKS,
+                0.6F,
+                1.0F
+            );
+        } else if (level != null) {
             level.addParticle(ParticleTypes.ELECTRIC_SPARK, x + 0.5D, y + 0.5D, z + 0.5D, 0.0D, 0.2D, 0.0D);
         }
     }

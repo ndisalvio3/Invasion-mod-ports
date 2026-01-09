@@ -1,8 +1,8 @@
 package invmod.common.nexus;
 
+import com.whammich.invasion.network.NetworkHandler;
 import invmod.Invasion;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -188,7 +188,7 @@ public class IMWaveSpawner implements ISpawnerAccess {
         for (String playerName : boundPlayers.keySet()) {
             ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayerByName(playerName);
             if (player != null) {
-                player.sendSystemMessage(Component.literal(message));
+                NetworkHandler.sendWaveStatus(player, message, true);
             }
         }
     }

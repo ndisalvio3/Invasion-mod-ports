@@ -1,5 +1,6 @@
 package invmod.common.nexus;
 
+import com.whammich.invasion.network.payload.NexusStatusPayload;
 import com.whammich.invasion.registry.ModMenus;
 import com.whammich.invasion.registry.ModBlocks;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -202,5 +203,17 @@ public class ContainerNexus extends AbstractContainerMenu {
 
     private int getCookTime() {
         return data.get(DATA_COOK_TIME);
+    }
+
+    public void applySnapshot(NexusStatusPayload payload) {
+        data.set(DATA_ACTIVATION_TIMER, payload.activationTimer());
+        data.set(DATA_MODE, payload.mode());
+        data.set(DATA_CURRENT_WAVE, payload.currentWave());
+        data.set(DATA_NEXUS_LEVEL, payload.nexusLevel());
+        data.set(DATA_NEXUS_KILLS, payload.nexusKills());
+        data.set(DATA_SPAWN_RADIUS, payload.spawnRadius());
+        data.set(DATA_GENERATION, payload.generation());
+        data.set(DATA_POWER_LEVEL, payload.powerLevel());
+        data.set(DATA_COOK_TIME, payload.cookTime());
     }
 }

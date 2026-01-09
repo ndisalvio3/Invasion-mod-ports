@@ -5,7 +5,14 @@ import com.whammich.invasion.network.payload.ConfigSyncPayload;
 import com.whammich.invasion.network.payload.CustomEffectPayload;
 import com.whammich.invasion.network.payload.EntitySpawnDataPayload;
 import com.whammich.invasion.network.payload.ItemInteractionPayload;
+import com.whammich.invasion.network.payload.NexusStatusPayload;
+import com.whammich.invasion.network.payload.ParticleSoundPayload;
+import com.whammich.invasion.network.payload.WaveStatusPayload;
 import invmod.Invasion;
+import invmod.common.nexus.ContainerNexus;
+import invmod.common.nexus.TileEntityNexus;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -14,6 +21,11 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -22,7 +34,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class NetworkHandler {
-    private static final String PROTOCOL_VERSION = "4";
+    private static final String PROTOCOL_VERSION = "5";
 
     private NetworkHandler() {
     }
@@ -38,6 +50,9 @@ public final class NetworkHandler {
         registrar.playToClient(ItemInteractionPayload.TYPE, ItemInteractionPayload.STREAM_CODEC, NetworkHandler::handleItemInteraction);
         registrar.playToClient(CustomEffectPayload.TYPE, CustomEffectPayload.STREAM_CODEC, NetworkHandler::handleCustomEffect);
         registrar.playToClient(EntitySpawnDataPayload.TYPE, EntitySpawnDataPayload.STREAM_CODEC, NetworkHandler::handleEntitySpawnData);
+        registrar.playToClient(WaveStatusPayload.TYPE, WaveStatusPayload.STREAM_CODEC, NetworkHandler::handleWaveStatus);
+        registrar.playToClient(ParticleSoundPayload.TYPE, ParticleSoundPayload.STREAM_CODEC, NetworkHandler::handleParticleSound);
+        registrar.playToClient(NexusStatusPayload.TYPE, NexusStatusPayload.STREAM_CODEC, NetworkHandler::handleNexusStatus);
     }
 
     public static void sendConfigSync(net.minecraft.server.level.ServerPlayer player) {
@@ -68,6 +83,40 @@ public final class NetworkHandler {
 
     public static void sendEntitySpawnData(Entity entity, CompoundTag tag) {
         PacketDistributor.sendToAllPlayers(new EntitySpawnDataPayload(entity.getId(), tag));
+    }
+
+    public static void sendWaveStatus(ServerPlayer player, String message, boolean actionBar) {
+        PacketDistributor.sendToPlayer(player, new WaveStatusPayload(message, actionBar));
+    }
+
+    public static void sendNexusStatus(ServerPlayer player, TileEntityNexus nexus) {
+        PacketDistributor.sendToPlayer(
+            player,
+            new NexusStatusPayload(
+                nexus.getActivationTimer(),
+                nexus.getMode(),
+                nexus.getCurrentWave(),
+                nexus.getNexusLevel(),
+                nexus.getNexusKills(),
+                nexus.getSpawnRadius(),
+                nexus.getGeneration(),
+                nexus.getNexusPowerLevel(),
+                nexus.getCookTime()
+            )
+        );
+    }
+
+    public static void sendParticleSound(ServerLevel level, BlockPos pos, ParticleType<?> particle, int count, SoundEvent sound, SoundSource source, float volume, float pitch) {
+        var particleId = BuiltInRegistries.PARTICLE_TYPE.getKey(particle);
+        var soundId = sound != null ? BuiltInRegistries.SOUND_EVENT.getKey(sound) : null;
+        if (particleId == null) {
+            return;
+        }
+        if (soundId != null) {
+            PacketDistributor.sendToAllPlayers(new ParticleSoundPayload(pos, particleId, count, true, soundId, source, volume, pitch));
+        } else {
+            PacketDistributor.sendToAllPlayers(new ParticleSoundPayload(pos, particleId, count, false, particleId, SoundSource.AMBIENT, 0.0F, 0.0F));
+        }
     }
 
     private static void handleConfigSync(ConfigSyncPayload payload, IPayloadContext context) {
@@ -124,6 +173,64 @@ public final class NetworkHandler {
             Entity entity = level.getEntity(payload.entityId());
             if (entity instanceof AdvancedSpawnData spawnData) {
                 spawnData.readSpawnData(payload.data());
+            }
+        });
+    }
+
+    private static void handleWaveStatus(WaveStatusPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player != null) {
+                player.displayClientMessage(Component.literal(payload.message()), payload.actionBar());
+            }
+        });
+    }
+
+    private static void handleParticleSound(ParticleSoundPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player == null) {
+                return;
+            }
+            Level level = player.level();
+            BuiltInRegistries.PARTICLE_TYPE.get(payload.particleId()).ifPresent(holder -> {
+                ParticleType<?> particleType = holder.value();
+                if (particleType instanceof SimpleParticleType simple) {
+                    RandomSource random = level.getRandom();
+                    double x = payload.pos().getX() + 0.5D;
+                    double y = payload.pos().getY() + 0.5D;
+                    double z = payload.pos().getZ() + 0.5D;
+                    for (int i = 0; i < payload.count(); i++) {
+                        double xo = (random.nextDouble() - 0.5D) * 0.6D;
+                        double yo = (random.nextDouble() - 0.5D) * 0.6D;
+                        double zo = (random.nextDouble() - 0.5D) * 0.6D;
+                        level.addParticle(simple, x + xo, y + yo, z + zo, 0.0D, 0.02D, 0.0D);
+                    }
+                }
+            });
+            if (payload.playSound()) {
+                BuiltInRegistries.SOUND_EVENT.get(payload.soundId()).ifPresent(sound -> level.playLocalSound(
+                    payload.pos().getX() + 0.5D,
+                    payload.pos().getY() + 0.5D,
+                    payload.pos().getZ() + 0.5D,
+                    sound.value(),
+                    payload.soundSource(),
+                    payload.volume(),
+                    payload.pitch(),
+                    false
+                ));
+            }
+        });
+    }
+
+    private static void handleNexusStatus(NexusStatusPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            Player player = context.player();
+            if (player == null) {
+                return;
+            }
+            if (player.containerMenu instanceof ContainerNexus menu) {
+                menu.applySnapshot(payload);
             }
         });
     }

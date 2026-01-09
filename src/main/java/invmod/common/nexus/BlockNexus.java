@@ -1,5 +1,6 @@
 package invmod.common.nexus;
 
+import com.whammich.invasion.network.NetworkHandler;
 import com.whammich.invasion.registry.ModBlockEntities;
 import invmod.Invasion;
 import net.minecraft.core.BlockPos;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.server.level.ServerPlayer;
 
 public class BlockNexus extends Block implements EntityBlock {
     public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
@@ -48,6 +50,9 @@ public class BlockNexus extends Block implements EntityBlock {
             Invasion.setNexusClicked(nexus);
             nexus.bindPlayer(player);
             player.openMenu(nexus);
+            if (player instanceof ServerPlayer serverPlayer) {
+                NetworkHandler.sendNexusStatus(serverPlayer, nexus);
+            }
             return InteractionResult.CONSUME;
         }
 
