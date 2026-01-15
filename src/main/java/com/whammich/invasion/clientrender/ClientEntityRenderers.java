@@ -38,6 +38,7 @@ import net.minecraft.client.renderer.entity.state.WolfRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -308,8 +309,8 @@ public final class ClientEntityRenderers {
         @Override
         public void extractRenderState(EntityIMBird entity, InvasionChickenRenderState state, float partialTick) {
             super.extractRenderState(entity, state, partialTick);
-            state.flap = 0.0F;
-            state.flapSpeed = 0.0F;
+            state.flap = Mth.lerp(partialTick, entity.getOldFlap(), entity.getFlap());
+            state.flapSpeed = Mth.lerp(partialTick, entity.getOldFlapSpeed(), entity.getFlapSpeed());
             state.variant = null;
             state.texture = VULTURE;
         }

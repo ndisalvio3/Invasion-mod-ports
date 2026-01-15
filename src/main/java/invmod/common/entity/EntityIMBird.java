@@ -10,37 +10,62 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.Mth;
+
+import java.util.EnumSet;
 
 public class EntityIMBird extends Monster implements IHasNexus {
     private static final EntityDataAccessor<Integer> DATA_TIER = SynchedEntityData.defineId(EntityIMBird.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_FLAVOUR = SynchedEntityData.defineId(EntityIMBird.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TEXTURE = SynchedEntityData.defineId(EntityIMBird.class, EntityDataSerializers.INT);
+    private static final double CARRY_HORIZONTAL_OFFSET = -0.35D;
+    private static final double CARRY_VERTICAL_OFFSET = -0.6D;
+    private static final double CARRY_RANGE = 1.4D;
+    private static final int CARRY_TICKS = 120;
 
     private int tier;
     private int flavour;
     private INexusAccess nexus;
+    private float flap;
+    private float flapSpeed;
+    private float oFlap;
+    private float oFlapSpeed;
+    private float flapping = 1.0F;
 
     public EntityIMBird(EntityType<? extends EntityIMBird> type, Level level) {
         super(type, level);
         this.tier = 1;
         this.flavour = 0;
+        this.moveControl = new FlyingMoveControl(this, 10, false);
+        this.setPathfindingMalus(PathType.WATER, 0.0F);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
             .add(Attributes.MAX_HEALTH, 18.0D)
             .add(Attributes.MOVEMENT_SPEED, 0.3D)
+            .add(Attributes.FLYING_SPEED, 0.4D)
             .add(Attributes.ATTACK_DAMAGE, 2.0D)
             .add(Attributes.FOLLOW_RANGE, Invasion.getNightMobSightRange());
     }
@@ -48,14 +73,75 @@ public class EntityIMBird extends Monster implements IHasNexus {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(1, new PickUpTargetGoal());
         goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.1D, true));
         goalSelector.addGoal(3, new AttackNexusGoal(this, this, 2, 2.5D));
-        goalSelector.addGoal(5, new RandomStrollGoal(this, 0.9D));
-        goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        goalSelector.addGoal(5, new WaterAvoidingRandomFlyingGoal(this, 1.0D));
+        goalSelector.addGoal(6, new RandomStrollGoal(this, 0.8D));
+        goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        goalSelector.addGoal(8, new RandomLookAroundGoal(this));
 
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
         targetSelector.addGoal(2, new IMNearestAttackableTargetGoal<>(this, Player.class, Invasion.getNightMobSenseRange(), false));
         targetSelector.addGoal(3, new IMNearestAttackableTargetGoal<>(this, Player.class, Invasion.getNightMobSightRange(), true));
+    }
+
+    @Override
+    protected PathNavigation createNavigation(Level level) {
+        FlyingPathNavigation navigation = new FlyingPathNavigation(this, level);
+        navigation.setCanOpenDoors(false);
+        navigation.setCanFloat(true);
+        return navigation;
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        updateFlapping();
+    }
+
+    public float getFlap() {
+        return flap;
+    }
+
+    public float getFlapSpeed() {
+        return flapSpeed;
+    }
+
+    public float getOldFlap() {
+        return oFlap;
+    }
+
+    public float getOldFlapSpeed() {
+        return oFlapSpeed;
+    }
+
+    @Override
+    public Vec3 getPassengerRidingPosition(Entity passenger) {
+        if (this.hasPassenger(passenger)) {
+            float yawRad = (float) Math.toRadians(this.getYRot());
+            double offsetX = Math.sin(yawRad) * CARRY_HORIZONTAL_OFFSET;
+            double offsetZ = -Math.cos(yawRad) * CARRY_HORIZONTAL_OFFSET;
+            double yOffset = (this.getBbHeight() * 0.6D) + CARRY_VERTICAL_OFFSET;
+            return this.position().add(offsetX, yOffset, offsetZ);
+        }
+        return super.getPassengerRidingPosition(passenger);
+    }
+
+    private void updateFlapping() {
+        oFlap = flap;
+        oFlapSpeed = flapSpeed;
+        flapSpeed = flapSpeed + (!onGround() && !isPassenger() ? 4.0F : -1.0F) * 0.3F;
+        flapSpeed = Mth.clamp(flapSpeed, 0.0F, 1.0F);
+        if (!onGround() && flapping < 1.0F) {
+            flapping = 1.0F;
+        }
+        flapping *= 0.9F;
+        Vec3 delta = getDeltaMovement();
+        if (!onGround() && delta.y < 0.0D) {
+            setDeltaMovement(delta.multiply(1.0D, 0.6D, 1.0D));
+        }
+        flap = flap + flapping * 2.0F;
     }
 
     public void setTier(int tier) {
@@ -122,5 +208,68 @@ public class EntityIMBird extends Monster implements IHasNexus {
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
         return super.hurtServer(level, source, amount);
+    }
+
+    private final class PickUpTargetGoal extends Goal {
+        private LivingEntity carriedTarget;
+        private int carryTicks;
+
+        private PickUpTargetGoal() {
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!EntityIMBird.this.getPassengers().isEmpty()) {
+                return false;
+            }
+            LivingEntity target = EntityIMBird.this.getTarget();
+            if (target == null || !target.isAlive()) {
+                return false;
+            }
+            if (target.isPassenger() || target.isVehicle()) {
+                return false;
+            }
+            if (EntityIMBird.this.distanceTo(target) > CARRY_RANGE) {
+                return false;
+            }
+            return EntityIMBird.this.hasLineOfSight(target);
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return carriedTarget != null
+                && carriedTarget.isPassengerOfSameVehicle(EntityIMBird.this)
+                && carryTicks < CARRY_TICKS;
+        }
+
+        @Override
+        public void start() {
+            carriedTarget = EntityIMBird.this.getTarget();
+            carryTicks = 0;
+            if (carriedTarget != null) {
+                carriedTarget.startRiding(EntityIMBird.this, true);
+            }
+        }
+
+        @Override
+        public void tick() {
+            carryTicks++;
+            if (carriedTarget == null) {
+                return;
+            }
+            if (EntityIMBird.this.onGround() || carryTicks >= CARRY_TICKS) {
+                carriedTarget.stopRiding();
+                carriedTarget = null;
+            }
+        }
+
+        @Override
+        public void stop() {
+            if (carriedTarget != null) {
+                carriedTarget.stopRiding();
+                carriedTarget = null;
+            }
+        }
     }
 }
