@@ -26,6 +26,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.extensions.IMenuProviderExtension;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,6 +50,8 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private static final String LEGACY_TAG_ACTIVATION_TIMER = "activationTimer";
     private static final String LEGACY_TAG_WAVE_ELAPSED = "spawnerElapsed";
     private static final String LEGACY_TAG_BOUND_PLAYERS = "boundPlayers";
+    private static final SoundEvent WAVE_START_SOUND = SoundEvents.WITHER_SPAWN;
+    private static final SoundEvent WAVE_COMPLETE_SOUND = SoundEvents.PLAYER_LEVELUP;
 
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final List<EntityIMLiving> mobs = new ArrayList<>();
@@ -135,6 +140,9 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         try {
             waveSpawner.spawn(TICK_MILLIS);
             if (waveSpawner.isWaveComplete()) {
+                if (waveRestTimer == 0) {
+                    announceWaveComplete(currentWave);
+                }
                 waveRestTimer = Math.max(1, waveSpawner.getWaveRestTime() / TICK_MILLIS);
                 waveElapsed = 0L;
             }
@@ -576,6 +584,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
             mode = 1;
             waveElapsed = 0L;
             setActive(true);
+            announceWaveStart(waveNumber);
             setChanged();
         } catch (WaveSpawnerException e) {
             Invasion.log("Failed to start wave " + waveNumber + ": " + e.getMessage());
@@ -598,6 +607,32 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
 
     private int getMaxPowerLevel() {
         return DEFAULT_POWER_LEVEL + Math.max(0, nexusLevel - 1) * 20;
+    }
+
+    private void announceWaveStart(int waveNumber) {
+        notifyBoundPlayers("Wave " + waveNumber + " has begun.", WAVE_START_SOUND, 1.0F, 0.8F);
+    }
+
+    private void announceWaveComplete(int waveNumber) {
+        notifyBoundPlayers("Wave " + waveNumber + " complete.", WAVE_COMPLETE_SOUND, 0.9F, 1.1F);
+    }
+
+    private void notifyBoundPlayers(String message, SoundEvent sound, float volume, float pitch) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        if (boundPlayers.isEmpty()) {
+            return;
+        }
+        for (String playerName : boundPlayers.keySet()) {
+            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayerByName(playerName);
+            if (player != null) {
+                NetworkHandler.sendWaveStatus(player, message, true);
+                if (sound != null) {
+                    player.playNotifySound(sound, SoundSource.PLAYERS, volume, pitch);
+                }
+            }
+        }
     }
 
     private int readTagInt(CompoundTag tag, String primary, String fallback, int defaultValue) {
