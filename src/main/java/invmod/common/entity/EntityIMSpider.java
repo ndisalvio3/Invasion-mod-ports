@@ -96,7 +96,7 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
 
     @Override
     protected SoundEvent getHurtSound(DamageSource damageSource) {
-        return SoundEvents.SPIDER_HURT;
+        return ModSounds.SPIDER_HISS.get();
     }
 
     @Override
@@ -115,6 +115,7 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         entityData.set(DATA_TIER, normalizedTier);
         applyAttributes();
         updateSpecialGoals();
+        applyDefaultTextureIfUnset();
     }
 
     public int getTier() {
@@ -126,6 +127,7 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         entityData.set(DATA_FLAVOUR, this.flavour);
         applyAttributes();
         updateSpecialGoals();
+        applyDefaultTextureIfUnset();
     }
 
     public int getFlavour() {
@@ -159,7 +161,7 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
                         return null;
                     }
                     spider.setTier(1);
-                    spider.setFlavour(0);
+                    spider.setFlavour(1);
                     if (nexus != null) {
                         spider.acquiredByNexus(nexus);
                     }
@@ -194,9 +196,9 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         int loadedTier = readTagInt(tag, "Tier", "tier", 1);
         int loadedFlavour = readTagInt(tag, "Flavour", "flavour", 0);
         int loadedTexture = readTagInt(tag, "Texture", "textureId", 0);
+        setTextureId(loadedTexture);
         setTier(loadedTier);
         setFlavour(loadedFlavour);
-        setTextureId(loadedTexture);
     }
 
     @Override
@@ -217,6 +219,9 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
 
     @Override
     protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean wasRecentlyHit) {
+        if (tier == 1 && flavour == 1) {
+            return;
+        }
         super.dropCustomDeathLoot(level, damageSource, wasRecentlyHit);
         if (random.nextFloat() < 0.35F) {
             spawnAtLocation(level, new ItemStack(Items.STRING));
@@ -232,8 +237,8 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
     }
 
     private void applyAttributes() {
-        float moveSpeed = 0.3F;
-        float attackStrength = 2.0F;
+        float moveSpeed = 0.29F;
+        float attackStrength = 3.0F;
         float maxHealth = 16.0F;
         double gravity = 0.08D;
         itemDrop = Items.AIR;
@@ -241,19 +246,20 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
 
         if (tier == 1) {
             if (flavour == 1) {
-                attackStrength = 3.0F;
-                itemDrop = Items.STRING;
-                dropChance = 0.3F;
+                maxHealth = 8.0F;
+                moveSpeed = 0.34F;
+                attackStrength = 1.0F;
             }
         } else if (tier == 2) {
             maxHealth = 32.0F;
-            attackStrength = 4.0F;
-            moveSpeed = 0.35F;
+            attackStrength = 5.0F;
+            moveSpeed = 0.3F;
             itemDrop = Items.SPIDER_EYE;
             dropChance = 0.25F;
             if (flavour == 1) {
                 maxHealth = 40.0F;
-                attackStrength = 5.0F;
+                attackStrength = 4.0F;
+                moveSpeed = 0.22F;
                 itemDrop = Items.FERMENTED_SPIDER_EYE;
                 dropChance = 0.3F;
             } else {
@@ -292,6 +298,19 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         }
     }
 
+    private void applyDefaultTextureIfUnset() {
+        if (getTextureId() != 0) {
+            return;
+        }
+        if (tier == 2) {
+            if (flavour == 0) {
+                setTextureId(1);
+            } else if (flavour == 1) {
+                setTextureId(2);
+            }
+        }
+    }
+
     private void updateSpecialGoals() {
         if (pounceGoal == null || eggGoal == null) {
             return;
@@ -303,6 +322,11 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         } else if (flavour == 1 || tier == 2) {
             goalSelector.addGoal(4, pounceGoal);
         }
+    }
+
+    @Override
+    public boolean isPushable() {
+        return !onClimbable();
     }
 
     private int readTagInt(CompoundTag tag, String primary, String fallback, int defaultValue) {
