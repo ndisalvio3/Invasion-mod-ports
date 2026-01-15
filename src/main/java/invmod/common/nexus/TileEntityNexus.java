@@ -2,6 +2,7 @@ package invmod.common.nexus;
 
 import com.whammich.invasion.network.NetworkHandler;
 import com.whammich.invasion.registry.ModBlockEntities;
+import com.whammich.invasion.registry.ModItems;
 import invmod.Invasion;
 import invmod.common.entity.EntityIMLiving;
 import invmod.common.entity.ai.AttackerAI;
@@ -20,6 +21,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -64,11 +66,16 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private static final String TAG_WAVE_DELAY_TIMER = "waveDelayTimer";
     private static final String TAG_WAVE_DELAY = "waveDelay";
     private static final String TAG_POWER_LEVEL_TIMER = "powerLevelTimer";
+    private static final String TAG_PENDING_ACTIVATION = "PendingActivationType";
     private static final String LEGACY_TAG_ACTIVATION_TIMER = "activationTimer";
     private static final String LEGACY_TAG_WAVE_ELAPSED = "spawnerElapsed";
     private static final String LEGACY_TAG_BOUND_PLAYERS = "boundPlayers";
     private static final SoundEvent WAVE_START_SOUND = SoundEvents.WITHER_SPAWN;
     private static final SoundEvent WAVE_COMPLETE_SOUND = SoundEvents.PLAYER_LEVELUP;
+    private static final int PENDING_NONE = 0;
+    private static final int PENDING_UNSTABLE_CATALYST = 1;
+    private static final int PENDING_STRONG_CATALYST = 2;
+    private static final int PENDING_STABLE_CATALYST = 3;
 
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final List<EntityIMLiving> mobs = new ArrayList<>();
@@ -104,6 +111,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private long waveDelayTimer = -1L;
     private long waveDelay;
     private boolean continuousAttack;
+    private int pendingActivationType;
 
     public TileEntityNexus(BlockPos pos, BlockState state) {
         super(ModBlockEntities.NEXUS.get(), pos, state);
@@ -138,16 +146,11 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
 
     private void serverTick() {
         mobs.removeIf(mob -> mob == null || !mob.isAlive() || mob.isRemoved());
+        updateStatus();
 
         if (mode == 0) {
             if (activationTimer > 0) {
-                activationTimer = Math.max(0, activationTimer - 1);
-                if (activationTimer == 0 && queuedStartWave > 0) {
-                    int startWave = queuedStartWave;
-                    queuedStartWave = 0;
-                    startInvasion(startWave);
-                    return;
-                }
+                return;
             }
             if (powerLevel > 0) {
                 enterContinuousIdle();
@@ -157,10 +160,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
 
         if (mode == 4) {
             if (activationTimer > 0) {
-                activationTimer = Math.max(0, activationTimer - 1);
-                if (activationTimer == 0) {
-                    enterContinuousIdle();
-                }
+                return;
             }
             return;
         }
@@ -189,6 +189,10 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
             bindPlayersInRange();
         }
 
+        if (waveSpawner != null && waveSpawner.isActive()) {
+            generateFlux(1);
+        }
+
         if (waveRestTimer > 0) {
             waveRestTimer--;
             if (waveRestTimer == 0) {
@@ -210,6 +214,198 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         } catch (WaveSpawnerException e) {
             Invasion.log("Nexus wave failed: " + e.getMessage());
             emergencyStop();
+        }
+    }
+
+    private void updateStatus() {
+        ItemStack input = items.get(INPUT_SLOT);
+        ItemStack output = items.get(OUTPUT_SLOT);
+        boolean changed = false;
+
+        if (isItem(input, ModItems.TRAP_EMPTY.get())) {
+            int increment = mode == 0 ? 1 : 9;
+            if (cookTime < COOK_TICKS) {
+                cookTime = Math.min(COOK_TICKS, cookTime + increment);
+                changed = true;
+            }
+            if (cookTime >= COOK_TICKS && canAcceptOutput(output, ModItems.TRAP_RIFT.get())) {
+                if (output.isEmpty()) {
+                    items.set(OUTPUT_SLOT, new ItemStack(ModItems.TRAP_RIFT.get()));
+                } else {
+                    output.grow(1);
+                }
+                consumeInput();
+                cookTime = 0;
+                changed = true;
+            }
+        } else if (isItem(input, ModItems.RIFT_FLUX.get())) {
+            if (nexusLevel >= 10 && cookTime < COOK_TICKS) {
+                cookTime = Math.min(COOK_TICKS, cookTime + 5);
+                changed = true;
+            }
+            if (cookTime >= COOK_TICKS && output.isEmpty()) {
+                items.set(OUTPUT_SLOT, new ItemStack(ModItems.CATALYST_STRONG.get()));
+                consumeInput();
+                cookTime = 0;
+                changed = true;
+            }
+        } else if (cookTime != 0) {
+            cookTime = 0;
+            changed = true;
+        }
+
+        if (updateActivation(input)) {
+            changed = true;
+        }
+
+        if (changed) {
+            setChanged();
+        }
+    }
+
+    private boolean updateActivation(ItemStack input) {
+        boolean changed = false;
+
+        if (activationTimer > 0) {
+            if (pendingActivationType == PENDING_NONE && queuedStartWave == 0) {
+                activationTimer = 0;
+                return true;
+            }
+            if (pendingActivationType != PENDING_NONE && !isCatalyst(input, pendingActivationType)) {
+                activationTimer = 0;
+                queuedStartWave = 0;
+                pendingActivationType = PENDING_NONE;
+                if (mode == 4) {
+                    setMode(0);
+                }
+                return true;
+            }
+
+            activationTimer += 1;
+            changed = true;
+
+            if (activationTimer >= ACTIVATION_TICKS) {
+                activationTimer = 0;
+                if (pendingActivationType == PENDING_STABLE_CATALYST) {
+                    if (consumeCatalyst(pendingActivationType)) {
+                        enterContinuousIdle();
+                    } else {
+                        setMode(0);
+                    }
+                    pendingActivationType = PENDING_NONE;
+                    return true;
+                }
+
+                if (queuedStartWave > 0) {
+                    int startWave = queuedStartWave;
+                    queuedStartWave = 0;
+                    boolean canStart = pendingActivationType == PENDING_NONE || consumeCatalyst(pendingActivationType);
+                    pendingActivationType = PENDING_NONE;
+                    if (canStart) {
+                        startInvasion(startWave);
+                    }
+                } else {
+                    pendingActivationType = PENDING_NONE;
+                }
+            }
+
+            return changed;
+        }
+
+        if (mode == 4 && !isCatalyst(input, PENDING_STABLE_CATALYST)) {
+            setMode(0);
+            return true;
+        }
+
+        if (mode == 0 || mode == 2 || mode == 4) {
+            if ((mode == 0 || mode == 4) && isCatalyst(input, PENDING_STABLE_CATALYST)) {
+                activationTimer = 1;
+                pendingActivationType = PENDING_STABLE_CATALYST;
+                setMode(4);
+                return true;
+            }
+            if (isCatalyst(input, PENDING_STRONG_CATALYST)) {
+                activationTimer = 1;
+                queuedStartWave = 10;
+                pendingActivationType = PENDING_STRONG_CATALYST;
+                return true;
+            }
+            if (isCatalyst(input, PENDING_UNSTABLE_CATALYST)) {
+                activationTimer = 1;
+                queuedStartWave = 1;
+                pendingActivationType = PENDING_UNSTABLE_CATALYST;
+                return true;
+            }
+        }
+
+        if (queuedStartWave > 0) {
+            activationTimer = 1;
+            return true;
+        }
+
+        return changed;
+    }
+
+    private boolean isCatalyst(ItemStack stack, int type) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        return switch (type) {
+            case PENDING_UNSTABLE_CATALYST -> stack.is(ModItems.NEXUS_CATALYST_UNSTABLE.get());
+            case PENDING_STRONG_CATALYST -> stack.is(ModItems.CATALYST_STRONG.get());
+            case PENDING_STABLE_CATALYST -> stack.is(ModItems.NEXUS_CATALYST_STABLE.get());
+            default -> false;
+        };
+    }
+
+    private boolean consumeCatalyst(int type) {
+        if (!isCatalyst(items.get(INPUT_SLOT), type)) {
+            return false;
+        }
+        consumeInput();
+        return true;
+    }
+
+    private void consumeInput() {
+        ItemStack input = items.get(INPUT_SLOT);
+        if (input.isEmpty()) {
+            return;
+        }
+        input.shrink(1);
+        if (input.isEmpty()) {
+            items.set(INPUT_SLOT, ItemStack.EMPTY);
+        }
+    }
+
+    private boolean isItem(ItemStack stack, Item item) {
+        return !stack.isEmpty() && stack.is(item);
+    }
+
+    private boolean canAcceptOutput(ItemStack output, Item target) {
+        if (output.isEmpty()) {
+            return true;
+        }
+        if (!output.is(target)) {
+            return false;
+        }
+        return output.getCount() < output.getMaxStackSize();
+    }
+
+    private void generateFlux(int increment) {
+        generation += increment;
+        if (generation < GENERATION_TICKS) {
+            return;
+        }
+
+        ItemStack output = items.get(OUTPUT_SLOT);
+        if (output.isEmpty()) {
+            items.set(OUTPUT_SLOT, new ItemStack(ModItems.RIFT_FLUX.get()));
+            generation -= GENERATION_TICKS;
+            setChanged();
+        } else if (output.is(ModItems.RIFT_FLUX.get()) && output.getCount() < output.getMaxStackSize()) {
+            output.grow(1);
+            generation -= GENERATION_TICKS;
+            setChanged();
         }
     }
 
@@ -445,6 +641,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         tag.putLong(TAG_WAVE_DELAY_TIMER, waveDelayTimer);
         tag.putLong(TAG_WAVE_DELAY, waveDelay);
         tag.putBoolean(TAG_CONTINUOUS_ATTACK, continuousAttack);
+        tag.putInt(TAG_PENDING_ACTIVATION, pendingActivationType);
         if (!boundPlayers.isEmpty()) {
             CompoundTag playersTag = new CompoundTag();
             for (Map.Entry<String, Long> entry : boundPlayers.entrySet()) {
@@ -486,6 +683,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         waveDelayTimer = tag.getLongOr(TAG_WAVE_DELAY_TIMER, -1L);
         waveDelay = tag.getLongOr(TAG_WAVE_DELAY, 0L);
         continuousAttack = tag.getBooleanOr(TAG_CONTINUOUS_ATTACK, false);
+        pendingActivationType = tag.getIntOr(TAG_PENDING_ACTIVATION, PENDING_NONE);
         boundPlayers.clear();
         if (tag.contains(TAG_BOUND_PLAYERS)) {
             CompoundTag playersTag = tag.getCompoundOrEmpty(TAG_BOUND_PLAYERS);
@@ -514,8 +712,9 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         if (active || activationTimer > 0) {
             return;
         }
-        activationTimer = ACTIVATION_TICKS;
+        activationTimer = 1;
         queuedStartWave = 1;
+        pendingActivationType = PENDING_NONE;
         setChanged();
     }
 
@@ -720,6 +919,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         if (level == null || level.isClientSide) {
             return;
         }
+        pendingActivationType = PENDING_NONE;
         powerLevel = Math.max(powerLevel, getMaxPowerLevel());
         hp = maxHp;
         lastHp = maxHp;
@@ -820,6 +1020,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         powerLevelTimer += elapsedMillis;
         if (powerLevelTimer > CONTINUOUS_POWER_TICK_MS) {
             powerLevelTimer -= CONTINUOUS_POWER_TICK_MS;
+            generateFlux(5 + (int) (5 * powerLevel / 1550.0F));
             addPowerLevel(1);
         }
 
@@ -1068,6 +1269,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         waveRestTimer = 0;
         activationTimer = 0;
         queuedStartWave = 0;
+        pendingActivationType = PENDING_NONE;
         waveElapsed = 0L;
         waveDelayTimer = -1L;
         continuousAttack = false;
