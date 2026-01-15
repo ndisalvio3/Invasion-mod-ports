@@ -36,6 +36,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffspring {
     private static final int MAX_TIER = 3;
@@ -49,6 +50,8 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
     private int airborneTime;
     private Item itemDrop;
     private float dropChance;
+    private EntityAIPounce pounceGoal;
+    private EntityAILayEgg eggGoal;
 
     public EntityIMSpider(EntityType<? extends EntityIMSpider> type, Level level) {
         super(type, level);
@@ -65,7 +68,8 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
             .add(Attributes.MAX_HEALTH, 16.0D)
             .add(Attributes.MOVEMENT_SPEED, 0.3D)
             .add(Attributes.ATTACK_DAMAGE, 2.0D)
-            .add(Attributes.FOLLOW_RANGE, Invasion.getNightMobSightRange());
+            .add(Attributes.FOLLOW_RANGE, Invasion.getNightMobSightRange())
+            .add(Attributes.GRAVITY, 0.08D);
     }
 
     @Override
@@ -74,10 +78,11 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, true));
         goalSelector.addGoal(3, new AttackNexusGoal(this, this, 2, 2.5D));
-        goalSelector.addGoal(4, new EntityAIPounce(this, 0.4F, 1.2F, 60));
-        goalSelector.addGoal(5, new EntityAILayEgg(this, 2));
         goalSelector.addGoal(6, new RandomStrollGoal(this, 0.8D));
         goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        pounceGoal = new EntityAIPounce(this, 0.2F, 1.55F, 18);
+        eggGoal = new EntityAILayEgg(this, 1);
+        updateSpecialGoals();
 
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
         targetSelector.addGoal(2, new IMNearestAttackableTargetGoal<>(this, Player.class, Invasion.getNightMobSenseRange(), false));
@@ -109,6 +114,7 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         this.tier = normalizedTier;
         entityData.set(DATA_TIER, normalizedTier);
         applyAttributes();
+        updateSpecialGoals();
     }
 
     public int getTier() {
@@ -119,6 +125,7 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         this.flavour = Math.max(0, flavour);
         entityData.set(DATA_FLAVOUR, this.flavour);
         applyAttributes();
+        updateSpecialGoals();
     }
 
     public int getFlavour() {
@@ -144,11 +151,21 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
     @Override
     public Entity[] getOffspring(Entity paramEntity) {
         if (level() instanceof ServerLevel serverLevel) {
-            EntityIMSpider offspring = ModEntities.IM_SPIDER.get().create(serverLevel, EntitySpawnReason.EVENT);
-            if (offspring != null) {
-                offspring.setTier(Math.max(1, tier - 1));
-                offspring.setFlavour(flavour);
-                return new Entity[] { offspring };
+            if (tier == 2 && flavour == 1) {
+                Entity[] offspring = new Entity[6];
+                for (int i = 0; i < offspring.length; i++) {
+                    EntityIMSpider spider = ModEntities.IM_SPIDER.get().create(serverLevel, EntitySpawnReason.EVENT);
+                    if (spider == null) {
+                        return null;
+                    }
+                    spider.setTier(1);
+                    spider.setFlavour(0);
+                    if (nexus != null) {
+                        spider.acquiredByNexus(nexus);
+                    }
+                    offspring[i] = spider;
+                }
+                return offspring;
             }
         }
         return null;
@@ -177,12 +194,9 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         int loadedTier = readTagInt(tag, "Tier", "tier", 1);
         int loadedFlavour = readTagInt(tag, "Flavour", "flavour", 0);
         int loadedTexture = readTagInt(tag, "Texture", "textureId", 0);
-        this.tier = Mth.clamp(loadedTier, 1, MAX_TIER);
-        this.flavour = Math.max(0, loadedFlavour);
-        entityData.set(DATA_TIER, this.tier);
-        entityData.set(DATA_FLAVOUR, this.flavour);
+        setTier(loadedTier);
+        setFlavour(loadedFlavour);
         setTextureId(loadedTexture);
-        applyAttributes();
     }
 
     @Override
@@ -190,6 +204,15 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         tag.putInt("Tier", getTier());
         tag.putInt("Flavour", getFlavour());
         tag.putInt("Texture", getTextureId());
+    }
+
+    @Override
+    public void travel(Vec3 travelVector) {
+        if (airborneTime > 0) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+        super.travel(travelVector);
     }
 
     @Override
@@ -212,6 +235,7 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         float moveSpeed = 0.3F;
         float attackStrength = 2.0F;
         float maxHealth = 16.0F;
+        double gravity = 0.08D;
         itemDrop = Items.AIR;
         dropChance = 0.0F;
 
@@ -232,6 +256,8 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
                 attackStrength = 5.0F;
                 itemDrop = Items.FERMENTED_SPIDER_EYE;
                 dropChance = 0.3F;
+            } else {
+                gravity = 0.043D;
             }
         } else if (tier == 3) {
             maxHealth = 48.0F;
@@ -259,6 +285,23 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         AttributeInstance followAttr = getAttribute(Attributes.FOLLOW_RANGE);
         if (followAttr != null) {
             followAttr.setBaseValue(Invasion.getNightMobSightRange());
+        }
+        AttributeInstance gravityAttr = getAttribute(Attributes.GRAVITY);
+        if (gravityAttr != null) {
+            gravityAttr.setBaseValue(gravity);
+        }
+    }
+
+    private void updateSpecialGoals() {
+        if (pounceGoal == null || eggGoal == null) {
+            return;
+        }
+        goalSelector.removeGoal(pounceGoal);
+        goalSelector.removeGoal(eggGoal);
+        if (tier == 2 && flavour == 1) {
+            goalSelector.addGoal(5, eggGoal);
+        } else if (flavour == 1 || tier == 2) {
+            goalSelector.addGoal(4, pounceGoal);
         }
     }
 

@@ -15,7 +15,6 @@ public class EntityAIPounce extends Goal {
     private final int cooldown;
     private final float minPower;
     private final float maxPower;
-    private static final double GRAVITY = 0.08D; // Standard entity gravity
 
     public EntityAIPounce(EntityIMSpider entity, float minPower, float maxPower, int cooldown) {
         this.spider = entity;
@@ -83,7 +82,11 @@ public class EntityAIPounce extends Goal {
         if (a > -0.7853981633974483D && a < 0.7853981633974483D) {
             double rratio = (1.0D - Math.tan(a)) * (1.0D / Math.cos(a));
             double r = dXZ / rratio;
-            double v = 1.0D / Math.sqrt(1.0F / GRAVITY / r);
+        double gravity = spider.getGravity();
+        if (gravity <= 0.0D) {
+            return false;
+        }
+        double v = 1.0D / Math.sqrt(1.0D / gravity / r);
             if (v > minPower && v < maxPower) {
                 double distance = Math.sqrt(2.0D * (dXZ * dXZ));
                 Vec3 motion = new Vec3(v * dX / distance, v * dXZ / distance, v * dZ / distance);
