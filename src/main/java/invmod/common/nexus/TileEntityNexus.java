@@ -34,8 +34,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.world.phys.AABB;
 
 public class TileEntityNexus extends BlockEntity implements Container, INexusAccess, MenuProvider, IMenuProviderExtension {
+    private static final long BIND_EXPIRE_TIME_MS = 300000L;
     private static final int INPUT_SLOT = 0;
     private static final int OUTPUT_SLOT = 1;
     private static final int SLOT_COUNT = 2;
@@ -43,6 +45,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private static final int GENERATION_TICKS = 3000;
     private static final int COOK_TICKS = 1200;
     private static final int TICK_MILLIS = 50;
+    private static final int DEFAULT_HP = 100;
     private static final int DEFAULT_POWER_LEVEL = 100;
     private static final String TAG_BOUND_PLAYERS = "BoundPlayers";
     private static final String TAG_WAVE_ELAPSED = "WaveElapsed";
@@ -71,6 +74,10 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private int queuedStartWave;
     private long waveElapsed;
     private IMWaveSpawner waveSpawner;
+    private int maxHp = DEFAULT_HP;
+    private int hp = DEFAULT_HP;
+    private int lastHp = DEFAULT_HP;
+    private int tickCount;
 
     public TileEntityNexus(BlockPos pos, BlockState state) {
         super(ModBlockEntities.NEXUS.get(), pos, state);
@@ -128,6 +135,10 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         ensureWaveSpawner();
         resumeWaveIfNeeded();
         attackerAI.update();
+        if (++tickCount >= 60) {
+            tickCount = 0;
+            bindPlayersInRange();
+        }
 
         if (waveRestTimer > 0) {
             waveRestTimer--;
@@ -282,9 +293,21 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         if (!active) {
             return;
         }
-        powerLevel = Math.max(0, powerLevel - Math.max(1, damage));
-        if (powerLevel == 0) {
-            emergencyStop();
+        int appliedDamage = Math.max(1, damage);
+        if (mode == 1) {
+            hp = Math.max(0, hp - appliedDamage);
+            while (hp + 5 <= lastHp) {
+                notifyBoundPlayers("Nexus at " + (lastHp - 5) + " hp", null, 0.0F, 0.0F);
+                lastHp -= 5;
+            }
+            if (hp == 0) {
+                theEnd();
+            }
+        } else {
+            powerLevel = Math.max(0, powerLevel - appliedDamage);
+            if (powerLevel == 0) {
+                emergencyStop();
+            }
         }
         setChanged();
     }
@@ -330,7 +353,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
 
     public void bindPlayer(Player player) {
         if (player != null) {
-            boundPlayers.put(player.getGameProfile().getName(), player.level().getGameTime());
+            boundPlayers.put(player.getGameProfile().getName(), System.currentTimeMillis());
         }
     }
 
@@ -350,6 +373,9 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         tag.putInt("WaveRestTimer", waveRestTimer);
         tag.putInt(TAG_QUEUED_START_WAVE, queuedStartWave);
         tag.putLong(TAG_WAVE_ELAPSED, waveElapsed);
+        tag.putInt("MaxHp", maxHp);
+        tag.putInt("Hp", hp);
+        tag.putInt("LastHp", lastHp);
         if (!boundPlayers.isEmpty()) {
             CompoundTag playersTag = new CompoundTag();
             for (Map.Entry<String, Long> entry : boundPlayers.entrySet()) {
@@ -376,14 +402,17 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         waveRestTimer = tag.getIntOr("WaveRestTimer", 0);
         queuedStartWave = tag.getIntOr(TAG_QUEUED_START_WAVE, 0);
         waveElapsed = readTagLong(tag, TAG_WAVE_ELAPSED, LEGACY_TAG_WAVE_ELAPSED, 0L);
+        maxHp = Math.max(DEFAULT_HP, tag.getIntOr("MaxHp", DEFAULT_HP));
+        hp = Math.min(maxHp, readTagInt(tag, "Hp", "hp", maxHp));
+        lastHp = Math.max(hp, tag.getIntOr("LastHp", hp));
         boundPlayers.clear();
         if (tag.contains(TAG_BOUND_PLAYERS)) {
             CompoundTag playersTag = tag.getCompoundOrEmpty(TAG_BOUND_PLAYERS);
             for (String key : playersTag.keySet()) {
-                boundPlayers.put(key, playersTag.getLongOr(key, 0L));
+                boundPlayers.put(key, normalizeBindTime(playersTag.getLongOr(key, 0L)));
             }
         } else if (tag.contains(LEGACY_TAG_BOUND_PLAYERS)) {
-            long bindTime = level != null ? level.getGameTime() : 0L;
+            long bindTime = System.currentTimeMillis();
             ListTag playersTag = tag.getListOrEmpty(LEGACY_TAG_BOUND_PLAYERS);
             for (int i = 0; i < playersTag.size(); i++) {
                 CompoundTag entry = playersTag.getCompoundOrEmpty(i);
@@ -566,6 +595,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
                 currentWave = waveNumber;
                 mode = 1;
                 setActive(true);
+                acquireEntities();
                 setChanged();
             } else {
                 beginWave(waveNumber);
@@ -584,6 +614,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
             mode = 1;
             waveElapsed = 0L;
             setActive(true);
+            bindPlayersInRange();
             announceWaveStart(waveNumber);
             setChanged();
         } catch (WaveSpawnerException e) {
@@ -597,6 +628,8 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
             return;
         }
         powerLevel = Math.max(powerLevel, getMaxPowerLevel());
+        hp = maxHp;
+        lastHp = maxHp;
         waveRestTimer = 0;
         activationTimer = 0;
         queuedStartWave = 0;
@@ -624,6 +657,8 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         if (boundPlayers.isEmpty()) {
             return;
         }
+        long now = System.currentTimeMillis();
+        boundPlayers.entrySet().removeIf(entry -> now - entry.getValue() > BIND_EXPIRE_TIME_MS);
         for (String playerName : boundPlayers.keySet()) {
             ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayerByName(playerName);
             if (player != null) {
@@ -653,5 +688,100 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
             return tag.getLong(fallback).orElse(defaultValue);
         }
         return defaultValue;
+    }
+
+    private void bindPlayersInRange() {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        AABB bounds = getBindingBox();
+        long now = System.currentTimeMillis();
+        for (ServerPlayer player : serverLevel.getEntitiesOfClass(ServerPlayer.class, bounds)) {
+            String name = player.getGameProfile().getName();
+            Long lastBound = boundPlayers.get(name);
+            if (lastBound == null || now - lastBound > BIND_EXPIRE_TIME_MS) {
+                notifyBoundPlayers(formatBoundMessage(name), null, 0.0F, 0.0F);
+            }
+            boundPlayers.put(name, now);
+        }
+        boundPlayers.entrySet().removeIf(entry -> now - entry.getValue() > BIND_EXPIRE_TIME_MS);
+        setChanged();
+    }
+
+    private AABB getBindingBox() {
+        int x = worldPosition.getX();
+        int y = worldPosition.getY();
+        int z = worldPosition.getZ();
+        int xzRange = spawnRadius + 10;
+        int yRange = spawnRadius + 40;
+        int minY = level != null ? level.getMinY() : y - yRange;
+        int maxY = level != null ? level.getMaxY() : y + yRange;
+        return new AABB(
+            x - xzRange,
+            Math.max(minY, y - yRange),
+            z - xzRange,
+            x + xzRange + 1,
+            Math.min(maxY, y + yRange + 1),
+            z + xzRange + 1
+        );
+    }
+
+    private String formatBoundMessage(String name) {
+        String suffix = name.toLowerCase().endsWith("s") ? "'" : "'s";
+        return name + suffix + " life is now bound to the nexus";
+    }
+
+    private void theEnd() {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        notifyBoundPlayers("The nexus is destroyed!", SoundEvents.GENERIC_EXPLODE.value(), 1.0F, 1.0F);
+        emergencyStop();
+        long now = System.currentTimeMillis();
+        for (Map.Entry<String, Long> entry : boundPlayers.entrySet()) {
+            if (now - entry.getValue() <= BIND_EXPIRE_TIME_MS) {
+                ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayerByName(entry.getKey());
+                if (player != null) {
+                    player.hurt(player.damageSources().magic(), 500.0F);
+                }
+            }
+        }
+        boundPlayers.clear();
+        killAllMobs();
+        setChanged();
+    }
+
+    private void killAllMobs() {
+        if (level == null) {
+            return;
+        }
+        AABB bounds = getBindingBox();
+        for (EntityIMLiving mob : level.getEntitiesOfClass(EntityIMLiving.class, bounds)) {
+            mob.hurt(mob.damageSources().magic(), 500.0F);
+        }
+        for (invmod.common.entity.EntityIMWolf wolf : level.getEntitiesOfClass(invmod.common.entity.EntityIMWolf.class, bounds)) {
+            wolf.hurt(wolf.damageSources().magic(), 500.0F);
+        }
+        mobs.clear();
+    }
+
+    private int acquireEntities() {
+        if (level == null) {
+            return 0;
+        }
+        AABB bounds = getBindingBox().inflate(10.0D, 128.0D, 10.0D);
+        List<EntityIMLiving> entities = level.getEntitiesOfClass(EntityIMLiving.class, bounds);
+        for (EntityIMLiving entity : entities) {
+            entity.acquiredByNexus(this);
+        }
+        Invasion.log("Acquired " + entities.size() + " entities after state restore");
+        return entities.size();
+    }
+
+    private long normalizeBindTime(long storedTime) {
+        if (storedTime < 1_000_000_000_000L) {
+            return System.currentTimeMillis();
+        }
+        return storedTime;
     }
 }
