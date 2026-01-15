@@ -451,12 +451,12 @@ public class IMWaveBuilder {
         zombiePigmanT1Any.addFlavour(0, 1.0F);
 
         EntityPattern zombiePigmanT2Any = new EntityPattern(IMEntityType.ZOMBIEPIGMAN);
-        zombiePigmanT1Any.addTier(2, 1.0F);
-        zombiePigmanT1Any.addFlavour(0, 1.0F);
+        zombiePigmanT2Any.addTier(2, 1.0F);
+        zombiePigmanT2Any.addFlavour(0, 1.0F);
 
         EntityPattern zombiePigmanT3Any = new EntityPattern(IMEntityType.ZOMBIEPIGMAN);
-        zombiePigmanT1Any.addTier(3, 1.0F);
-        zombiePigmanT1Any.addFlavour(0, 1.0F);
+        zombiePigmanT3Any.addTier(3, 1.0F);
+        zombiePigmanT3Any.addFlavour(0, 1.0F);
 
         EntityPattern spiderT1Any = new EntityPattern(IMEntityType.SPIDER);
         spiderT1Any.addTier(1, 1.0F);
