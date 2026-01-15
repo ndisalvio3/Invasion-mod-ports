@@ -40,6 +40,9 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private static final int COOK_TICKS = 1200;
     private static final int TICK_MILLIS = 50;
     private static final int DEFAULT_POWER_LEVEL = 100;
+    private static final String TAG_BOUND_PLAYERS = "BoundPlayers";
+    private static final String TAG_WAVE_ELAPSED = "WaveElapsed";
+    private static final String TAG_QUEUED_START_WAVE = "QueuedStartWave";
 
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final List<EntityIMLiving> mobs = new ArrayList<>();
@@ -56,6 +59,8 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private int cookTime;
     private int mode;
     private int waveRestTimer;
+    private int queuedStartWave;
+    private long waveElapsed;
     private IMWaveSpawner waveSpawner;
 
     public TileEntityNexus(BlockPos pos, BlockState state) {
@@ -95,11 +100,24 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         if (!active) {
             if (activationTimer > 0) {
                 activationTimer = Math.max(0, activationTimer - 1);
+                if (activationTimer == 0 && queuedStartWave > 0) {
+                    int startWave = queuedStartWave;
+                    queuedStartWave = 0;
+                    startInvasion(startWave);
+                    return;
+                }
             }
+            mode = powerLevel > 0 ? 2 : 0;
+            return;
+        }
+
+        if (powerLevel <= 0) {
+            emergencyStop();
             return;
         }
 
         ensureWaveSpawner();
+        resumeWaveIfNeeded();
         attackerAI.update();
 
         if (waveRestTimer > 0) {
@@ -114,7 +132,9 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
             waveSpawner.spawn(TICK_MILLIS);
             if (waveSpawner.isWaveComplete()) {
                 waveRestTimer = Math.max(1, waveSpawner.getWaveRestTime() / TICK_MILLIS);
+                waveElapsed = 0L;
             }
+            waveElapsed = waveSpawner.getElapsedTime();
         } catch (WaveSpawnerException e) {
             Invasion.log("Nexus wave failed: " + e.getMessage());
             emergencyStop();
@@ -185,7 +205,8 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     }
 
     void setNexusLevel(int nexusLevel) {
-        this.nexusLevel = nexusLevel;
+        this.nexusLevel = Math.max(1, nexusLevel);
+        powerLevel = Math.min(powerLevel, getMaxPowerLevel());
     }
 
     public boolean addNexusLevel(int amount) {
@@ -193,6 +214,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
             return false;
         }
         nexusLevel += amount;
+        powerLevel = Math.min(powerLevel, getMaxPowerLevel());
         setChanged();
         return true;
     }
@@ -209,7 +231,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         if (amount <= 0) {
             return false;
         }
-        powerLevel = Math.max(0, powerLevel + amount);
+        powerLevel = Math.min(getMaxPowerLevel(), Math.max(0, powerLevel + amount));
         setChanged();
         return true;
     }
@@ -304,6 +326,15 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         tag.putInt("PowerLevel", powerLevel);
         tag.putInt("CookTime", cookTime);
         tag.putInt("WaveRestTimer", waveRestTimer);
+        tag.putInt(TAG_QUEUED_START_WAVE, queuedStartWave);
+        tag.putLong(TAG_WAVE_ELAPSED, waveElapsed);
+        if (!boundPlayers.isEmpty()) {
+            CompoundTag playersTag = new CompoundTag();
+            for (Map.Entry<String, Long> entry : boundPlayers.entrySet()) {
+                playersTag.putLong(entry.getKey(), entry.getValue());
+            }
+            tag.put(TAG_BOUND_PLAYERS, playersTag);
+        }
         ContainerHelper.saveAllItems(tag, items, provider);
     }
 
@@ -321,6 +352,13 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         powerLevel = tag.getIntOr("PowerLevel", 0);
         cookTime = tag.getIntOr("CookTime", 0);
         waveRestTimer = tag.getIntOr("WaveRestTimer", 0);
+        queuedStartWave = tag.getIntOr(TAG_QUEUED_START_WAVE, 0);
+        waveElapsed = tag.getLongOr(TAG_WAVE_ELAPSED, 0L);
+        boundPlayers.clear();
+        CompoundTag playersTag = tag.getCompoundOrEmpty(TAG_BOUND_PLAYERS);
+        for (String key : playersTag.keySet()) {
+            boundPlayers.put(key, playersTag.getLongOr(key, 0L));
+        }
         ContainerHelper.loadAllItems(tag, items, provider);
     }
 
@@ -329,7 +367,12 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     }
 
     public void startInvasionFromUi() {
-        startInvasion(1);
+        if (active || activationTimer > 0) {
+            return;
+        }
+        activationTimer = ACTIVATION_TICKS;
+        queuedStartWave = 1;
+        setChanged();
     }
 
     public void emergencyStop() {
@@ -337,6 +380,8 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         waveRestTimer = 0;
         mode = 0;
         activationTimer = 0;
+        queuedStartWave = 0;
+        waveElapsed = 0L;
         if (waveSpawner != null) {
             waveSpawner.stop();
         }
@@ -471,12 +516,34 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         }
     }
 
+    private void resumeWaveIfNeeded() {
+        if (waveSpawner == null || waveSpawner.isActive() || waveRestTimer > 0) {
+            return;
+        }
+        int waveNumber = Math.max(1, currentWave);
+        try {
+            if (waveElapsed > 0) {
+                waveSpawner.resumeFromState(waveNumber, waveElapsed, spawnRadius);
+                currentWave = waveNumber;
+                mode = 1;
+                setActive(true);
+                setChanged();
+            } else {
+                beginWave(waveNumber);
+            }
+        } catch (WaveSpawnerException e) {
+            Invasion.log("Failed to resume wave " + waveNumber + ": " + e.getMessage());
+            emergencyStop();
+        }
+    }
+
     private void beginWave(int waveNumber) {
         ensureWaveSpawner();
         try {
             waveSpawner.beginNextWave(waveNumber);
             currentWave = waveNumber;
             mode = 1;
+            waveElapsed = 0L;
             setActive(true);
             setChanged();
         } catch (WaveSpawnerException e) {
@@ -489,11 +556,16 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         if (level == null || level.isClientSide) {
             return;
         }
-        powerLevel = Math.max(powerLevel, DEFAULT_POWER_LEVEL + (nexusLevel - 1) * 20);
+        powerLevel = Math.max(powerLevel, getMaxPowerLevel());
         waveRestTimer = 0;
         activationTimer = 0;
+        queuedStartWave = 0;
         setActive(true);
         Invasion.setActiveNexus(this);
         beginWave(Math.max(1, startWave));
+    }
+
+    private int getMaxPowerLevel() {
+        return DEFAULT_POWER_LEVEL + Math.max(0, nexusLevel - 1) * 20;
     }
 }

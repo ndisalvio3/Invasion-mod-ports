@@ -1,29 +1,34 @@
 package invmod.common.entity.ai;
 
-//NOOB HAUS: DONE
-
+import com.whammich.invasion.registry.ModEntities;
 import invmod.common.entity.EntityIMEgg;
-import invmod.common.entity.EntityIMLiving;
-import invmod.common.entity.Goal;
+import invmod.common.entity.EntityIMSpider;
 import invmod.common.entity.ISpawnsOffspring;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
 
-public class EntityAILayEgg extends EntityAIBase {
+import java.util.EnumSet;
 
+public class EntityAILayEgg extends Goal {
     private static final int EGG_LAY_TIME = 45;
     private static final int INITIAL_EGG_DELAY = 25;
     private static final int NEXT_EGG_DELAY = 230;
     private static final int EGG_HATCH_TIME = 125;
-    private EntityIMLiving theEntity;
+
+    private final EntityIMSpider spider;
     private int time;
     private boolean isLaying;
     private int eggCount;
 
-    public EntityAILayEgg(EntityIMLiving entity, int eggs) {
-        this.theEntity = entity;
+    public EntityAILayEgg(EntityIMSpider entity, int eggs) {
+        this.spider = entity;
         this.eggCount = eggs;
         this.isLaying = false;
+        this.time = 0;
+        setFlags(EnumSet.of(Flag.MOVE));
     }
 
     public void addEggs(int eggs) {
@@ -31,43 +36,56 @@ public class EntityAILayEgg extends EntityAIBase {
     }
 
     @Override
-    public boolean shouldExecute() {
-        if ((this.theEntity.getAIGoal() == Goal.TARGET_ENTITY) && (this.eggCount > 0) && (this.theEntity.getEntitySenses().canSee(this.theEntity.getAttackTarget()))) {
+    public boolean canUse() {
+        LivingEntity target = spider.getTarget();
+        if (eggCount > 0 && target != null && spider.hasLineOfSight(target)) {
             return true;
         }
         return false;
     }
 
     @Override
-    public void startExecuting() {
-        this.time = 25;
+    public boolean canContinueToUse() {
+        return eggCount > 0 && spider.getTarget() != null;
     }
 
     @Override
-    public void updateTask() {
-        this.time -= 1;
-        if (this.time <= 0) {
-            if (!this.isLaying) {
-                this.isLaying = true;
-                this.time = 45;
-                setMutexBits(1);
+    public void start() {
+        this.time = INITIAL_EGG_DELAY;
+        this.isLaying = false;
+    }
+
+    @Override
+    public void tick() {
+        time--;
+        if (time <= 0) {
+            if (!isLaying) {
+                isLaying = true;
+                time = EGG_LAY_TIME;
             } else {
-                this.isLaying = false;
-                this.eggCount -= 1;
-                this.time = 230;
-                setMutexBits(0);
+                isLaying = false;
+                eggCount--;
+                time = NEXT_EGG_DELAY;
                 layEgg();
             }
         }
     }
 
     private void layEgg() {
-        Entity[] contents;
-        if ((this.theEntity instanceof ISpawnsOffspring))
-            contents = ((ISpawnsOffspring) this.theEntity).getOffspring(null);
-        else {
-            contents = null;
+        if (!(spider.level() instanceof ServerLevel serverLevel)) {
+            return;
         }
-        this.theEntity.worldObj.spawnEntityInWorld(new EntityIMEgg(this.theEntity, contents, 125));
+
+        Entity[] contents = null;
+        if (spider instanceof ISpawnsOffspring spawner) {
+            contents = spawner.getOffspring(null);
+        }
+
+        EntityIMEgg egg = ModEntities.IM_EGG.get().create(serverLevel, EntitySpawnReason.EVENT);
+        if (egg != null) {
+            egg.setPos(spider.getX(), spider.getY(), spider.getZ());
+            egg.setupEgg(contents, EGG_HATCH_TIME);
+            serverLevel.addFreshEntity(egg);
+        }
     }
 }

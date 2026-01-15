@@ -1,78 +1,93 @@
 package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMSpider;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.Vec3;
 
-public class EntityAIPounce extends EntityAIBase {
-    private EntityIMSpider theEntity;
+import java.util.EnumSet;
+
+public class EntityAIPounce extends Goal {
+    private final EntityIMSpider spider;
     private boolean isPouncing;
     private int pounceTimer;
-    private int cooldown;
-    private float minPower;
-    private float maxPower;
+    private final int cooldown;
+    private final float minPower;
+    private final float maxPower;
+    private static final double GRAVITY = 0.08D; // Standard entity gravity
 
     public EntityAIPounce(EntityIMSpider entity, float minPower, float maxPower, int cooldown) {
-        this.theEntity = entity;
+        this.spider = entity;
         this.isPouncing = false;
         this.minPower = minPower;
         this.maxPower = maxPower;
         this.cooldown = cooldown;
+        this.pounceTimer = 0;
+        setFlags(EnumSet.of(Flag.MOVE, Flag.JUMP));
     }
 
-    public boolean shouldExecute() {
-        EntityLivingBase target = this.theEntity.getAttackTarget();
-        if ((--this.pounceTimer <= 0) && (target != null) && (this.theEntity.canEntityBeSeen(target)) && (this.theEntity.onGround)) {
+    @Override
+    public boolean canUse() {
+        LivingEntity target = spider.getTarget();
+        if (--pounceTimer <= 0 && target != null && spider.hasLineOfSight(target) && spider.onGround()) {
             return true;
         }
-
         return false;
     }
 
-    public boolean continueExecuting() {
-        return this.isPouncing;
+    @Override
+    public boolean canContinueToUse() {
+        return isPouncing;
     }
 
-    public void startExecuting() {
-        EntityLivingBase target = this.theEntity.getAttackTarget();
-        if (pounce(target.posX, target.posY, target.posZ)) {
-            this.theEntity.setAirborneTime(0);
-            this.isPouncing = true;
-            this.theEntity.getNavigatorNew().haltForTick();
+    @Override
+    public void start() {
+        LivingEntity target = spider.getTarget();
+        if (target != null && pounce(target.getX(), target.getY(), target.getZ())) {
+            spider.setAirborneTime(0);
+            isPouncing = true;
+            spider.getNavigation().stop();
         } else {
-            this.isPouncing = false;
+            isPouncing = false;
         }
     }
 
-    public void updateTask() {
-        this.theEntity.getNavigatorNew().haltForTick();
-        int airborneTime = this.theEntity.getAirborneTime();
-        if ((airborneTime > 20) && (this.theEntity.onGround)) {
-            this.isPouncing = false;
-            this.pounceTimer = this.cooldown;
-            this.theEntity.setAirborneTime(0);
-            this.theEntity.getNavigatorNew().clearPath();
+    @Override
+    public void tick() {
+        spider.getNavigation().stop();
+        int airborneTime = spider.getAirborneTime();
+        if (airborneTime > 20 && spider.onGround()) {
+            isPouncing = false;
+            pounceTimer = cooldown;
+            spider.setAirborneTime(0);
+            spider.getNavigation().stop();
         } else {
-            this.theEntity.setAirborneTime(airborneTime + 1);
+            spider.setAirborneTime(airborneTime + 1);
         }
+    }
+
+    @Override
+    public void stop() {
+        isPouncing = false;
+        spider.setAirborneTime(0);
+        spider.getNavigation().stop();
     }
 
     protected boolean pounce(double x, double y, double z) {
-        double dX = x - this.theEntity.posX;
-        double dY = y - this.theEntity.posY;
-        double dZ = z - this.theEntity.posZ;
-        double dXZ = MathHelper.sqrt_double(dX * dX + dZ * dZ);
+        double dX = x - spider.getX();
+        double dY = y - spider.getY();
+        double dZ = z - spider.getZ();
+        double dXZ = Math.sqrt(dX * dX + dZ * dZ);
         double a = Math.atan(dY / dXZ);
-        if ((a > -0.7853981633974483D) && (a < 0.7853981633974483D)) {
+        if (a > -0.7853981633974483D && a < 0.7853981633974483D) {
             double rratio = (1.0D - Math.tan(a)) * (1.0D / Math.cos(a));
             double r = dXZ / rratio;
-            double v = 1.0D / Math.sqrt(1.0F / this.theEntity.getGravity() / r);
-            if ((v > this.minPower) && (v < this.maxPower)) {
-                double distance = MathHelper.sqrt_double(2.0D * (dXZ * dXZ));
-                this.theEntity.motionX = (v * dX / distance);
-                this.theEntity.motionY = (v * dXZ / distance);
-                this.theEntity.motionZ = (v * dZ / distance);
+            double v = 1.0D / Math.sqrt(1.0F / GRAVITY / r);
+            if (v > minPower && v < maxPower) {
+                double distance = Math.sqrt(2.0D * (dXZ * dXZ));
+                Vec3 motion = new Vec3(v * dX / distance, v * dXZ / distance, v * dZ / distance);
+                spider.setDeltaMovement(motion);
                 return true;
             }
         }
