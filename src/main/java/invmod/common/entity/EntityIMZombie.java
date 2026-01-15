@@ -390,7 +390,8 @@ public class EntityIMZombie extends EntityIMMob {
         return digCooldown == 0 && horizontalCollision && (getNexus() != null || getTarget() != null) && canDig();
     }
 
-    private boolean canDig() {
+    @Override
+    protected boolean canDig() {
         return getDestructiveness() > 0;
     }
 
