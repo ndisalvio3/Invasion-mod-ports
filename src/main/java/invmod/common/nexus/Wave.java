@@ -21,10 +21,19 @@ public class Wave {
 
     public int doNextSpawns(int elapsedMillis, ISpawnerAccess spawner) {
         int numberOfSpawns = 0;
+        int previousElapsed = this.elapsed;
         this.elapsed += elapsedMillis;
         for (WaveEntry entry : this.entries) {
-            if ((this.elapsed >= entry.getTimeBegin()) && (this.elapsed < entry.getTimeEnd())) {
-                numberOfSpawns += entry.doNextSpawns(elapsedMillis, spawner);
+            int entryBegin = entry.getTimeBegin();
+            int entryEnd = entry.getTimeEnd();
+            if (this.elapsed <= entryBegin || previousElapsed >= entryEnd) {
+                continue;
+            }
+            int effectiveStart = Math.max(previousElapsed, entryBegin);
+            int effectiveEnd = Math.min(this.elapsed, entryEnd);
+            int effectiveElapsed = effectiveEnd - effectiveStart;
+            if (effectiveElapsed > 0) {
+                numberOfSpawns += entry.doNextSpawns(effectiveElapsed, spawner);
             }
         }
         return numberOfSpawns;
@@ -55,6 +64,17 @@ public class Wave {
 
     public void setWaveToTime(int millis) {
         this.elapsed = millis;
+        for (WaveEntry entry : this.entries) {
+            int entryElapsed = millis - entry.getTimeBegin();
+            if (entryElapsed < 0) {
+                entryElapsed = 0;
+            }
+            int entryDuration = entry.getTimeEnd() - entry.getTimeBegin();
+            if (entryDuration >= 0 && entryElapsed > entryDuration) {
+                entryElapsed = entryDuration;
+            }
+            entry.setToTime(entryElapsed);
+        }
     }
 
     public int getTotalMobAmount() {

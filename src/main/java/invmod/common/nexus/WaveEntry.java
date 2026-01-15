@@ -51,20 +51,25 @@ public class WaveEntry {
     }
 
     public int doNextSpawns(int elapsedMillis, ISpawnerAccess spawner) {
+        if (elapsedMillis <= 0) {
+            return 0;
+        }
+
+        this.elapsed += elapsedMillis;
         this.toNextSpawn -= elapsedMillis;
-        if (this.nextAlert <= this.elapsed - this.toNextSpawn) {
+        while (this.nextAlert <= this.elapsed) {
             sendNextAlert(spawner);
         }
 
         if (this.toNextSpawn <= 0) {
-            this.elapsed += this.granularity;
-            this.toNextSpawn += this.granularity;
-            if (this.toNextSpawn < 0) {
-                this.elapsed -= this.toNextSpawn;
-                this.toNextSpawn = 0;
+            int duration = this.timeEnd - this.timeBegin;
+            int amountToSpawn = 0;
+            if (duration > 0) {
+                amountToSpawn = Math.round(this.amount * this.elapsed / (float) duration) - this.amountQueued;
+            } else if (this.amountQueued == 0) {
+                amountToSpawn = this.amount;
             }
 
-            int amountToSpawn = Math.round(this.amount * this.elapsed / (this.timeEnd - this.timeBegin)) - this.amountQueued;
             if (amountToSpawn > 0) {
                 if (amountToSpawn + this.amountQueued > this.amount) {
                     amountToSpawn = this.amount - this.amountQueued;
@@ -83,6 +88,10 @@ public class WaveEntry {
                         Invasion.log("Pool: " + this.mobPool.toString());
                     }
                 }
+            }
+            int step = Math.max(1, this.granularity);
+            while (this.toNextSpawn <= 0) {
+                this.toNextSpawn += step;
             }
         }
 
@@ -106,11 +115,17 @@ public class WaveEntry {
     public void resetToBeginning() {
         this.elapsed = 0;
         this.amountQueued = 0;
+        this.toNextSpawn = 0;
+        this.spawnList.clear();
         this.mobPool.reset();
+        resetAlerts();
     }
 
     public void setToTime(int millis) {
         this.elapsed = millis;
+        int step = Math.max(1, this.granularity);
+        int remainder = millis % step;
+        this.toNextSpawn = remainder == 0 ? 0 : step - remainder;
     }
 
     public int getTimeBegin() {
@@ -145,11 +160,16 @@ public class WaveEntry {
         if (message != null) {
             spawner.sendSpawnAlert(message);
         }
+        resetAlerts();
+    }
+
+    private void resetAlerts() {
         this.nextAlert = 2147483647;
         if (this.alerts.size() > 0) {
             for (Integer key : this.alerts.keySet()) {
-                if (key.intValue() < this.nextAlert)
+                if (key.intValue() < this.nextAlert) {
                     this.nextAlert = key.intValue();
+                }
             }
         }
     }
