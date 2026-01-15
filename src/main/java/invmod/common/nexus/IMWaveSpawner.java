@@ -2,6 +2,7 @@ package invmod.common.nexus;
 
 import com.whammich.invasion.network.NetworkHandler;
 import invmod.Invasion;
+import com.whammich.invasion.registry.ModEntities;
 import invmod.common.entity.EntityIMLiving;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -274,7 +275,14 @@ public class IMWaveSpawner implements ISpawnerAccess {
             return;
         }
         Level level = this.nexus.getLevel();
-        List spawnPoints = new ArrayList();
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        Mob testMob = ModEntities.IM_ZOMBIE.get().create(serverLevel, EntitySpawnReason.EVENT);
+        if (testMob == null) {
+            return;
+        }
+        List<SpawnPoint> spawnPoints = new ArrayList<>();
         int x = this.nexus.getXCoord();
         int y = this.nexus.getYCoord();
         int z = this.nexus.getZCoord();
@@ -284,40 +292,40 @@ public class IMWaveSpawner implements ISpawnerAccess {
                 for (int i = 0; i <= this.spawnRadius * 0.7D + 1.0D; i++) {
                     int j = (int) Math.round(this.spawnRadius * Math.cos(Math.asin(i / this.spawnRadius)));
 
-                    addValidSpawn(level, spawnPoints, x + i, y + vertical, z + j);
-                    addValidSpawn(level, spawnPoints, x + j, y + vertical, z + i);
+                    addValidSpawn(serverLevel, testMob, spawnPoints, x + i, y + vertical, z + j);
+                    addValidSpawn(serverLevel, testMob, spawnPoints, x + j, y + vertical, z + i);
 
-                    addValidSpawn(level, spawnPoints, x + i, y + vertical, z - j);
-                    addValidSpawn(level, spawnPoints, x + j, y + vertical, z - i);
+                    addValidSpawn(serverLevel, testMob, spawnPoints, x + i, y + vertical, z - j);
+                    addValidSpawn(serverLevel, testMob, spawnPoints, x + j, y + vertical, z - i);
 
-                    addValidSpawn(level, spawnPoints, x - i, y + vertical, z + j);
-                    addValidSpawn(level, spawnPoints, x - j, y + vertical, z + i);
+                    addValidSpawn(serverLevel, testMob, spawnPoints, x - i, y + vertical, z + j);
+                    addValidSpawn(serverLevel, testMob, spawnPoints, x - j, y + vertical, z + i);
 
-                    addValidSpawn(level, spawnPoints, x - i, y + vertical, z - j);
-                    addValidSpawn(level, spawnPoints, x - j, y + vertical, z - i);
+                    addValidSpawn(serverLevel, testMob, spawnPoints, x - i, y + vertical, z - j);
+                    addValidSpawn(serverLevel, testMob, spawnPoints, x - j, y + vertical, z - i);
                 }
 
             }
 
         }
 
-        if (spawnPoints.size() > 15) {
+        if (spawnPoints.size() > MIN_SPAWN_POINTS_TO_KEEP) {
             int i;
-            int amountToRemove = (int) ((spawnPoints.size() - 15) * 0.3F);
+            int amountToRemove = (int) ((spawnPoints.size() - MIN_SPAWN_POINTS_TO_KEEP) * SPAWN_POINT_CULL_RATE);
             for (i = spawnPoints.size() - 1; i >= spawnPoints.size() - amountToRemove; i--) {
-                if (Math.abs(((SpawnPoint) spawnPoints.get(i)).getYCoord() - y) < 30) {
+                if (Math.abs(spawnPoints.get(i).getYCoord() - y) < NORMAL_SPAWN_HEIGHT) {
                     break;
                 }
             }
-            for (; i >= 20; i--) {
-                SpawnPoint spawnPoint = (SpawnPoint) spawnPoints.get(i);
-                if (spawnPoint.getYCoord() - y <= 35) {
+            for (; i >= MIN_SPAWN_POINTS_TO_KEEP_BELOW_HEIGHT_CUTOFF; i--) {
+                SpawnPoint spawnPoint = spawnPoints.get(i);
+                if (spawnPoint.getYCoord() - y <= HEIGHT_CUTOFF) {
                     this.spawnPointContainer.addSpawnPointXZ(spawnPoint);
                 }
 
             }
             for (; i >= 0; i--) {
-                this.spawnPointContainer.addSpawnPointXZ((SpawnPoint) spawnPoints.get(i));
+                this.spawnPointContainer.addSpawnPointXZ(spawnPoints.get(i));
             }
 
         }
@@ -325,22 +333,30 @@ public class IMWaveSpawner implements ISpawnerAccess {
         Invasion.log("Num. Spawn Points: " + Integer.toString(this.spawnPointContainer.getNumberOfSpawnPoints(SpawnType.HUMANOID)));
     }
 
-    private void addValidSpawn(Level level, List<SpawnPoint> spawnPoints, int x, int y, int z) {
-        if (isValidSpawnLocation(level, x, y, z)) {
+    private void addValidSpawn(ServerLevel level, Mob entity, List<SpawnPoint> spawnPoints, int x, int y, int z) {
+        if (isValidSpawnLocation(level, entity, x, y, z)) {
             int angle = (int) (Math.atan2(this.nexus.getZCoord() - z, this.nexus.getXCoord() - x) * 180.0D / 3.141592653589793D);
             spawnPoints.add(new SpawnPoint(x, y, z, angle, SpawnType.HUMANOID));
         }
     }
 
-    private boolean isValidSpawnLocation(Level level, int x, int y, int z) {
+    private void checkAddSpawn(ServerLevel level, Mob entity, int x, int y, int z) {
+        if (isValidSpawnLocation(level, entity, x, y, z)) {
+            int angle = (int) (Math.atan2(this.nexus.getZCoord() - z, this.nexus.getXCoord() - x) * 180.0D / 3.141592653589793D);
+            this.spawnPointContainer.addSpawnPointXZ(new SpawnPoint(x, y, z, angle, SpawnType.HUMANOID));
+        }
+    }
+
+    private boolean isValidSpawnLocation(ServerLevel level, Mob entity, int x, int y, int z) {
         BlockPos pos = new BlockPos(x, y, z);
-        if (!level.getBlockState(pos).isAir()) {
+        entity.setPos(x + 0.5D, y, z + 0.5D);
+        if (!SpawnPlacements.isSpawnPositionOk(entity.getType(), level, pos)) {
             return false;
         }
-        if (!level.getBlockState(pos.below()).isSolid()) {
+        if (!SpawnPlacements.checkSpawnRules(entity.getType(), level, EntitySpawnReason.EVENT, pos, level.getRandom())) {
             return false;
         }
-        return level.getBlockState(pos.above()).isAir();
+        return entity.checkSpawnObstruction(level);
     }
 
     private boolean isValidSpawnPosition(ServerLevel level, Entity entity, int x, int y, int z) {
