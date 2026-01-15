@@ -220,9 +220,9 @@ public final class ClientEntityRenderers {
         @Override
         public void extractRenderState(EntityIMSkeleton entity, SkeletonRenderState state, float partialTick) {
             super.extractRenderState(entity, state, partialTick);
-            state.isAggressive = false;
+            state.isAggressive = entity.getTarget() != null;
             state.isShaking = false;
-            state.isHoldingBow = false;
+            state.isHoldingBow = entity.isHolding(Items.BOW);
         }
 
         @Override
