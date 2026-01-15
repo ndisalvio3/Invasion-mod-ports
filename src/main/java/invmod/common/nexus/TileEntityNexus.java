@@ -12,6 +12,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
@@ -43,6 +44,9 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private static final String TAG_BOUND_PLAYERS = "BoundPlayers";
     private static final String TAG_WAVE_ELAPSED = "WaveElapsed";
     private static final String TAG_QUEUED_START_WAVE = "QueuedStartWave";
+    private static final String LEGACY_TAG_ACTIVATION_TIMER = "activationTimer";
+    private static final String LEGACY_TAG_WAVE_ELAPSED = "spawnerElapsed";
+    private static final String LEGACY_TAG_BOUND_PLAYERS = "boundPlayers";
 
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final List<EntityIMLiving> mobs = new ArrayList<>();
@@ -352,7 +356,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
         active = tag.getBooleanOr("Active", false);
-        activationTimer = tag.getIntOr("ActivationTimer", 0);
+        activationTimer = readTagInt(tag, "ActivationTimer", LEGACY_TAG_ACTIVATION_TIMER, 0);
         mode = tag.getIntOr("Mode", 0);
         currentWave = tag.getIntOr("CurrentWave", 0);
         nexusLevel = tag.getIntOr("NexusLevel", 1);
@@ -363,11 +367,23 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         cookTime = tag.getIntOr("CookTime", 0);
         waveRestTimer = tag.getIntOr("WaveRestTimer", 0);
         queuedStartWave = tag.getIntOr(TAG_QUEUED_START_WAVE, 0);
-        waveElapsed = tag.getLongOr(TAG_WAVE_ELAPSED, 0L);
+        waveElapsed = readTagLong(tag, TAG_WAVE_ELAPSED, LEGACY_TAG_WAVE_ELAPSED, 0L);
         boundPlayers.clear();
-        CompoundTag playersTag = tag.getCompoundOrEmpty(TAG_BOUND_PLAYERS);
-        for (String key : playersTag.keySet()) {
-            boundPlayers.put(key, playersTag.getLongOr(key, 0L));
+        if (tag.contains(TAG_BOUND_PLAYERS)) {
+            CompoundTag playersTag = tag.getCompoundOrEmpty(TAG_BOUND_PLAYERS);
+            for (String key : playersTag.keySet()) {
+                boundPlayers.put(key, playersTag.getLongOr(key, 0L));
+            }
+        } else if (tag.contains(LEGACY_TAG_BOUND_PLAYERS)) {
+            long bindTime = level != null ? level.getGameTime() : 0L;
+            ListTag playersTag = tag.getListOrEmpty(LEGACY_TAG_BOUND_PLAYERS);
+            for (int i = 0; i < playersTag.size(); i++) {
+                CompoundTag entry = playersTag.getCompoundOrEmpty(i);
+                String name = entry.getString("name").orElse("");
+                if (!name.isEmpty()) {
+                    boundPlayers.put(name, bindTime);
+                }
+            }
         }
         ContainerHelper.loadAllItems(tag, items, provider);
     }
@@ -582,5 +598,25 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
 
     private int getMaxPowerLevel() {
         return DEFAULT_POWER_LEVEL + Math.max(0, nexusLevel - 1) * 20;
+    }
+
+    private int readTagInt(CompoundTag tag, String primary, String fallback, int defaultValue) {
+        if (tag.contains(primary)) {
+            return tag.getIntOr(primary, defaultValue);
+        }
+        if (tag.contains(fallback)) {
+            return tag.getShort(fallback).orElse((short) defaultValue);
+        }
+        return defaultValue;
+    }
+
+    private long readTagLong(CompoundTag tag, String primary, String fallback, long defaultValue) {
+        if (tag.contains(primary)) {
+            return tag.getLongOr(primary, defaultValue);
+        }
+        if (tag.contains(fallback)) {
+            return tag.getLong(fallback).orElse(defaultValue);
+        }
+        return defaultValue;
     }
 }
