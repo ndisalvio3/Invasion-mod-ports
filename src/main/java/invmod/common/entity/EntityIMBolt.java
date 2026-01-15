@@ -6,7 +6,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.sounds.SoundEvents;
+import com.whammich.invasion.registry.ModSounds;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -58,15 +59,16 @@ public class EntityIMBolt extends Entity implements AdvancedSpawnData {
         this.age += 1;
         if ((this.age == 1) && (getSoundMade() == 1)) {
             if (!level().isClientSide) {
+                SoundEvent zapSound = getZapSound();
                 level().playSound(
                     null,
                     getX(),
                     getY(),
                     getZ(),
-                    SoundEvents.LIGHTNING_BOLT_IMPACT,
+                    zapSound,
                     SoundSource.HOSTILE,
-                    0.8F,
-                    1.0F + (random.nextFloat() - 0.5F) * 0.2F
+                    1.0F,
+                    1.0F
                 );
             }
         }
@@ -246,5 +248,13 @@ public class EntityIMBolt extends Entity implements AdvancedSpawnData {
 
     private void refreshHeading() {
         setHeading(getVecX(), getVecY(), getVecZ());
+    }
+
+    private SoundEvent getZapSound() {
+        return switch (random.nextInt(3)) {
+            case 1 -> ModSounds.ZAP_2.get();
+            case 2 -> ModSounds.ZAP_3.get();
+            default -> ModSounds.ZAP_1.get();
+        };
     }
 }
