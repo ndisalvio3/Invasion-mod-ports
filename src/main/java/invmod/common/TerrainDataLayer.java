@@ -1,8 +1,7 @@
 package invmod.common;
 
-import invmod.common.entity.PathAction;
 import invmod.common.entity.PathNode;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -14,23 +13,23 @@ import net.minecraft.core.Holder;
 public class TerrainDataLayer implements IBlockAccessExtended, BlockGetter {
     public static final int EXT_DATA_SCAFFOLD_METAPOSITION = 16384;
     private final BlockGetter world;
-    private Int2IntOpenHashMap dataLayer;
+    private Long2IntOpenHashMap dataLayer;
 
     public TerrainDataLayer(BlockGetter world) {
         this.world = world;
-        this.dataLayer = new Int2IntOpenHashMap();
+        this.dataLayer = new Long2IntOpenHashMap();
     }
 
     public void setData(int x, int y, int z, Integer data) {
-        this.dataLayer.put(PathNode.makeHash(x, y, z, PathAction.NONE), data.intValue());
+        this.dataLayer.put(PathNode.makeHash(x, y, z), data.intValue());
     }
 
     public int getLayeredData(int x, int y, int z) {
-        int key = PathNode.makeHash(x, y, z, PathAction.NONE);
+        long key = PathNode.makeHash(x, y, z);
         return this.dataLayer.getOrDefault(key, 0);
     }
 
-    public void setAllData(Int2IntOpenHashMap data) {
+    public void setAllData(Long2IntOpenHashMap data) {
         this.dataLayer = data;
     }
 

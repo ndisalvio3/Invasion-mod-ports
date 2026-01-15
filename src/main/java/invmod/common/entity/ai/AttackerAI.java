@@ -9,7 +9,7 @@ import invmod.common.entity.*;
 import invmod.common.nexus.INexusAccess;
 import invmod.common.util.Distance;
 import invmod.common.util.IPosition;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -25,7 +25,7 @@ import java.util.List;
 public class AttackerAI {
     private INexusAccess nexus;
     private IPathSource pathSource;
-    private Int2IntOpenHashMap entityDensityData;
+    private Long2IntOpenHashMap entityDensityData;
     private List<Scaffold> scaffolds;
     private int scaffoldLimit;
     private int minDistanceBetweenScaffolds;
@@ -38,7 +38,7 @@ public class AttackerAI {
         this.pathSource = new PathCreator();
         this.pathSource.setSearchDepth(8500);
         this.pathSource.setQuickFailDepth(8500);
-        this.entityDensityData = new Int2IntOpenHashMap();
+        this.entityDensityData = new Long2IntOpenHashMap();
         this.scaffolds = new ArrayList();
     }
 
@@ -323,7 +323,7 @@ public class AttackerAI {
         this.entityDensityData.clear();
         List<EntityIMLiving> mobs = this.nexus.getMobList();
         for (EntityIMLiving mob : mobs) {
-            int coordHash = PathNode.makeHash(mob.getXCoord(), mob.getYCoord(), mob.getZCoord(), PathAction.NONE);
+            long coordHash = PathNode.makeHash(mob.getXCoord(), mob.getYCoord(), mob.getZCoord());
             if (this.entityDensityData.containsKey(coordHash)) {
                 int value = this.entityDensityData.get(coordHash);
                 if (value < 7) {

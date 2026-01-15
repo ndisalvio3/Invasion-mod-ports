@@ -1,15 +1,16 @@
 package invmod.common.entity;
 
 import invmod.common.IPathfindable;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.world.level.BlockGetter;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 public class PathfinderIM {
     private static PathfinderIM pathfinder = new PathfinderIM();
     private BlockGetter worldMap;
     private NodeContainer path;
-    private Map<Integer, PathNode> pointMap;
+    private Map<PathAction, Long2ObjectOpenHashMap<PathNode>> pointMap;
     private PathNode[] pathOptions;
     private PathNode finalTarget;
     private float targetRadius;
@@ -20,7 +21,10 @@ public class PathfinderIM {
 
     public PathfinderIM() {
         this.path = new NodeContainer();
-        this.pointMap = new HashMap<>();
+        this.pointMap = new EnumMap<>(PathAction.class);
+        for (PathAction action : PathAction.values()) {
+            this.pointMap.put(action, new Long2ObjectOpenHashMap<>());
+        }
         this.pathOptions = new PathNode[32];
     }
 
@@ -34,7 +38,9 @@ public class PathfinderIM {
         this.nodesOpened = 1;
         this.searchRange = maxSearchRange;
         this.path.clearPath();
-        this.pointMap.clear();
+        for (Long2ObjectOpenHashMap<PathNode> map : this.pointMap.values()) {
+            map.clear();
+        }
         PathNode start = openPoint(x, y, z);
         PathNode target = openPoint(x2, y2, z2);
         this.finalTarget = target;
@@ -114,11 +120,12 @@ public class PathfinderIM {
     }
 
     protected PathNode openPoint(int x, int y, int z, PathAction action) {
-        int hash = PathNode.makeHash(x, y, z, action);
-        PathNode pathpoint = this.pointMap.get(hash);
+        long hash = PathNode.makeHash(x, y, z);
+        Long2ObjectOpenHashMap<PathNode> actionMap = this.pointMap.get(action);
+        PathNode pathpoint = actionMap.get(hash);
         if (pathpoint == null) {
             pathpoint = new PathNode(x, y, z, action);
-            this.pointMap.put(hash, pathpoint);
+            actionMap.put(hash, pathpoint);
             this.nodesOpened += 1;
         }
 

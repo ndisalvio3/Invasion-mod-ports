@@ -16,6 +16,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import invmod.common.util.CoordsInt;
+import net.minecraft.world.phys.shapes.CollisionContext;
 
 public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus, IPathfindable, SparrowAPI {
     private INexusAccess nexus;
@@ -56,7 +57,7 @@ public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus,
         }
         BlockPos pos = new BlockPos(to.xCoord, to.yCoord, to.zCoord);
         BlockState state = level.getBlockState(pos);
-        if (!state.getCollisionShape(level, pos).isEmpty()) {
+        if (!state.getCollisionShape(level, pos, CollisionContext.of(this)).isEmpty()) {
             return from.distanceTo(to) * 3.2F * multiplier;
         }
         return from.distanceTo(to) * multiplier;
@@ -211,13 +212,13 @@ public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus,
         for (int xOffset = x; xOffset < x + sizeX; xOffset++) {
             for (int zOffset = z; zOffset < z + sizeZ; zOffset++) {
                 BlockPos pos = new BlockPos(xOffset, y - 1, zOffset);
-                BlockState state = level.getBlockState(pos);
-                if (!state.isAir()) {
-                    if (!state.getCollisionShape(level, pos).isEmpty()) {
-                        isSolidBlock = true;
-                    } else if (avoidsBlock(state)) {
-                        return false;
-                    }
+                    BlockState state = level.getBlockState(pos);
+                    if (!state.isAir()) {
+                        if (!state.getCollisionShape(level, pos, CollisionContext.of(this)).isEmpty()) {
+                            isSolidBlock = true;
+                        } else if (avoidsBlock(state)) {
+                            return false;
+                        }
                 }
             }
         }
@@ -247,7 +248,7 @@ public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus,
                         liquidFlag = true;
                         continue;
                     }
-                    if (!state.getCollisionShape(level, pos).isEmpty()) {
+                    if (!state.getCollisionShape(level, pos, CollisionContext.of(this)).isEmpty()) {
                         if (isBlockDestructible(state, pos, level)) {
                             destructibleFlag = true;
                         } else {

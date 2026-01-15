@@ -1,6 +1,7 @@
 package invmod.common.entity;
 
 import invmod.common.util.IPosition;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 
 public class PathNode
@@ -9,7 +10,7 @@ public class PathNode
     public final int yCoord;
     public final int zCoord;
     public final PathAction action;
-    private final int hash;
+    private final long posHash;
     public boolean isFirst;
     int index;
     float totalPathDistance;
@@ -28,11 +29,11 @@ public class PathNode
         this.yCoord = j;
         this.zCoord = k;
         this.action = pathAction;
-        this.hash = makeHash(i, j, k, this.action);
+        this.posHash = makeHash(i, j, k);
     }
 
-    public static int makeHash(int x, int y, int z, PathAction action) {
-        return y & 0xFF | (x & 0xFF) << 8 | (z & 0xFF) << 16 | (action.ordinal() & 0xFF) << 24;
+    public static long makeHash(int x, int y, int z) {
+        return BlockPos.asLong(x, y, z);
     }
 
     public float distanceTo(PathNode pathpoint) {
@@ -52,7 +53,7 @@ public class PathNode
     public boolean equals(Object obj) {
         if ((obj instanceof PathNode)) {
             PathNode node = (PathNode) obj;
-            return (this.hash == node.hash) && (this.xCoord == node.xCoord) && (this.yCoord == node.yCoord) && (this.zCoord == node.zCoord) && (node.action == this.action);
+            return (this.xCoord == node.xCoord) && (this.yCoord == node.yCoord) && (this.zCoord == node.zCoord) && (node.action == this.action);
         }
 
         return false;
@@ -63,7 +64,9 @@ public class PathNode
     }
 
     public int hashCode() {
-        return this.hash;
+        int result = Long.hashCode(this.posHash);
+        result = 31 * result + this.action.ordinal();
+        return result;
     }
 
     public boolean isAssigned() {
