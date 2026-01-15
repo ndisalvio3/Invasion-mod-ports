@@ -5,7 +5,7 @@ neoforgejunitdev
 --assetIndex
 asset-index
 --assetsDir
-/root/.gradle/caches/minecraft/assets
+/home/ndisalvio/.gradle/caches/minecraft/assets
 --fml.fmlVersion
 7.0.13
 --fml.mcVersion

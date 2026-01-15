@@ -4,6 +4,8 @@ So you think your base is tough, do you?
 
 This repository contains the source for the Invasion mod, ported to modern tooling.
 
+Use this Repository for reference including the specific branch: https://github.com/UnstoppableN/Invasion-mod/tree/1.7.2
+
 ## Build & Test
 Use Java 21 and the Gradle wrapper:
 
