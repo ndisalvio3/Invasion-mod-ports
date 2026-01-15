@@ -64,7 +64,9 @@ public final class ClientEntityRenderers {
     private static final ResourceLocation SPIDER_T2 = texture("spiderT2.png");
     private static final ResourceLocation SPIDER_T2B = texture("spiderT2b.png");
     private static final ResourceLocation SPIDER_VANILLA = ResourceLocation.withDefaultNamespace("textures/entity/spider/spider.png");
-    private static final ResourceLocation WOLF_TAME = texture("wolf_tame_nexus.png");
+    private static final ResourceLocation WOLF_WILD = ResourceLocation.withDefaultNamespace("textures/entity/wolf/wolf.png");
+    private static final ResourceLocation WOLF_TAME = ResourceLocation.withDefaultNamespace("textures/entity/wolf/wolf_tame.png");
+    private static final ResourceLocation WOLF_TAME_NEXUS = texture("wolf_tame_nexus.png");
     private static final ResourceLocation VULTURE = texture("vulture.png");
     private static final ResourceLocation BURROWER = texture("burrower.png");
     private static final ResourceLocation BOULDER = texture("boulder.png");
@@ -268,13 +270,13 @@ public final class ClientEntityRenderers {
         @Override
         public void extractRenderState(EntityIMWolf entity, WolfRenderState state, float partialTick) {
             super.extractRenderState(entity, state, partialTick);
-            state.isAngry = false;
+            state.isAngry = entity.getTarget() != null;
             state.isSitting = false;
             state.tailAngle = (float) (Math.PI / 5);
             state.headRollAngle = 0.0F;
             state.shakeAnim = 0.0F;
             state.wetShade = 1.0F;
-            state.texture = WOLF_TAME;
+            state.texture = resolveWolfTexture(entity);
             state.collarColor = null;
             state.bodyArmorItem = ItemStack.EMPTY;
         }
@@ -282,6 +284,14 @@ public final class ClientEntityRenderers {
         @Override
         public ResourceLocation getTextureLocation(WolfRenderState state) {
             return state.texture;
+        }
+
+        private static ResourceLocation resolveWolfTexture(EntityIMWolf entity) {
+            return switch (entity.getTextureId()) {
+                case EntityIMWolf.TEXTURE_NEXUS -> WOLF_TAME_NEXUS;
+                case EntityIMWolf.TEXTURE_WILD -> WOLF_WILD;
+                default -> WOLF_TAME;
+            };
         }
     }
 
