@@ -38,6 +38,7 @@ import net.minecraft.world.phys.AABB;
 
 public class TileEntityNexus extends BlockEntity implements Container, INexusAccess, MenuProvider, IMenuProviderExtension {
     private static final long BIND_EXPIRE_TIME_MS = 300000L;
+    private static final long DAY_TICKS = 24000L;
     private static final int INPUT_SLOT = 0;
     private static final int OUTPUT_SLOT = 1;
     private static final int SLOT_COUNT = 2;
@@ -45,11 +46,24 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private static final int GENERATION_TICKS = 3000;
     private static final int COOK_TICKS = 1200;
     private static final int TICK_MILLIS = 50;
+    private static final int CONTINUOUS_WAVE_SECONDS = 240;
+    private static final int CONTINUOUS_POWER_TICK_MS = 2200;
     private static final int DEFAULT_HP = 100;
     private static final int DEFAULT_POWER_LEVEL = 100;
     private static final String TAG_BOUND_PLAYERS = "BoundPlayers";
     private static final String TAG_WAVE_ELAPSED = "WaveElapsed";
     private static final String TAG_QUEUED_START_WAVE = "QueuedStartWave";
+    private static final String TAG_CONTINUOUS_ATTACK = "continuousAttack";
+    private static final String TAG_NEXT_ATTACK_TIME = "nextAttackTime";
+    private static final String TAG_LAST_WORLD_TIME = "lastWorldTime";
+    private static final String TAG_LAST_POWER_LEVEL = "lastPowerLevel";
+    private static final String TAG_MOBS_LEFT = "mobsLeftInWave";
+    private static final String TAG_MOBS_TO_KILL = "mobsToKillInWave";
+    private static final String TAG_LAST_MOBS_LEFT = "lastMobsLeftInWave";
+    private static final String TAG_ZAP_TIMER = "zapTimer";
+    private static final String TAG_WAVE_DELAY_TIMER = "waveDelayTimer";
+    private static final String TAG_WAVE_DELAY = "waveDelay";
+    private static final String TAG_POWER_LEVEL_TIMER = "powerLevelTimer";
     private static final String LEGACY_TAG_ACTIVATION_TIMER = "activationTimer";
     private static final String LEGACY_TAG_WAVE_ELAPSED = "spawnerElapsed";
     private static final String LEGACY_TAG_BOUND_PLAYERS = "boundPlayers";
@@ -60,6 +74,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private final List<EntityIMLiving> mobs = new ArrayList<>();
     private final Map<String, Long> boundPlayers = new HashMap<>();
     private final AttackerAI attackerAI = new AttackerAI(this);
+    private final IMWaveBuilder waveBuilder = new IMWaveBuilder();
     private boolean active;
     private int activationTimer;
     private int currentWave;
@@ -78,6 +93,17 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private int hp = DEFAULT_HP;
     private int lastHp = DEFAULT_HP;
     private int tickCount;
+    private int lastPowerLevel;
+    private int powerLevelTimer;
+    private int mobsLeftInWave;
+    private int lastMobsLeftInWave;
+    private int mobsToKillInWave;
+    private long nextAttackTime;
+    private long lastWorldTime;
+    private int zapTimer;
+    private long waveDelayTimer = -1L;
+    private long waveDelay;
+    private boolean continuousAttack;
 
     public TileEntityNexus(BlockPos pos, BlockState state) {
         super(ModBlockEntities.NEXUS.get(), pos, state);
@@ -113,7 +139,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     private void serverTick() {
         mobs.removeIf(mob -> mob == null || !mob.isAlive() || mob.isRemoved());
 
-        if (!active) {
+        if (mode == 0) {
             if (activationTimer > 0) {
                 activationTimer = Math.max(0, activationTimer - 1);
                 if (activationTimer == 0 && queuedStartWave > 0) {
@@ -123,12 +149,35 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
                     return;
                 }
             }
-            mode = powerLevel > 0 ? 2 : 0;
+            if (powerLevel > 0) {
+                enterContinuousIdle();
+            }
             return;
         }
 
-        if (powerLevel <= 0) {
-            emergencyStop();
+        if (mode == 4) {
+            if (activationTimer > 0) {
+                activationTimer = Math.max(0, activationTimer - 1);
+                if (activationTimer == 0) {
+                    enterContinuousIdle();
+                }
+            }
+            return;
+        }
+
+        if (mode == 2 || mode == 3) {
+            if (powerLevel <= 0) {
+                stopInvasion();
+                return;
+            }
+            ensureWaveSpawner();
+            resumeContinuousIfNeeded();
+            attackerAI.update();
+            if (++tickCount >= 60) {
+                tickCount = 0;
+                bindPlayersInRange();
+            }
+            doContinuous(TICK_MILLIS);
             return;
         }
 
@@ -294,20 +343,13 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
             return;
         }
         int appliedDamage = Math.max(1, damage);
-        if (mode == 1) {
-            hp = Math.max(0, hp - appliedDamage);
-            while (hp + 5 <= lastHp) {
-                notifyBoundPlayers("Nexus at " + (lastHp - 5) + " hp", null, 0.0F, 0.0F);
-                lastHp -= 5;
-            }
-            if (hp == 0) {
-                theEnd();
-            }
-        } else {
-            powerLevel = Math.max(0, powerLevel - appliedDamage);
-            if (powerLevel == 0) {
-                emergencyStop();
-            }
+        hp = Math.max(0, hp - appliedDamage);
+        while (hp + 5 <= lastHp) {
+            notifyBoundPlayers("Nexus at " + (lastHp - 5) + " hp", null, 0.0F, 0.0F);
+            lastHp -= 5;
+        }
+        if (hp == 0 && mode == 1) {
+            theEnd();
         }
         setChanged();
     }
@@ -315,6 +357,22 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     @Override
     public void registerMobDied() {
         nexusKills++;
+        if (continuousAttack && mobsToKillInWave > 0) {
+            mobsLeftInWave = Math.max(0, mobsLeftInWave - 1);
+            if (mobsLeftInWave <= 0) {
+                if (lastMobsLeftInWave > 0) {
+                    notifyBoundPlayers("Nexus stabilized.", null, 0.0F, 0.0F);
+                    lastMobsLeftInWave = mobsLeftInWave;
+                }
+            } else {
+                int threshold = (int) (mobsToKillInWave * 0.1F);
+                if (threshold > 0 && mobsLeftInWave + threshold <= lastMobsLeftInWave) {
+                    int percent = 100 - (int) (100.0F * mobsLeftInWave / mobsToKillInWave);
+                    notifyBoundPlayers("Nexus stabilized to " + percent + "%", null, 0.0F, 0.0F);
+                    lastMobsLeftInWave = Math.max(0, lastMobsLeftInWave - threshold);
+                }
+            }
+        }
         setChanged();
     }
 
@@ -376,6 +434,17 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         tag.putInt("MaxHp", maxHp);
         tag.putInt("Hp", hp);
         tag.putInt("LastHp", lastHp);
+        tag.putInt(TAG_LAST_POWER_LEVEL, lastPowerLevel);
+        tag.putInt(TAG_POWER_LEVEL_TIMER, powerLevelTimer);
+        tag.putInt(TAG_MOBS_LEFT, mobsLeftInWave);
+        tag.putInt(TAG_LAST_MOBS_LEFT, lastMobsLeftInWave);
+        tag.putInt(TAG_MOBS_TO_KILL, mobsToKillInWave);
+        tag.putLong(TAG_NEXT_ATTACK_TIME, nextAttackTime);
+        tag.putLong(TAG_LAST_WORLD_TIME, lastWorldTime);
+        tag.putInt(TAG_ZAP_TIMER, zapTimer);
+        tag.putLong(TAG_WAVE_DELAY_TIMER, waveDelayTimer);
+        tag.putLong(TAG_WAVE_DELAY, waveDelay);
+        tag.putBoolean(TAG_CONTINUOUS_ATTACK, continuousAttack);
         if (!boundPlayers.isEmpty()) {
             CompoundTag playersTag = new CompoundTag();
             for (Map.Entry<String, Long> entry : boundPlayers.entrySet()) {
@@ -392,6 +461,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         active = tag.getBooleanOr("Active", false);
         activationTimer = readTagInt(tag, "ActivationTimer", LEGACY_TAG_ACTIVATION_TIMER, 0);
         mode = tag.getIntOr("Mode", 0);
+        active = mode != 0;
         currentWave = tag.getIntOr("CurrentWave", 0);
         nexusLevel = tag.getIntOr("NexusLevel", 1);
         nexusKills = tag.getIntOr("NexusKills", 0);
@@ -405,6 +475,17 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         maxHp = Math.max(DEFAULT_HP, tag.getIntOr("MaxHp", DEFAULT_HP));
         hp = Math.min(maxHp, readTagInt(tag, "Hp", "hp", maxHp));
         lastHp = Math.max(hp, tag.getIntOr("LastHp", hp));
+        lastPowerLevel = tag.getIntOr(TAG_LAST_POWER_LEVEL, powerLevel);
+        powerLevelTimer = tag.getIntOr(TAG_POWER_LEVEL_TIMER, 0);
+        mobsLeftInWave = tag.getIntOr(TAG_MOBS_LEFT, 0);
+        lastMobsLeftInWave = tag.getIntOr(TAG_LAST_MOBS_LEFT, mobsLeftInWave);
+        mobsToKillInWave = tag.getIntOr(TAG_MOBS_TO_KILL, 0);
+        nextAttackTime = tag.getLongOr(TAG_NEXT_ATTACK_TIME, 0L);
+        lastWorldTime = tag.getLongOr(TAG_LAST_WORLD_TIME, 0L);
+        zapTimer = tag.getIntOr(TAG_ZAP_TIMER, 0);
+        waveDelayTimer = tag.getLongOr(TAG_WAVE_DELAY_TIMER, -1L);
+        waveDelay = tag.getLongOr(TAG_WAVE_DELAY, 0L);
+        continuousAttack = tag.getBooleanOr(TAG_CONTINUOUS_ATTACK, false);
         boundPlayers.clear();
         if (tag.contains(TAG_BOUND_PLAYERS)) {
             CompoundTag playersTag = tag.getCompoundOrEmpty(TAG_BOUND_PLAYERS);
@@ -439,17 +520,7 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     }
 
     public void emergencyStop() {
-        active = false;
-        waveRestTimer = 0;
-        mode = 0;
-        activationTimer = 0;
-        queuedStartWave = 0;
-        waveElapsed = 0L;
-        if (waveSpawner != null) {
-            waveSpawner.stop();
-        }
-        Invasion.setActiveNexus(null);
-        setChanged();
+        stopInvasion();
     }
 
     public void debugStatus() {
@@ -606,6 +677,28 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         }
     }
 
+    private void resumeContinuousIfNeeded() {
+        if (waveSpawner == null || waveSpawner.isActive() || !continuousAttack || waveElapsed <= 0) {
+            return;
+        }
+        try {
+            Wave wave = buildContinuousWave();
+            if (mobsToKillInWave <= 0) {
+                mobsToKillInWave = (int) (wave.getTotalMobAmount() * 0.8F);
+            }
+            int spawns = waveSpawner.resumeFromState(wave, waveElapsed, spawnRadius);
+            mobsLeftInWave = Math.max(0, mobsToKillInWave - spawns);
+            lastMobsLeftInWave = mobsLeftInWave;
+            mode = 3;
+            setActive(true);
+            acquireEntities();
+            setChanged();
+        } catch (WaveSpawnerException e) {
+            Invasion.log("Failed to resume continuous wave: " + e.getMessage());
+            stopInvasion();
+        }
+    }
+
     private void beginWave(int waveNumber) {
         ensureWaveSpawner();
         try {
@@ -638,6 +731,59 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         beginWave(Math.max(1, startWave));
     }
 
+    private void enterContinuousIdle() {
+        if (level == null || level.isClientSide) {
+            return;
+        }
+        if (mode == 2 || mode == 3) {
+            return;
+        }
+        setMode(2);
+        hp = maxHp;
+        lastHp = maxHp;
+        lastPowerLevel = powerLevel;
+        lastWorldTime = level.getDayTime();
+        nextAttackTime = scheduleNextContinuousAttack(lastWorldTime);
+        waveDelayTimer = -1L;
+        continuousAttack = false;
+        zapTimer = 0;
+        setChanged();
+    }
+
+    private long scheduleNextContinuousAttack(long currentTime) {
+        int minDays = Invasion.getMinContinuousModeDays();
+        int maxDays = Invasion.getMaxContinuousModeDays();
+        int span = Math.max(0, maxDays - minDays);
+        int days = minDays + (span == 0 || level == null ? 0 : level.getRandom().nextInt(span + 1));
+        return (currentTime / DAY_TICKS) * DAY_TICKS + 14000L + (long) days * DAY_TICKS;
+    }
+
+    private Wave buildContinuousWave() {
+        float difficulty = 1.0F + powerLevel / 4500.0F;
+        float tierLevel = 1.0F + powerLevel / 4500.0F;
+        return waveBuilder.generateWave(difficulty, tierLevel, CONTINUOUS_WAVE_SECONDS);
+    }
+
+    private void startContinuousWave(long currentTime) throws WaveSpawnerException {
+        Wave wave = buildContinuousWave();
+        mobsToKillInWave = (int) (wave.getTotalMobAmount() * 0.8F);
+        mobsLeftInWave = mobsToKillInWave;
+        lastMobsLeftInWave = mobsToKillInWave;
+        waveSpawner.beginNextWave(wave);
+        continuousAttack = true;
+        mode = 3;
+        setActive(true);
+        Invasion.setActiveNexus(this);
+        nextAttackTime = scheduleNextContinuousAttack(currentTime);
+        hp = maxHp;
+        lastHp = maxHp;
+        zapTimer = 0;
+        waveDelayTimer = -1L;
+        waveElapsed = 0L;
+        notifyBoundPlayers("Nexus destabilizing.", WAVE_START_SOUND, 1.0F, 0.8F);
+        setChanged();
+    }
+
     private int getMaxPowerLevel() {
         return DEFAULT_POWER_LEVEL + Math.max(0, nexusLevel - 1) * 20;
     }
@@ -666,6 +812,74 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
                 if (sound != null) {
                     player.playNotifySound(sound, SoundSource.PLAYERS, volume, pitch);
                 }
+            }
+        }
+    }
+
+    private void doContinuous(int elapsedMillis) {
+        powerLevelTimer += elapsedMillis;
+        if (powerLevelTimer > CONTINUOUS_POWER_TICK_MS) {
+            powerLevelTimer -= CONTINUOUS_POWER_TICK_MS;
+            addPowerLevel(1);
+        }
+
+        if (!continuousAttack) {
+            if (level == null) {
+                return;
+            }
+            long currentTime = level.getDayTime();
+            long timeOfDay = lastWorldTime % DAY_TICKS;
+            if (timeOfDay < 12000 && currentTime % DAY_TICKS >= 12000 && currentTime + 12000 > nextAttackTime) {
+                notifyBoundPlayers("Night is looming around the nexus.", null, 0.0F, 0.0F);
+            }
+            if (lastWorldTime > currentTime) {
+                nextAttackTime = Math.max(0, nextAttackTime - (lastWorldTime - currentTime));
+            }
+            lastWorldTime = currentTime;
+            if (nextAttackTime == 0L) {
+                nextAttackTime = scheduleNextContinuousAttack(currentTime);
+            }
+            if (lastWorldTime >= nextAttackTime) {
+                try {
+                    startContinuousWave(currentTime);
+                } catch (WaveSpawnerException e) {
+                    Invasion.log("Nexus continuous wave failed: " + e.getMessage());
+                    stopInvasion();
+                }
+            }
+            return;
+        }
+
+        if (hp <= 0) {
+            continuousAttack = false;
+            continuousNexusHurt();
+            return;
+        }
+
+        if (waveSpawner.isWaveComplete()) {
+            if (waveDelayTimer == -1L) {
+                waveDelayTimer = 0L;
+                waveDelay = waveSpawner.getWaveRestTime();
+            } else {
+                waveDelayTimer += elapsedMillis;
+                if (waveDelayTimer > waveDelay && zapTimer < -200) {
+                    endContinuousWave();
+                }
+            }
+
+            zapTimer -= 1;
+            if (mobsLeftInWave <= 0 && zapTimer <= 0) {
+                if (zapEnemy()) {
+                    zapTimer = 23;
+                }
+            }
+        } else {
+            try {
+                waveSpawner.spawn(elapsedMillis);
+                waveElapsed = waveSpawner.getElapsedTime();
+            } catch (WaveSpawnerException e) {
+                Invasion.log("Nexus continuous wave failed: " + e.getMessage());
+                stopInvasion();
             }
         }
     }
@@ -751,6 +965,61 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
         setChanged();
     }
 
+    private void continuousNexusHurt() {
+        notifyBoundPlayers("The nexus is severely damaged!", SoundEvents.GENERIC_EXPLODE.value(), 1.0F, 1.0F);
+        killAllMobs();
+        if (waveSpawner != null) {
+            waveSpawner.stop();
+        }
+        powerLevel = Math.max(0, Math.round(lastPowerLevel * 0.7F));
+        lastPowerLevel = powerLevel;
+        waveElapsed = 0L;
+        if (powerLevel <= 0) {
+            stopInvasion();
+        }
+        setChanged();
+    }
+
+    private void endContinuousWave() {
+        waveDelayTimer = -1L;
+        continuousAttack = false;
+        waveSpawner.stop();
+        hp = maxHp;
+        lastHp = maxHp;
+        lastPowerLevel = powerLevel;
+        waveElapsed = 0L;
+        mode = 2;
+        setActive(true);
+        Invasion.setActiveNexus(null);
+        setChanged();
+    }
+
+    private boolean zapEnemy() {
+        if (level == null) {
+            return false;
+        }
+        AABB bounds = getBindingBox();
+        List<EntityIMLiving> candidates = level.getEntitiesOfClass(EntityIMLiving.class, bounds);
+        if (candidates.isEmpty()) {
+            return false;
+        }
+        EntityIMLiving target = null;
+        double farthest = -1.0D;
+        for (EntityIMLiving mob : candidates) {
+            double distance = mob.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D, worldPosition.getZ() + 0.5D);
+            if (distance > farthest) {
+                farthest = distance;
+                target = mob;
+            }
+        }
+        if (target == null) {
+            return false;
+        }
+        target.hurt(target.damageSources().magic(), 500.0F);
+        createBolt((int) target.getX(), (int) target.getY(), (int) target.getZ(), 15);
+        return true;
+    }
+
     private void killAllMobs() {
         if (level == null) {
             return;
@@ -783,5 +1052,33 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
             return System.currentTimeMillis();
         }
         return storedTime;
+    }
+
+    private void stopInvasion() {
+        if (mode == 3) {
+            mode = 2;
+            setActive(true);
+            if (level != null) {
+                nextAttackTime = scheduleNextContinuousAttack(level.getDayTime());
+            }
+        } else {
+            mode = 0;
+            setActive(false);
+        }
+        waveRestTimer = 0;
+        activationTimer = 0;
+        queuedStartWave = 0;
+        waveElapsed = 0L;
+        waveDelayTimer = -1L;
+        continuousAttack = false;
+        mobsLeftInWave = 0;
+        lastMobsLeftInWave = 0;
+        mobsToKillInWave = 0;
+        zapTimer = 0;
+        if (waveSpawner != null) {
+            waveSpawner.stop();
+        }
+        Invasion.setActiveNexus(null);
+        setChanged();
     }
 }
