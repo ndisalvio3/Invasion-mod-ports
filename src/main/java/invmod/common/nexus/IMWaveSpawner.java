@@ -2,6 +2,7 @@ package invmod.common.nexus;
 
 import com.whammich.invasion.network.NetworkHandler;
 import invmod.Invasion;
+import invmod.common.entity.EntityIMLiving;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -166,7 +167,7 @@ public class IMWaveSpawner implements ISpawnerAccess {
         return this.currentWave.getTotalMobAmount();
     }
 
-    public void askForRespawn(Entity entity) {
+    public void askForRespawn(EntityIMLiving entity) {
         if (this.spawnPointContainer.getNumberOfSpawnPoints(SpawnType.HUMANOID) > 10) {
             SpawnPoint spawnPoint = this.spawnPointContainer.getRandomSpawnPoint(SpawnType.HUMANOID);
             entity.setPos(spawnPoint.getXCoord(), spawnPoint.getYCoord(), spawnPoint.getZCoord());

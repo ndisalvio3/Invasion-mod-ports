@@ -1,8 +1,15 @@
 package invmod.common.nexus;
 
+import invmod.common.entity.EntityIMLiving;
+import invmod.common.entity.ai.AttackerAI;
+import invmod.common.util.IPosition;
 import net.minecraft.world.level.Level;
 
-public interface INexusAccess {
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+public interface INexusAccess extends IPosition {
     default void attackNexus(int damage) {
     }
 
@@ -41,6 +48,10 @@ public interface INexusAccess {
         return 0;
     }
 
+    default Level getWorld() {
+        return getLevel();
+    }
+
     default Level getLevel() {
         return null;
     }
@@ -57,18 +68,21 @@ public interface INexusAccess {
         return 0;
     }
 
-    default java.util.List<invmod.common.entity.EntityIMLiving> getMobList() {
-        return java.util.Collections.emptyList();
+    default List<EntityIMLiving> getMobList() {
+        return Collections.emptyList();
     }
 
-    default void registerMob(invmod.common.entity.EntityIMLiving mob) {
+    default void registerMob(EntityIMLiving mob) {
     }
 
-    default java.util.Map<String, Long> getBoundPlayers() {
-        return java.util.Collections.emptyMap();
+    default void askForRespawn(EntityIMLiving mob) {
     }
 
-    default invmod.common.entity.ai.AttackerAI getAttackerAI() {
+    default Map<String, Long> getBoundPlayers() {
+        return Collections.emptyMap();
+    }
+
+    default AttackerAI getAttackerAI() {
         return null;
     }
 }

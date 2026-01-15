@@ -297,6 +297,16 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
     }
 
     @Override
+    public void askForRespawn(EntityIMLiving entity) {
+        if (entity == null) {
+            return;
+        }
+        Invasion.log("Stuck entity asking for respawn: " + entity + "  " + entity.getX() + ", " + entity.getY() + ", " + entity.getZ());
+        ensureWaveSpawner();
+        waveSpawner.askForRespawn(entity);
+    }
+
+    @Override
     public Map<String, Long> getBoundPlayers() {
         return boundPlayers;
     }
@@ -442,6 +452,11 @@ public class TileEntityNexus extends BlockEntity implements Container, INexusAcc
 
     @Override
     public Level getLevel() {
+        return level;
+    }
+
+    @Override
+    public Level getWorld() {
         return level;
     }
 
