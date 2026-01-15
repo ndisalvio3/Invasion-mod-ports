@@ -18,16 +18,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraft.world.level.gameevent.GameEvent.Context;
-import net.minecraft.world.level.gameevent.PositionSource;
-import net.minecraft.world.level.gameevent.PositionSourceType;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 
 public class EntityIMBoulder extends Entity implements AdvancedSpawnData {
@@ -154,9 +148,13 @@ public class EntityIMBoulder extends Entity implements AdvancedSpawnData {
             damage = 14;
         }
         DamageSource source = shootingEntity != null ? damageSources().mobAttack(shootingEntity) : damageSources().generic();
-        entityHit.getEntity().hurt(source, damage);
-        level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 0.9F / (random.nextFloat() * 0.2F + 0.9F));
-        discard();
+        if (level() instanceof ServerLevel serverLevel) {
+            boolean hit = entityHit.getEntity().hurtServer(serverLevel, source, damage);
+            if (hit) {
+                level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 0.9F / (random.nextFloat() * 0.2F + 0.9F));
+                discard();
+            }
+        }
     }
 
     private void handleBlockHit(BlockHitResult blockHit) {
@@ -179,12 +177,20 @@ public class EntityIMBoulder extends Entity implements AdvancedSpawnData {
                 tileEntityNexus.attackNexus(2);
             }
         } else if (state.getBlock() != Blocks.BEDROCK && state.getBlock() != Blocks.CHEST) {
+            if (isDeflectionBlock(state) && random.nextInt(2) == 0) {
+                discard();
+                return;
+            }
             if (level() instanceof ServerLevel serverLevel) {
                 boolean mobGriefing = serverLevel.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
                 Level.ExplosionInteraction interaction = mobGriefing ? Level.ExplosionInteraction.MOB : Level.ExplosionInteraction.NONE;
                 serverLevel.explode(this, hit.x, hit.y, hit.z, 0.5F, interaction);
             }
         }
+    }
+
+    private boolean isDeflectionBlock(BlockState state) {
+        return state.is(Blocks.OBSIDIAN);
     }
 
     private void updateRotationFromDelta() {
