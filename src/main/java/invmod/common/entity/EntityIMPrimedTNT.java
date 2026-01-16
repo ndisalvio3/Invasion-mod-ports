@@ -173,12 +173,20 @@ public class EntityIMPrimedTNT extends Entity implements AdvancedSpawnData {
                 tileEntityNexus.attackNexus(2);
             }
         } else if (state.getBlock() != Blocks.BEDROCK && state.getBlock() != Blocks.CHEST) {
+            if (isDeflectionBlock(state) && random.nextInt(2) == 0) {
+                discard();
+                return;
+            }
             if (level() instanceof ServerLevel serverLevel) {
                 boolean mobGriefing = serverLevel.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
                 Level.ExplosionInteraction interaction = mobGriefing ? Level.ExplosionInteraction.MOB : Level.ExplosionInteraction.NONE;
                 serverLevel.explode(this, hit.x, hit.y, hit.z, 1.0F, interaction);
             }
         }
+    }
+
+    private boolean isDeflectionBlock(BlockState state) {
+        return state.is(Blocks.OBSIDIAN);
     }
 
     private void updateRotationFromDelta() {
