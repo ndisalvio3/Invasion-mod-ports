@@ -1,11 +1,15 @@
 package invmod.common.entity;
 
+import com.whammich.invasion.registry.ModSounds;
+import invmod.common.nexus.INexusAccess;
+import invmod.common.nexus.InvMobConstruct;
+import invmod.common.nexus.MobBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -18,15 +22,17 @@ public class EntityIMEgg extends Entity {
     private int hatchTime;
     private int ticks;
     private boolean hatched;
-    private Entity[] contents;
+    private InvMobConstruct[] contents;
+    private INexusAccess nexus;
 
     public EntityIMEgg(EntityType<? extends EntityIMEgg> type, Level level) {
         super(type, level);
     }
 
-    public void setupEgg(Entity[] contents, int hatchTime) {
+    public void setupEgg(InvMobConstruct[] contents, int hatchTime, INexusAccess nexus) {
         this.contents = contents;
         this.hatchTime = hatchTime;
+        this.nexus = nexus;
         this.hatched = false;
         this.ticks = 0;
     }
@@ -44,29 +50,29 @@ public class EntityIMEgg extends Entity {
                 hatch();
             }
         } else if (!hatched && entityData.get(DATA_HATCHED)) {
-            level().playLocalSound(
-                getX(),
-                getY(),
-                getZ(),
-                SoundEvents.TURTLE_EGG_HATCH,
-                SoundSource.HOSTILE,
-                1.0F,
-                1.0F,
-                false
-            );
             hatched = true;
         }
     }
 
     private void hatch() {
+        level().playSound(null, blockPosition(), getHatchSound(), SoundSource.HOSTILE, 1.0F, 1.0F);
         hatched = true;
         entityData.set(DATA_HATCHED, Boolean.TRUE);
         if (contents != null && level() instanceof ServerLevel serverLevel) {
-            for (Entity entity : contents) {
+            MobBuilder mobBuilder = new MobBuilder();
+            for (InvMobConstruct construct : contents) {
+                Entity entity = mobBuilder.createMobFromConstruct(construct, serverLevel, nexus);
+                if (entity == null) {
+                    continue;
+                }
                 entity.setPos(getX(), getY(), getZ());
                 serverLevel.addFreshEntity(entity);
             }
         }
+    }
+
+    private SoundEvent getHatchSound() {
+        return random.nextBoolean() ? ModSounds.EGG_HATCH_1.get() : ModSounds.EGG_HATCH_2.get();
     }
 
     @Override

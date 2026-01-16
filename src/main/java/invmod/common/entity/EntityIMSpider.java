@@ -1,6 +1,5 @@
 package invmod.common.entity;
 
-import com.whammich.invasion.registry.ModEntities;
 import com.whammich.invasion.registry.ModSounds;
 import invmod.Invasion;
 import invmod.common.entity.ai.AttackNexusGoal;
@@ -8,6 +7,8 @@ import invmod.common.entity.ai.EntityAILayEgg;
 import invmod.common.entity.ai.EntityAIPounce;
 import invmod.common.entity.ai.IMNearestAttackableTargetGoal;
 import invmod.common.nexus.INexusAccess;
+import invmod.common.nexus.IMEntityType;
+import invmod.common.nexus.InvMobConstruct;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -20,7 +21,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -151,24 +151,13 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
     }
 
     @Override
-    public Entity[] getOffspring(Entity paramEntity) {
-        if (level() instanceof ServerLevel serverLevel) {
-            if (tier == 2 && flavour == 1) {
-                Entity[] offspring = new Entity[6];
-                for (int i = 0; i < offspring.length; i++) {
-                    EntityIMSpider spider = ModEntities.IM_SPIDER.get().create(serverLevel, EntitySpawnReason.EVENT);
-                    if (spider == null) {
-                        return null;
-                    }
-                    spider.setTier(1);
-                    spider.setFlavour(1);
-                    if (nexus != null) {
-                        spider.acquiredByNexus(nexus);
-                    }
-                    offspring[i] = spider;
-                }
-                return offspring;
+    public InvMobConstruct[] getOffspring(Entity paramEntity) {
+        if (tier == 2 && flavour == 1) {
+            InvMobConstruct[] offspring = new InvMobConstruct[6];
+            for (int i = 0; i < offspring.length; i++) {
+                offspring[i] = new InvMobConstruct(IMEntityType.SPIDER, 0, 1, 1, 0.0F);
             }
+            return offspring;
         }
         return null;
     }

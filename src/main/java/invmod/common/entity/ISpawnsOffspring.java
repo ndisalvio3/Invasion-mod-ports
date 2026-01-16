@@ -1,7 +1,8 @@
 package invmod.common.entity;
 
+import invmod.common.nexus.InvMobConstruct;
 import net.minecraft.world.entity.Entity;
 
 public abstract interface ISpawnsOffspring {
-    public abstract Entity[] getOffspring(Entity paramEntity);
+    public abstract InvMobConstruct[] getOffspring(Entity paramEntity);
 }

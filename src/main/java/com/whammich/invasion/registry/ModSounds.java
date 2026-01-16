@@ -11,6 +11,8 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> SCRAPE_1 = register("scrape1");
     public static final DeferredHolder<SoundEvent, SoundEvent> SCRAPE_2 = register("scrape2");
     public static final DeferredHolder<SoundEvent, SoundEvent> SCRAPE_3 = register("scrape3");
+    public static final DeferredHolder<SoundEvent, SoundEvent> EGG_HATCH_1 = register("egghatch1");
+    public static final DeferredHolder<SoundEvent, SoundEvent> EGG_HATCH_2 = register("egghatch2");
     public static final DeferredHolder<SoundEvent, SoundEvent> SPIDER_HISS = register("v_hiss1");
     public static final DeferredHolder<SoundEvent, SoundEvent> ZAP_1 = register("zap1");
     public static final DeferredHolder<SoundEvent, SoundEvent> ZAP_2 = register("zap2");

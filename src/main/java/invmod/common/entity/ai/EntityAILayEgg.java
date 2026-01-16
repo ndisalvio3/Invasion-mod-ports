@@ -4,8 +4,9 @@ import com.whammich.invasion.registry.ModEntities;
 import invmod.common.entity.EntityIMEgg;
 import invmod.common.entity.EntityIMSpider;
 import invmod.common.entity.ISpawnsOffspring;
+import invmod.common.nexus.INexusAccess;
+import invmod.common.nexus.InvMobConstruct;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -76,15 +77,17 @@ public class EntityAILayEgg extends Goal {
             return;
         }
 
-        Entity[] contents = null;
+        InvMobConstruct[] contents = null;
+        INexusAccess nexus = null;
         if (spider instanceof ISpawnsOffspring spawner) {
             contents = spawner.getOffspring(null);
+            nexus = spider.getNexus();
         }
 
         EntityIMEgg egg = ModEntities.IM_EGG.get().create(serverLevel, EntitySpawnReason.EVENT);
         if (egg != null) {
             egg.setPos(spider.getX(), spider.getY(), spider.getZ());
-            egg.setupEgg(contents, EGG_HATCH_TIME);
+            egg.setupEgg(contents, EGG_HATCH_TIME, nexus);
             serverLevel.addFreshEntity(egg);
         }
     }
