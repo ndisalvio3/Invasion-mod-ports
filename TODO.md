@@ -1,0 +1,658 @@
+# TODO (1.7.2 Reconciliation)
+
+This file lists all reconciliation work required to reach 1:1 parity with the 1.7.2 reference repo.
+Generated from local diff reports in /tmp/invasion-recon and file set comparisons.
+
+## Missing From Current Repo (present in 1.7.2)
+- src/main/java/assets/invmod/lang/en_US.lang
+- src/main/java/assets/invmod/sounds/bigzombie1.ogg
+- src/main/java/assets/invmod/sounds/chime1.ogg
+- src/main/java/assets/invmod/sounds/egghatch1.ogg
+- src/main/java/assets/invmod/sounds/egghatch2.ogg
+- src/main/java/assets/invmod/sounds/fireball1.ogg
+- src/main/java/assets/invmod/sounds.json
+- src/main/java/assets/invmod/sounds/rumble1.ogg
+- src/main/java/assets/invmod/sounds/scrape1.ogg
+- src/main/java/assets/invmod/sounds/scrape2.ogg
+- src/main/java/assets/invmod/sounds/scrape3.ogg
+- src/main/java/assets/invmod/sounds/v_death1.ogg
+- src/main/java/assets/invmod/sounds/v_hiss1.ogg
+- src/main/java/assets/invmod/sounds/v_longscreech1.ogg
+- src/main/java/assets/invmod/sounds/v_screech1.ogg
+- src/main/java/assets/invmod/sounds/v_screech2.ogg
+- src/main/java/assets/invmod/sounds/v_screech3.ogg
+- src/main/java/assets/invmod/sounds/v_squawk1.ogg
+- src/main/java/assets/invmod/sounds/v_squawk2.ogg
+- src/main/java/assets/invmod/sounds/v_squawk3.ogg
+- src/main/java/assets/invmod/sounds/v_squawk4.ogg
+- src/main/java/assets/invmod/sounds/zap1.ogg
+- src/main/java/assets/invmod/sounds/zap2.ogg
+- src/main/java/assets/invmod/sounds/zap3.ogg
+- src/main/java/assets/invmod/textures/blocks/nexusSideOff.png
+- src/main/java/assets/invmod/textures/blocks/nexusSideOn.png
+- src/main/java/assets/invmod/textures/blocks/nexusTopOff.png
+- src/main/java/assets/invmod/textures/blocks/nexusTopOn.png
+- src/main/java/assets/invmod/textures/boulder.png
+- src/main/java/assets/invmod/textures/burrower.png
+- src/main/java/assets/invmod/textures/imp.png
+- src/main/java/assets/invmod/textures/items/adjuster.png
+- src/main/java/assets/invmod/textures/items/catalystMixture.png
+- src/main/java/assets/invmod/textures/items/dampingAgent.png
+- src/main/java/assets/invmod/textures/items/debugWand.png
+- src/main/java/assets/invmod/textures/items/engyHammer.png
+- src/main/java/assets/invmod/textures/items/infusedSword.png
+- src/main/java/assets/invmod/textures/items/nexusCatalyst.png
+- src/main/java/assets/invmod/textures/items/phaseCrystal.png
+- src/main/java/assets/invmod/textures/items/probe.png
+- src/main/java/assets/invmod/textures/items/riftFlux.png
+- src/main/java/assets/invmod/textures/items/sbowc1.png
+- src/main/java/assets/invmod/textures/items/sbowc2.png
+- src/main/java/assets/invmod/textures/items/sbowc3.png
+- src/main/java/assets/invmod/textures/items/searingBow.png
+- src/main/java/assets/invmod/textures/items/smallRemnants.png
+- src/main/java/assets/invmod/textures/items/stableCatalystMixture.png
+- src/main/java/assets/invmod/textures/items/stableNexusCatalyst.png
+- src/main/java/assets/invmod/textures/items/strangeBone.png
+- src/main/java/assets/invmod/textures/items/strongCatalyst.png
+- src/main/java/assets/invmod/textures/items/strongDampingAgent.png
+- src/main/java/assets/invmod/textures/items/trapEmpty.png
+- src/main/java/assets/invmod/textures/items/trapPurple.png
+- src/main/java/assets/invmod/textures/items/trapRed.png
+- src/main/java/assets/invmod/textures/nexusgui.png
+- src/main/java/assets/invmod/textures/pigengT1.png
+- src/main/java/assets/invmod/textures/pigzombie64x32.png
+- src/main/java/assets/invmod/textures/spideregg.png
+- src/main/java/assets/invmod/textures/spiderT2b.png
+- src/main/java/assets/invmod/textures/spiderT2.png
+- src/main/java/assets/invmod/textures/testmodel.png
+- src/main/java/assets/invmod/textures/throwerT1.png
+- src/main/java/assets/invmod/textures/throwerT2.png
+- src/main/java/assets/invmod/textures/trap.png
+- src/main/java/assets/invmod/textures/vulture.png
+- src/main/java/assets/invmod/textures/wolf_tame_nexus.png
+- src/main/java/assets/invmod/textures/zombie_old.png
+- src/main/java/assets/invmod/textures/zombiePigmanT3.png
+- src/main/java/assets/invmod/textures/zombieT1a.png
+- src/main/java/assets/invmod/textures/zombieT2a.png
+- src/main/java/assets/invmod/textures/zombieT2old.png
+- src/main/java/assets/invmod/textures/zombieT2.png
+- src/main/java/assets/invmod/textures/zombieT3.png
+- src/main/java/assets/invmod/textures/zombietar.png
+- src/main/java/invmod/client/ProxyClient.java
+- src/main/java/invmod/client/render/animation/AnimationAction.java
+- src/main/java/invmod/client/render/animation/Animation.java
+- src/main/java/invmod/client/render/animation/AnimationPhaseInfo.java
+- src/main/java/invmod/client/render/animation/AnimationState.java
+- src/main/java/invmod/client/render/animation/BonesBirdLegs.java
+- src/main/java/invmod/client/render/animation/BonesMouth.java
+- src/main/java/invmod/client/render/animation/BonesWings.java
+- src/main/java/invmod/client/render/animation/InterpType.java
+- src/main/java/invmod/client/render/animation/KeyFrame.java
+- src/main/java/invmod/client/render/animation/ModelAnimator.java
+- src/main/java/invmod/client/render/AnimationRegistry.java
+- src/main/java/invmod/client/render/animation/Transition.java
+- src/main/java/invmod/client/render/ModelBigBiped.java
+- src/main/java/invmod/client/render/ModelBird.java
+- src/main/java/invmod/client/render/ModelB.java
+- src/main/java/invmod/client/render/ModelBoulder.java
+- src/main/java/invmod/client/render/ModelBurrower2.java
+- src/main/java/invmod/client/render/ModelBurrower.java
+- src/main/java/invmod/client/render/ModelEgg.java
+- src/main/java/invmod/client/render/ModelGiantBird.java
+- src/main/java/invmod/client/render/ModelImp.java
+- src/main/java/invmod/client/render/ModelIMSkeleton.java
+- src/main/java/invmod/client/render/ModelQuetzalcoatlus.java
+- src/main/java/invmod/client/render/ModelTest.java
+- src/main/java/invmod/client/render/ModelThrower.java
+- src/main/java/invmod/client/render/ModelTrap.java
+- src/main/java/invmod/client/render/ModelVulture.java
+- src/main/java/invmod/client/render/RenderB.java
+- src/main/java/invmod/client/render/RenderBolt.java
+- src/main/java/invmod/client/render/RenderBoulder.java
+- src/main/java/invmod/client/render/RenderBurrower.java
+- src/main/java/invmod/client/render/RenderEgg.java
+- src/main/java/invmod/client/render/RenderGiantBird.java
+- src/main/java/invmod/client/render/RenderIMCreeper.java
+- src/main/java/invmod/client/render/RenderIMLiving.java
+- src/main/java/invmod/client/render/RenderImp.java
+- src/main/java/invmod/client/render/RenderIMSkeleton.java
+- src/main/java/invmod/client/render/RenderIMWolf.java
+- src/main/java/invmod/client/render/RenderIMZombie.java
+- src/main/java/invmod/client/render/RenderIMZombiePigman.java
+- src/main/java/invmod/client/render/RenderInvis.java
+- src/main/java/invmod/client/render/RenderPigEngy.java
+- src/main/java/invmod/client/render/RenderSpiderIM.java
+- src/main/java/invmod/client/render/RenderThrower.java
+- src/main/java/invmod/client/render/RenderTrap.java
+- src/main/java/invmod/common/ConfigInvasion.java
+- src/main/java/invmod/common/Config.java
+- src/main/java/invmod/common/creativetab/CreativeTabInvmod.java
+- src/main/java/invmod/common/GuiHandler.java
+- src/main/java/invmod/common/item/ItemCatalystMixture.java
+- src/main/java/invmod/common/item/ItemDampingAgent.java
+- src/main/java/invmod/common/item/ItemDebugWand.java
+- src/main/java/invmod/common/item/ItemEngyHammer.java
+- src/main/java/invmod/common/item/ItemIM.java
+- src/main/java/invmod/common/item/ItemInfusedSword.java
+- src/main/java/invmod/common/item/ItemNexusCatalyst.java
+- src/main/java/invmod/common/item/ItemPhaseCrystal.java
+- src/main/java/invmod/common/item/ItemProbe.java
+- src/main/java/invmod/common/item/ItemRiftFlux.java
+- src/main/java/invmod/common/item/ItemSearingBow.java
+- src/main/java/invmod/common/item/ItemSmallRemnants.java
+- src/main/java/invmod/common/item/ItemStableCatalystMixture.java
+- src/main/java/invmod/common/item/ItemStableNexusCatalyst.java
+- src/main/java/invmod/common/item/ItemStrangeBone.java
+- src/main/java/invmod/common/item/ItemStrongCatalyst.java
+- src/main/java/invmod/common/item/ItemStrongDampingAgent.java
+- src/main/java/invmod/common/item/ItemTrap.java
+- src/main/java/invmod/common/mod_Invasion.java
+- src/main/java/invmod/common/nexus/GuiNexus.java
+- src/main/java/invmod/common/ProxyCommon.java
+- src/main/java/invmod/common/util/spawneggs/CustomTags.java
+- src/main/java/invmod/common/util/spawneggs/DispenserBehaviorSpawnEgg.java
+- src/main/java/invmod/common/util/spawneggs/ItemSpawnEgg.java
+- src/main/java/invmod/common/util/spawneggs/SpawnEggInfo.java
+- src/main/java/invmod/common/util/spawneggs/SpawnEggRegistry.java
+- src/main/resources/assets/invmod/lang/en_US.lang
+- src/main/resources/assets/invmod/sounds/bigzombie1.ogg
+- src/main/resources/assets/invmod/sounds/chime1.ogg
+- src/main/resources/assets/invmod/sounds/egghatch1.ogg
+- src/main/resources/assets/invmod/sounds/egghatch2.ogg
+- src/main/resources/assets/invmod/sounds/fireball1.ogg
+- src/main/resources/assets/invmod/sounds.json
+- src/main/resources/assets/invmod/sounds/rumble1.ogg
+- src/main/resources/assets/invmod/sounds/scrape1.ogg
+- src/main/resources/assets/invmod/sounds/scrape2.ogg
+- src/main/resources/assets/invmod/sounds/scrape3.ogg
+- src/main/resources/assets/invmod/sounds/v_death1.ogg
+- src/main/resources/assets/invmod/sounds/v_hiss1.ogg
+- src/main/resources/assets/invmod/sounds/v_longscreech1.ogg
+- src/main/resources/assets/invmod/sounds/v_screech1.ogg
+- src/main/resources/assets/invmod/sounds/v_screech2.ogg
+- src/main/resources/assets/invmod/sounds/v_screech3.ogg
+- src/main/resources/assets/invmod/sounds/v_squawk1.ogg
+- src/main/resources/assets/invmod/sounds/v_squawk2.ogg
+- src/main/resources/assets/invmod/sounds/v_squawk3.ogg
+- src/main/resources/assets/invmod/sounds/v_squawk4.ogg
+- src/main/resources/assets/invmod/sounds/zap1.ogg
+- src/main/resources/assets/invmod/sounds/zap2.ogg
+- src/main/resources/assets/invmod/sounds/zap3.ogg
+- src/main/resources/assets/invmod/textures/blocks/nexusSideOff.png
+- src/main/resources/assets/invmod/textures/blocks/nexusSideOn.png
+- src/main/resources/assets/invmod/textures/blocks/nexusTopOff.png
+- src/main/resources/assets/invmod/textures/blocks/nexusTopOn.png
+- src/main/resources/assets/invmod/textures/boulder.png
+- src/main/resources/assets/invmod/textures/burrower.png
+- src/main/resources/assets/invmod/textures/imp.png
+- src/main/resources/assets/invmod/textures/items/adjuster.png
+- src/main/resources/assets/invmod/textures/items/catalystMixture.png
+- src/main/resources/assets/invmod/textures/items/dampingAgent.png
+- src/main/resources/assets/invmod/textures/items/debugWand.png
+- src/main/resources/assets/invmod/textures/items/engyHammer.png
+- src/main/resources/assets/invmod/textures/items/infusedSword.png
+- src/main/resources/assets/invmod/textures/items/nexusCatalyst.png
+- src/main/resources/assets/invmod/textures/items/phaseCrystal.png
+- src/main/resources/assets/invmod/textures/items/probe.png
+- src/main/resources/assets/invmod/textures/items/riftFlux.png
+- src/main/resources/assets/invmod/textures/items/sbowc1.png
+- src/main/resources/assets/invmod/textures/items/sbowc2.png
+- src/main/resources/assets/invmod/textures/items/sbowc3.png
+- src/main/resources/assets/invmod/textures/items/searingBow.png
+- src/main/resources/assets/invmod/textures/items/smallRemnants.png
+- src/main/resources/assets/invmod/textures/items/stableCatalystMixture.png
+- src/main/resources/assets/invmod/textures/items/stableNexusCatalyst.png
+- src/main/resources/assets/invmod/textures/items/strangeBone.png
+- src/main/resources/assets/invmod/textures/items/strongCatalyst.png
+- src/main/resources/assets/invmod/textures/items/strongDampingAgent.png
+- src/main/resources/assets/invmod/textures/items/trapEmpty.png
+- src/main/resources/assets/invmod/textures/items/trapPurple.png
+- src/main/resources/assets/invmod/textures/items/trapRed.png
+- src/main/resources/assets/invmod/textures/nexusgui.png
+- src/main/resources/assets/invmod/textures/pigengT1.png
+- src/main/resources/assets/invmod/textures/pigzombie64x32.png
+- src/main/resources/assets/invmod/textures/spideregg.png
+- src/main/resources/assets/invmod/textures/spiderT2b.png
+- src/main/resources/assets/invmod/textures/spiderT2.png
+- src/main/resources/assets/invmod/textures/testmodel.png
+- src/main/resources/assets/invmod/textures/throwerT1.png
+- src/main/resources/assets/invmod/textures/throwerT2.png
+- src/main/resources/assets/invmod/textures/trap.png
+- src/main/resources/assets/invmod/textures/vulture.png
+- src/main/resources/assets/invmod/textures/wolf_tame_nexus.png
+- src/main/resources/assets/invmod/textures/zombie_old.png
+- src/main/resources/assets/invmod/textures/zombiePigmanT3.png
+- src/main/resources/assets/invmod/textures/zombieT1a.png
+- src/main/resources/assets/invmod/textures/zombieT2a.png
+- src/main/resources/assets/invmod/textures/zombieT2old.png
+- src/main/resources/assets/invmod/textures/zombieT2.png
+- src/main/resources/assets/invmod/textures/zombieT3.png
+- src/main/resources/assets/invmod/textures/zombietar.png
+- src/main/resources/mcmod.info
+
+## Highly Divergent Java Files (similarity < 0.30)
+Format: ratio ref_path -> current_path
+- 0.006 src/main/java/invmod/common/entity/EntityIMLiving.java -> src/main/java/invmod/common/entity/EntityIMLiving.java
+- 0.007 src/main/java/invmod/common/entity/EntityIMZombie.java -> src/main/java/invmod/common/entity/EntityIMZombie.java
+- 0.008 src/main/java/invmod/common/entity/EntityIMZombiePigman.java -> src/main/java/invmod/common/entity/EntityIMZombiePigman.java
+- 0.009 src/main/java/invmod/common/nexus/TileEntityNexus.java -> src/main/java/invmod/common/nexus/TileEntityNexus.java
+- 0.012 src/main/java/invmod/common/entity/NavigatorIM.java -> src/main/java/invmod/common/entity/NavigatorIM.java
+- 0.012 src/main/java/invmod/common/entity/EntityIMThrower.java -> src/main/java/invmod/common/entity/EntityIMThrower.java
+- 0.012 src/main/java/invmod/common/nexus/ContainerNexus.java -> src/main/java/invmod/common/nexus/ContainerNexus.java
+- 0.012 src/main/java/invmod/common/entity/EntityIMPrimedTNT.java -> src/main/java/invmod/common/entity/EntityIMPrimedTNT.java
+- 0.013 src/main/java/invmod/common/entity/EntityIMBolt.java -> src/main/java/invmod/common/entity/EntityIMBolt.java
+- 0.013 src/main/java/invmod/common/entity/EntityIMBird.java -> src/main/java/invmod/common/entity/EntityIMBird.java
+- 0.015 src/main/java/invmod/common/entity/NavigatorBurrower.java -> src/main/java/invmod/common/entity/NavigatorBurrower.java
+- 0.015 src/main/java/invmod/common/entity/NavigatorFlying.java -> src/main/java/invmod/common/entity/NavigatorFlying.java
+- 0.015 src/main/java/invmod/common/entity/IMMoveHelperFlying.java -> src/main/java/invmod/common/entity/IMMoveHelperFlying.java
+- 0.015 src/main/java/invmod/common/entity/EntityIMBoulder.java -> src/main/java/invmod/common/entity/EntityIMBoulder.java
+- 0.015 src/main/java/invmod/common/entity/EntityIMSpider.java -> src/main/java/invmod/common/entity/EntityIMSpider.java
+- 0.016 src/main/java/invmod/common/entity/EntityIMBurrower.java -> src/main/java/invmod/common/entity/EntityIMBurrower.java
+- 0.017 src/main/java/invmod/common/nexus/IMWaveBuilder.java -> src/main/java/invmod/common/nexus/IMWaveBuilder.java
+- 0.019 src/main/java/invmod/common/entity/EntityIMFlying.java -> src/main/java/invmod/common/entity/EntityIMFlying.java
+- 0.021 src/main/java/invmod/common/entity/EntityIMImp.java -> src/main/java/invmod/common/entity/EntityIMImp.java
+- 0.022 src/main/java/invmod/common/nexus/WaveEntry.java -> src/main/java/invmod/common/nexus/WaveEntry.java
+- 0.022 src/main/java/invmod/common/entity/EntityIMWolf.java -> src/main/java/invmod/common/entity/EntityIMWolf.java
+- 0.025 src/main/java/invmod/common/entity/EntityIMPigEngy.java -> src/main/java/invmod/common/entity/EntityIMPigEngy.java
+- 0.029 src/main/java/invmod/common/nexus/IMWaveSpawner.java -> src/main/java/invmod/common/nexus/IMWaveSpawner.java
+- 0.037 src/main/java/invmod/common/entity/Scaffold.java -> src/main/java/invmod/common/entity/Scaffold.java
+- 0.044 src/main/java/invmod/common/entity/ai/AttackerAI.java -> src/main/java/invmod/common/entity/ai/AttackerAI.java
+- 0.049 src/main/java/invmod/client/render/animation/KeyFrame.java -> src/main/java/com/whammich/invasion/client/render/animation/KeyFrame.java
+- 0.051 src/main/java/invmod/common/nexus/WaveBuilderSpiders.java -> src/main/java/invmod/common/nexus/WaveBuilderSpiders.java
+- 0.061 src/main/java/invmod/common/InvasionCommand.java -> src/main/java/invmod/common/InvasionCommand.java
+- 0.066 src/main/java/invmod/common/entity/EntityIMSkeleton.java -> src/main/java/invmod/common/entity/EntityIMSkeleton.java
+- 0.082 src/main/java/invmod/common/item/ItemStrangeBone.java -> src/main/java/com/whammich/invasion/items/ItemStrangeBone.java
+- 0.098 src/main/java/invmod/common/entity/PathfinderIM.java -> src/main/java/invmod/common/entity/PathfinderIM.java
+- 0.103 src/main/java/invmod/common/entity/ai/EntityAICharge.java -> src/main/java/invmod/common/entity/ai/EntityAICharge.java
+- 0.104 src/main/java/invmod/common/item/ItemTrap.java -> src/main/java/com/whammich/invasion/items/ItemTrap.java
+- 0.104 src/main/java/invmod/common/entity/LegController.java -> src/main/java/invmod/common/entity/LegController.java
+- 0.105 src/main/java/invmod/common/entity/EntityIMCreeper.java -> src/main/java/invmod/common/entity/EntityIMCreeper.java
+- 0.108 src/main/java/invmod/common/entity/ai/EntityAISwoop.java -> src/main/java/invmod/common/entity/ai/EntityAISwoop.java
+- 0.110 src/main/java/invmod/common/entity/EntityIMTrap.java -> src/main/java/invmod/common/entity/EntityIMTrap.java
+- 0.111 src/main/java/invmod/common/entity/ai/EntityAILayEgg.java -> src/main/java/invmod/common/entity/ai/EntityAILayEgg.java
+- 0.112 src/main/java/invmod/common/entity/EntitySFX.java -> src/main/java/invmod/common/entity/EntitySFX.java
+- 0.115 src/main/java/invmod/common/entity/NodeContainer.java -> src/main/java/invmod/common/entity/NodeContainer.java
+- 0.116 src/main/java/invmod/common/util/ExplosionUtil.java -> src/main/java/invmod/common/util/ExplosionUtil.java
+- 0.116 src/main/java/invmod/client/render/animation/AnimationState.java -> src/main/java/com/whammich/invasion/client/render/animation/AnimationState.java
+- 0.119 src/main/java/invmod/common/nexus/BlockNexus.java -> src/main/java/invmod/common/nexus/BlockNexus.java
+- 0.120 src/main/java/invmod/common/entity/Path.java -> src/main/java/invmod/common/entity/Path.java
+- 0.120 src/main/java/invmod/common/entity/IMMoveHelperSpider.java -> src/main/java/invmod/common/entity/IMMoveHelperSpider.java
+- 0.121 src/main/java/invmod/common/entity/WingController.java -> src/main/java/invmod/common/entity/WingController.java
+- 0.124 src/main/java/invmod/common/entity/TerrainModifier.java -> src/main/java/invmod/common/entity/TerrainModifier.java
+- 0.127 src/main/java/invmod/common/entity/IMMoveHelper.java -> src/main/java/invmod/common/entity/IMMoveHelper.java
+- 0.132 src/main/java/invmod/common/util/Version.java -> src/main/java/invmod/common/util/Version.java
+- 0.132 src/main/java/invmod/common/SimplyID.java -> src/main/java/invmod/common/SimplyID.java
+- 0.133 src/main/java/invmod/common/item/ItemProbe.java -> src/main/java/com/whammich/invasion/items/ItemProbe.java
+- 0.133 src/main/java/invmod/common/entity/ai/EntityAIPickUpEntity.java -> src/main/java/invmod/common/entity/ai/EntityAIPickUpEntity.java
+- 0.135 src/main/java/invmod/common/entity/TerrainBuilder.java -> src/main/java/invmod/common/entity/TerrainBuilder.java
+- 0.138 src/main/java/invmod/common/entity/EntityIMEgg.java -> src/main/java/invmod/common/entity/EntityIMEgg.java
+- 0.140 src/main/java/invmod/common/nexus/MobBuilder.java -> src/main/java/invmod/common/nexus/MobBuilder.java
+- 0.142 src/main/java/invmod/common/Tester.java -> src/main/java/invmod/common/Tester.java
+- 0.151 src/main/java/invmod/common/entity/IMLookHelper.java -> src/main/java/invmod/common/entity/IMLookHelper.java
+- 0.151 src/main/java/invmod/common/entity/NavigatorParametric.java -> src/main/java/invmod/common/entity/NavigatorParametric.java
+- 0.154 src/main/java/invmod/common/nexus/EntityConstruct.java -> src/main/java/invmod/common/nexus/EntityConstruct.java
+- 0.155 src/main/java/invmod/common/entity/NavigatorEngy.java -> src/main/java/invmod/common/entity/NavigatorEngy.java
+- 0.161 src/main/java/invmod/common/entity/EntityIMGiantBird.java -> src/main/java/invmod/common/entity/EntityIMGiantBird.java
+- 0.162 src/main/java/invmod/common/entity/PathNode.java -> src/main/java/invmod/common/entity/PathNode.java
+- 0.163 src/main/java/invmod/common/nexus/InvMobConstruct.java -> src/main/java/invmod/common/nexus/InvMobConstruct.java
+- 0.163 src/main/java/invmod/common/entity/ai/EntityAIPounce.java -> src/main/java/invmod/common/entity/ai/EntityAIPounce.java
+- 0.165 src/main/java/invmod/common/entity/ai/EntityAISprint.java -> src/main/java/invmod/common/entity/ai/EntityAISprint.java
+- 0.166 src/main/java/invmod/common/entity/ai/EntityAISprinpigman.java -> src/main/java/invmod/common/entity/ai/EntityAISprinpigman.java
+- 0.171 src/main/java/invmod/common/entity/PathNavigateAdapter.java -> src/main/java/invmod/common/entity/PathNavigateAdapter.java
+- 0.176 src/main/java/invmod/common/entity/ai/EntityAIAttackNexus.java -> src/main/java/invmod/common/entity/ai/EntityAIAttackNexus.java
+- 0.176 src/main/java/invmod/common/nexus/WaveContainer.java -> src/main/java/invmod/common/nexus/WaveContainer.java
+- 0.177 src/main/java/invmod/common/entity/EntityIMSpawnProxy.java -> src/main/java/invmod/common/entity/EntityIMSpawnProxy.java
+- 0.179 src/main/java/invmod/common/nexus/SpawnPoint.java -> src/main/java/invmod/common/nexus/SpawnPoint.java
+- 0.180 src/main/java/invmod/common/entity/ai/EntityAIThrowerKillEntity.java -> src/main/java/invmod/common/entity/ai/EntityAIThrowerKillEntity.java
+- 0.182 src/main/java/invmod/common/util/Distance.java -> src/main/java/invmod/common/util/Distance.java
+- 0.183 src/main/java/invmod/common/util/IMWailaProvider.java -> src/main/java/invmod/common/util/IMWailaProvider.java
+- 0.187 src/main/java/invmod/common/entity/ai/EntityAIMoveToEntity.java -> src/main/java/invmod/common/entity/ai/EntityAIMoveToEntity.java
+- 0.189 src/main/java/invmod/common/nexus/WaveBuilderNormal.java -> src/main/java/invmod/common/nexus/WaveBuilderNormal.java
+- 0.189 src/main/java/invmod/common/nexus/SpawnPointContainer.java -> src/main/java/invmod/common/nexus/SpawnPointContainer.java
+- 0.201 src/main/java/invmod/common/entity/ai/EntityAISimpleTarget.java -> src/main/java/invmod/common/entity/ai/EntityAISimpleTarget.java
+- 0.201 src/main/java/invmod/common/entity/ai/EntityAIBirdFight.java -> src/main/java/invmod/common/entity/ai/EntityAIBirdFight.java
+- 0.213 src/main/java/invmod/common/nexus/Wave.java -> src/main/java/invmod/common/nexus/Wave.java
+- 0.217 src/main/java/invmod/common/entity/ai/EntityAIMeleeFight.java -> src/main/java/invmod/common/entity/ai/EntityAIMeleeFight.java
+- 0.218 src/main/java/invmod/client/render/animation/Transition.java -> src/main/java/com/whammich/invasion/client/render/animation/Transition.java
+- 0.220 src/main/java/invmod/common/entity/MouthController.java -> src/main/java/invmod/common/entity/MouthController.java
+- 0.221 src/main/java/invmod/common/util/MathUtil.java -> src/main/java/invmod/common/util/MathUtil.java
+- 0.224 src/main/java/invmod/common/util/PosRotate3D.java -> src/main/java/invmod/common/util/PosRotate3D.java
+- 0.225 src/main/java/invmod/common/util/VersionChecker.java -> src/main/java/invmod/common/util/VersionChecker.java
+- 0.226 src/main/java/invmod/common/nexus/EntityPattern.java -> src/main/java/invmod/common/nexus/EntityPattern.java
+- 0.229 src/main/java/invmod/common/entity/ModifyBlockEntry.java -> src/main/java/invmod/common/entity/ModifyBlockEntry.java
+- 0.231 src/main/java/invmod/common/entity/ai/EntityAIRallyBehindEntity.java -> src/main/java/invmod/common/entity/ai/EntityAIRallyBehindEntity.java
+- 0.233 src/main/java/invmod/common/entity/PathCreator.java -> src/main/java/invmod/common/entity/PathCreator.java
+- 0.239 src/main/java/invmod/common/entity/TerrainDigger.java -> src/main/java/invmod/common/entity/TerrainDigger.java
+- 0.239 src/main/java/invmod/common/entity/ai/EntityAIBoP.java -> src/main/java/invmod/common/entity/ai/EntityAIBoP.java
+- 0.241 src/main/java/invmod/common/util/FiniteSelectionPool.java -> src/main/java/invmod/common/util/FiniteSelectionPool.java
+- 0.243 src/main/java/invmod/client/render/animation/AnimationPhaseInfo.java -> src/main/java/com/whammich/invasion/client/render/animation/AnimationPhaseInfo.java
+- 0.244 src/main/java/invmod/common/util/Triplet.java -> src/main/java/invmod/common/util/Triplet.java
+- 0.247 src/main/java/invmod/common/util/RandomSelectionPool.java -> src/main/java/invmod/common/util/RandomSelectionPool.java
+- 0.250 src/main/java/invmod/common/util/ComparatorEntityDistanceFrom.java -> src/main/java/invmod/common/util/ComparatorEntityDistanceFrom.java
+- 0.250 src/main/java/invmod/common/util/ComparatorEntityDistance.java -> src/main/java/invmod/common/util/ComparatorEntityDistance.java
+- 0.255 src/main/java/invmod/common/entity/ai/EntityAICircleTarget.java -> src/main/java/invmod/common/entity/ai/EntityAICircleTarget.java
+- 0.265 src/main/java/invmod/common/TerrainDataLayer.java -> src/main/java/invmod/common/TerrainDataLayer.java
+- 0.267 src/main/java/invmod/common/util/Pair.java -> src/main/java/invmod/common/util/Pair.java
+- 0.268 src/main/java/invmod/common/entity/ai/EntityAIStoop.java -> src/main/java/invmod/common/entity/ai/EntityAIStoop.java
+- 0.271 src/main/java/invmod/client/render/animation/Animation.java -> src/main/java/com/whammich/invasion/client/render/animation/Animation.java
+- 0.271 src/main/java/invmod/common/entity/ai/EntityAIKillEntity.java -> src/main/java/invmod/common/entity/ai/EntityAIKillEntity.java
+- 0.271 src/main/java/invmod/common/entity/ai/EntityAIFlyingStrike.java -> src/main/java/invmod/common/entity/ai/EntityAIFlyingStrike.java
+- 0.274 src/main/java/invmod/common/util/CoordsInt.java -> src/main/java/invmod/common/util/CoordsInt.java
+- 0.279 src/main/java/invmod/common/entity/ai/EntityAIMeleeAttack.java -> src/main/java/invmod/common/entity/ai/EntityAIMeleeAttack.java
+- 0.287 src/main/java/invmod/common/entity/ai/EntityAIGoToNexus.java -> src/main/java/invmod/common/entity/ai/EntityAIGoToNexus.java
+- 0.293 src/main/java/invmod/common/entity/ai/EntityAICreeperIMSwell.java -> src/main/java/invmod/common/entity/ai/EntityAICreeperIMSwell.java
+- 0.294 src/main/java/invmod/common/nexus/SlotOutput.java -> src/main/java/invmod/common/nexus/SlotOutput.java
+- 0.294 src/main/java/invmod/common/entity/ai/EntityAIStabiliseFlying.java -> src/main/java/invmod/common/entity/ai/EntityAIStabiliseFlying.java
+- 0.296 src/main/java/invmod/common/nexus/DummyNexus.java -> src/main/java/invmod/common/nexus/DummyNexus.java
+- 0.296 src/main/java/invmod/common/entity/EntityIMMob.java -> src/main/java/invmod/common/entity/EntityIMMob.java
+
+## Moderately Divergent Java Files (0.30 ≤ similarity < 0.70)
+Format: ratio ref_path -> current_path
+- 0.300 src/main/java/invmod/common/entity/ai/EntityAIWanderIM.java -> src/main/java/invmod/common/entity/ai/EntityAIWanderIM.java
+- 0.302 src/main/java/invmod/common/entity/ai/EntityAIRandomBoulder.java -> src/main/java/invmod/common/entity/ai/EntityAIRandomBoulder.java
+- 0.308 src/main/java/invmod/client/render/animation/BonesBirdLegs.java -> src/main/java/com/whammich/invasion/client/render/animation/BonesBirdLegs.java
+- 0.308 src/main/java/invmod/client/render/animation/AnimationAction.java -> src/main/java/com/whammich/invasion/client/render/animation/AnimationAction.java
+- 0.316 src/main/java/invmod/common/util/ComparatorDistanceFrom.java -> src/main/java/invmod/common/util/ComparatorDistanceFrom.java
+- 0.316 src/main/java/invmod/common/entity/ai/EntityAIFollowEntity.java -> src/main/java/invmod/common/entity/ai/EntityAIFollowEntity.java
+- 0.323 src/main/java/invmod/common/entity/IMBodyHelper.java -> src/main/java/invmod/common/entity/IMBodyHelper.java
+- 0.333 src/main/java/invmod/common/entity/ai/EntityAIWingAttack.java -> src/main/java/invmod/common/entity/ai/EntityAIWingAttack.java
+- 0.340 src/main/java/invmod/common/util/SingleSelection.java -> src/main/java/invmod/common/util/SingleSelection.java
+- 0.348 src/main/java/invmod/common/entity/ai/EntityAIKillWithArrow.java -> src/main/java/invmod/common/entity/ai/EntityAIKillWithArrow.java
+- 0.350 src/main/java/invmod/common/util/PolarAngle.java -> src/main/java/invmod/common/util/PolarAngle.java
+- 0.351 src/main/java/invmod/common/nexus/INexusAccess.java -> src/main/java/invmod/common/nexus/INexusAccess.java
+- 0.359 src/main/java/invmod/common/util/ThreadGetData.java -> src/main/java/invmod/common/util/ThreadGetData.java
+- 0.360 src/main/java/invmod/common/entity/ai/EntityAIFlyingTackle.java -> src/main/java/invmod/common/entity/ai/EntityAIFlyingTackle.java
+- 0.364 src/main/java/invmod/client/render/animation/InterpType.java -> src/main/java/com/whammich/invasion/client/render/animation/InterpType.java
+- 0.364 src/main/java/invmod/client/render/animation/BonesWings.java -> src/main/java/com/whammich/invasion/client/render/animation/BonesWings.java
+- 0.364 src/main/java/invmod/client/render/animation/BonesMouth.java -> src/main/java/com/whammich/invasion/client/render/animation/BonesMouth.java
+- 0.364 src/main/java/invmod/common/entity/ai/EntityAITargetRetaliate.java -> src/main/java/invmod/common/entity/ai/EntityAITargetRetaliate.java
+- 0.375 src/main/java/invmod/common/nexus/WaveSpawnerException.java -> src/main/java/invmod/common/nexus/WaveSpawnerException.java
+- 0.391 src/main/java/invmod/common/entity/ai/EntityAIWaitForEngy.java -> src/main/java/invmod/common/entity/ai/EntityAIWaitForEngy.java
+- 0.400 src/main/java/invmod/common/entity/Goal.java -> src/main/java/invmod/common/entity/Goal.java
+- 0.400 src/main/java/invmod/common/entity/ai/EntityAIWatchTarget.java -> src/main/java/invmod/common/entity/ai/EntityAIWatchTarget.java
+- 0.400 src/main/java/invmod/common/entity/ai/EntityAIFlyingMoveToEntity.java -> src/main/java/invmod/common/entity/ai/EntityAIFlyingMoveToEntity.java
+- 0.407 src/main/java/invmod/common/entity/ai/EntityAITargetOnNoNexusPath.java -> src/main/java/invmod/common/entity/ai/EntityAITargetOnNoNexusPath.java
+- 0.417 src/main/java/invmod/common/entity/ai/EntityAILeaderTarget.java -> src/main/java/invmod/common/entity/ai/EntityAILeaderTarget.java
+- 0.421 src/main/java/invmod/common/entity/PathAction.java -> src/main/java/invmod/common/entity/PathAction.java
+- 0.464 src/main/java/invmod/common/entity/INavigationFlying.java -> src/main/java/invmod/common/entity/INavigationFlying.java
+- 0.471 src/main/java/invmod/common/IBlockAccessExtended.java -> src/main/java/invmod/common/IBlockAccessExtended.java
+- 0.471 src/main/java/invmod/common/entity/IPathSource.java -> src/main/java/invmod/common/entity/IPathSource.java
+- 0.476 src/main/java/invmod/common/entity/BlockSpecial.java -> src/main/java/invmod/common/entity/BlockSpecial.java
+- 0.500 src/main/java/invmod/common/SparrowAPI.java -> src/main/java/invmod/common/SparrowAPI.java
+- 0.500 src/main/java/invmod/common/entity/ISpawnsOffspring.java -> src/main/java/invmod/common/entity/ISpawnsOffspring.java
+- 0.514 src/main/java/invmod/common/entity/ICanDig.java -> src/main/java/invmod/common/entity/ICanDig.java
+- 0.515 src/main/java/invmod/common/entity/INavigation.java -> src/main/java/invmod/common/entity/INavigation.java
+- 0.522 src/main/java/invmod/common/nexus/ISpawnerAccess.java -> src/main/java/invmod/common/nexus/ISpawnerAccess.java
+- 0.526 src/main/java/invmod/common/util/IPosition.java -> src/main/java/invmod/common/util/IPosition.java
+- 0.533 src/main/java/invmod/common/util/ISelect.java -> src/main/java/invmod/common/util/ISelect.java
+- 0.533 src/main/java/invmod/common/nexus/IEntityIMPattern.java -> src/main/java/invmod/common/nexus/IEntityIMPattern.java
+- 0.545 src/main/java/invmod/common/INotifyTask.java -> src/main/java/invmod/common/INotifyTask.java
+- 0.545 src/main/java/invmod/common/util/IPolarAngle.java -> src/main/java/invmod/common/util/IPolarAngle.java
+- 0.545 src/main/java/invmod/common/nexus/SpawnType.java -> src/main/java/invmod/common/nexus/SpawnType.java
+- 0.545 src/main/java/invmod/common/nexus/IWaveSource.java -> src/main/java/invmod/common/nexus/IWaveSource.java
+- 0.545 src/main/java/invmod/common/nexus/IMEntityType.java -> src/main/java/invmod/common/nexus/IMEntityType.java
+- 0.545 src/main/java/invmod/common/entity/MoveState.java -> src/main/java/invmod/common/entity/MoveState.java
+- 0.545 src/main/java/invmod/common/entity/IPathResult.java -> src/main/java/invmod/common/entity/IPathResult.java
+- 0.545 src/main/java/invmod/common/entity/ILeader.java -> src/main/java/invmod/common/entity/ILeader.java
+- 0.545 src/main/java/invmod/common/entity/FlyState.java -> src/main/java/invmod/common/entity/FlyState.java
+- 0.609 src/main/java/invmod/common/IPathfindable.java -> src/main/java/invmod/common/IPathfindable.java
+- 0.609 src/main/java/invmod/common/entity/ITerrainModify.java -> src/main/java/invmod/common/entity/ITerrainModify.java
+- 0.621 src/main/java/invmod/common/entity/ITerrainBuild.java -> src/main/java/invmod/common/entity/ITerrainBuild.java
+- 0.632 src/main/java/invmod/common/entity/ITerrainDig.java -> src/main/java/invmod/common/entity/ITerrainDig.java
+- 0.632 src/main/java/invmod/common/entity/IHasNexus.java -> src/main/java/invmod/common/entity/IHasNexus.java
+
+## Files Only In Current Repo (no direct 1.7.2 counterpart)
+- AGENTS.md
+- build.gradle
+- gradle/libs.versions.toml
+- gradle.properties
+- gradlew
+- gradlew.bat
+- gradle/wrapper/gradle-wrapper.jar
+- gradle/wrapper/gradle-wrapper.properties
+- README.md
+- settings.gradle
+- src/api/java/mcp/mobius/waila/api/IWailaConfigHandler.java
+- src/api/java/mcp/mobius/waila/api/IWailaDataAccessor.java
+- src/api/java/mcp/mobius/waila/api/IWailaDataProvider.java
+- src/api/java/mcp/mobius/waila/api/IWailaRegistrar.java
+- src/main/java/com/whammich/invasion/ClientMenuScreens.java
+- src/main/java/com/whammich/invasion/client/render/animation/AnimationAction.java
+- src/main/java/com/whammich/invasion/client/render/animation/Animation.java
+- src/main/java/com/whammich/invasion/client/render/animation/AnimationPhaseInfo.java
+- src/main/java/com/whammich/invasion/client/render/animation/AnimationState.java
+- src/main/java/com/whammich/invasion/client/render/animation/BonesBirdLegs.java
+- src/main/java/com/whammich/invasion/client/render/animation/BonesMouth.java
+- src/main/java/com/whammich/invasion/client/render/animation/BonesWings.java
+- src/main/java/com/whammich/invasion/client/render/animation/InterpType.java
+- src/main/java/com/whammich/invasion/client/render/animation/KeyFrame.java
+- src/main/java/com/whammich/invasion/client/render/animation/Transition.java
+- src/main/java/com/whammich/invasion/clientrender/ClientEntityRenderers.java
+- src/main/java/com/whammich/invasion/config/InvasionConfig.java
+- src/main/java/com/whammich/invasion/config/InvasionConfigSnapshot.java
+- src/main/java/com/whammich/invasion/InvasionMod.java
+- src/main/java/com/whammich/invasion/items/ItemBowSearing.java
+- src/main/java/com/whammich/invasion/items/ItemHammerEngineer.java
+- src/main/java/com/whammich/invasion/items/ItemMaterials.java
+- src/main/java/com/whammich/invasion/items/ItemProbe.java
+- src/main/java/com/whammich/invasion/items/ItemStrangeBone.java
+- src/main/java/com/whammich/invasion/items/ItemSwordInfused.java
+- src/main/java/com/whammich/invasion/items/ItemTrap.java
+- src/main/java/com/whammich/invasion/items/ItemWandDebug.java
+- src/main/java/com/whammich/invasion/items/ModToolMaterials.java
+- src/main/java/com/whammich/invasion/network/AdvancedSpawnData.java
+- src/main/java/com/whammich/invasion/network/NetworkHandler.java
+- src/main/java/com/whammich/invasion/network/payload/BroadcastMessagePayload.java
+- src/main/java/com/whammich/invasion/network/payload/ConfigSyncPayload.java
+- src/main/java/com/whammich/invasion/network/payload/CustomEffectPayload.java
+- src/main/java/com/whammich/invasion/network/payload/EntitySpawnDataPayload.java
+- src/main/java/com/whammich/invasion/network/payload/ItemInteractionPayload.java
+- src/main/java/com/whammich/invasion/network/payload/NexusStatusPayload.java
+- src/main/java/com/whammich/invasion/network/payload/ParticleSoundPayload.java
+- src/main/java/com/whammich/invasion/network/payload/WaveStatusPayload.java
+- src/main/java/com/whammich/invasion/Reference.java
+- src/main/java/com/whammich/invasion/registry/ModBlockEntities.java
+- src/main/java/com/whammich/invasion/registry/ModBlocks.java
+- src/main/java/com/whammich/invasion/registry/ModCreativeTabs.java
+- src/main/java/com/whammich/invasion/registry/ModEntities.java
+- src/main/java/com/whammich/invasion/registry/ModItems.java
+- src/main/java/com/whammich/invasion/registry/ModMenus.java
+- src/main/java/com/whammich/invasion/registry/ModRegistries.java
+- src/main/java/com/whammich/invasion/registry/ModSounds.java
+- src/main/java/com/whammich/invasion/registry/ModSpawnPlacements.java
+- src/main/java/com/whammich/invasion/util/LogHelper.java
+- src/main/java/invmod/common/entity/ai/AttackNexusGoal.java
+- src/main/java/invmod/common/entity/ai/IMNearestAttackableTargetGoal.java
+- src/main/java/invmod/common/nexus/NexusScreen.java
+- src/main/java/invmod/Invasion.java
+- src/main/resources/assets/invasion/blockstates/nexus.json
+- src/main/resources/assets/invasion/lang/en_us.json
+- src/main/resources/assets/invasion/models/block/nexus_active.json
+- src/main/resources/assets/invasion/models/block/nexus_inactive.json
+- src/main/resources/assets/invasion/models/item/catalyst_mixture_stable.json
+- src/main/resources/assets/invasion/models/item/catalyst_mixture_unstable.json
+- src/main/resources/assets/invasion/models/item/catalyst_strong.json
+- src/main/resources/assets/invasion/models/item/damping_agent_strong.json
+- src/main/resources/assets/invasion/models/item/damping_agent_weak.json
+- src/main/resources/assets/invasion/models/item/debug_wand.json
+- src/main/resources/assets/invasion/models/item/engineer_hammer.json
+- src/main/resources/assets/invasion/models/item/im_bird_spawn_egg.json
+- src/main/resources/assets/invasion/models/item/im_burrower_spawn_egg.json
+- src/main/resources/assets/invasion/models/item/im_imp_spawn_egg.json
+- src/main/resources/assets/invasion/models/item/im_skeleton_spawn_egg.json
+- src/main/resources/assets/invasion/models/item/im_spider_spawn_egg.json
+- src/main/resources/assets/invasion/models/item/im_thrower_spawn_egg.json
+- src/main/resources/assets/invasion/models/item/im_wolf_spawn_egg.json
+- src/main/resources/assets/invasion/models/item/im_zombie_pigman_spawn_egg.json
+- src/main/resources/assets/invasion/models/item/im_zombie_spawn_egg.json
+- src/main/resources/assets/invasion/models/item/infused_sword.json
+- src/main/resources/assets/invasion/models/item/material_probe.json
+- src/main/resources/assets/invasion/models/item/nexus_adjuster.json
+- src/main/resources/assets/invasion/models/item/nexus_catalyst_stable.json
+- src/main/resources/assets/invasion/models/item/nexus_catalyst_unstable.json
+- src/main/resources/assets/invasion/models/item/nexus.json
+- src/main/resources/assets/invasion/models/item/phase_crystal.json
+- src/main/resources/assets/invasion/models/item/rift_flux.json
+- src/main/resources/assets/invasion/models/item/searing_bow.json
+- src/main/resources/assets/invasion/models/item/searing_bow_pulling_0.json
+- src/main/resources/assets/invasion/models/item/searing_bow_pulling_1.json
+- src/main/resources/assets/invasion/models/item/searing_bow_pulling_2.json
+- src/main/resources/assets/invasion/models/item/small_remnants.json
+- src/main/resources/assets/invasion/models/item/strange_bone.json
+- src/main/resources/assets/invasion/models/item/trap_empty.json
+- src/main/resources/assets/invasion/models/item/trap_flame.json
+- src/main/resources/assets/invasion/models/item/trap_rift.json
+- src/main/resources/assets/invasion/sounds/bigzombie1.ogg
+- src/main/resources/assets/invasion/sounds/chime1.ogg
+- src/main/resources/assets/invasion/sounds/egghatch1.ogg
+- src/main/resources/assets/invasion/sounds/egghatch2.ogg
+- src/main/resources/assets/invasion/sounds/fireball1.ogg
+- src/main/resources/assets/invasion/sounds.json
+- src/main/resources/assets/invasion/sounds/rumble1.ogg
+- src/main/resources/assets/invasion/sounds/scrape1.ogg
+- src/main/resources/assets/invasion/sounds/scrape2.ogg
+- src/main/resources/assets/invasion/sounds/scrape3.ogg
+- src/main/resources/assets/invasion/sounds/v_death1.ogg
+- src/main/resources/assets/invasion/sounds/v_hiss1.ogg
+- src/main/resources/assets/invasion/sounds/v_longscreech1.ogg
+- src/main/resources/assets/invasion/sounds/v_screech1.ogg
+- src/main/resources/assets/invasion/sounds/v_screech2.ogg
+- src/main/resources/assets/invasion/sounds/v_screech3.ogg
+- src/main/resources/assets/invasion/sounds/v_squawk1.ogg
+- src/main/resources/assets/invasion/sounds/v_squawk2.ogg
+- src/main/resources/assets/invasion/sounds/v_squawk3.ogg
+- src/main/resources/assets/invasion/sounds/v_squawk4.ogg
+- src/main/resources/assets/invasion/sounds/zap1.ogg
+- src/main/resources/assets/invasion/sounds/zap2.ogg
+- src/main/resources/assets/invasion/sounds/zap3.ogg
+- src/main/resources/assets/invasion/textures/blocks/nexusSideOff.png
+- src/main/resources/assets/invasion/textures/blocks/nexusSideOn.png
+- src/main/resources/assets/invasion/textures/blocks/nexusTopOff.png
+- src/main/resources/assets/invasion/textures/blocks/nexusTopOn.png
+- src/main/resources/assets/invasion/textures/boulder.png
+- src/main/resources/assets/invasion/textures/burrower.png
+- src/main/resources/assets/invasion/textures/imp.png
+- src/main/resources/assets/invasion/textures/items/adjuster.png
+- src/main/resources/assets/invasion/textures/items/catalystMixture_stable.png
+- src/main/resources/assets/invasion/textures/items/catalystMixture_unstable.png
+- src/main/resources/assets/invasion/textures/items/catalyst_weak.png
+- src/main/resources/assets/invasion/textures/items/dampingAgent_strong.png
+- src/main/resources/assets/invasion/textures/items/dampingAgent_weak.png
+- src/main/resources/assets/invasion/textures/items/debugWand.png
+- src/main/resources/assets/invasion/textures/items/engyHammer.png
+- src/main/resources/assets/invasion/textures/items/im_bird_spawn_egg.png
+- src/main/resources/assets/invasion/textures/items/im_burrower_spawn_egg.png
+- src/main/resources/assets/invasion/textures/items/im_imp_spawn_egg.png
+- src/main/resources/assets/invasion/textures/items/im_skeleton_spawn_egg.png
+- src/main/resources/assets/invasion/textures/items/im_spider_spawn_egg.png
+- src/main/resources/assets/invasion/textures/items/im_thrower_spawn_egg.png
+- src/main/resources/assets/invasion/textures/items/im_wolf_spawn_egg.png
+- src/main/resources/assets/invasion/textures/items/im_zombie_pigman_spawn_egg.png
+- src/main/resources/assets/invasion/textures/items/im_zombie_spawn_egg.png
+- src/main/resources/assets/invasion/textures/items/infusedSword.png
+- src/main/resources/assets/invasion/textures/items/nexusCatalyst_stable.png
+- src/main/resources/assets/invasion/textures/items/nexusCatalyst_unstable.png
+- src/main/resources/assets/invasion/textures/items/phaseCrystal.png
+- src/main/resources/assets/invasion/textures/items/probe.png
+- src/main/resources/assets/invasion/textures/items/riftFlux.png
+- src/main/resources/assets/invasion/textures/items/sbowc1.png
+- src/main/resources/assets/invasion/textures/items/sbowc2.png
+- src/main/resources/assets/invasion/textures/items/sbowc3.png
+- src/main/resources/assets/invasion/textures/items/searingBow.png
+- src/main/resources/assets/invasion/textures/items/smallRemnants.png
+- src/main/resources/assets/invasion/textures/items/strangeBone.png
+- src/main/resources/assets/invasion/textures/items/trapEmpty.png
+- src/main/resources/assets/invasion/textures/items/trapPurple.png
+- src/main/resources/assets/invasion/textures/items/trapRed.png
+- src/main/resources/assets/invasion/textures/nexusgui.png
+- src/main/resources/assets/invasion/textures/pigengT1.png
+- src/main/resources/assets/invasion/textures/pigzombie64x32.png
+- src/main/resources/assets/invasion/textures/spideregg.png
+- src/main/resources/assets/invasion/textures/spiderT2b.png
+- src/main/resources/assets/invasion/textures/spiderT2.png
+- src/main/resources/assets/invasion/textures/testmodel.png
+- src/main/resources/assets/invasion/textures/throwerT1.png
+- src/main/resources/assets/invasion/textures/throwerT2.png
+- src/main/resources/assets/invasion/textures/trap.png
+- src/main/resources/assets/invasion/textures/vulture.png
+- src/main/resources/assets/invasion/textures/wolf_tame_nexus.png
+- src/main/resources/assets/invasion/textures/zombie_old.png
+- src/main/resources/assets/invasion/textures/zombiePigmanT3.png
+- src/main/resources/assets/invasion/textures/zombieT1a.png
+- src/main/resources/assets/invasion/textures/zombieT2a.png
+- src/main/resources/assets/invasion/textures/zombieT2old.png
+- src/main/resources/assets/invasion/textures/zombieT2.png
+- src/main/resources/assets/invasion/textures/zombieT3.png
+- src/main/resources/assets/invasion/textures/zombietar.png
+- src/main/resources/data/invasion/loot_tables/blocks/nexus.json
+- src/main/resources/data/invasion/loot_tables/entities/im_bird.json
+- src/main/resources/data/invasion/loot_tables/entities/im_bolt.json
+- src/main/resources/data/invasion/loot_tables/entities/im_boulder.json
+- src/main/resources/data/invasion/loot_tables/entities/im_burrower.json
+- src/main/resources/data/invasion/loot_tables/entities/im_egg.json
+- src/main/resources/data/invasion/loot_tables/entities/im_imp.json
+- src/main/resources/data/invasion/loot_tables/entities/im_primed_tnt.json
+- src/main/resources/data/invasion/loot_tables/entities/im_sfx.json
+- src/main/resources/data/invasion/loot_tables/entities/im_skeleton.json
+- src/main/resources/data/invasion/loot_tables/entities/im_spawn_proxy.json
+- src/main/resources/data/invasion/loot_tables/entities/im_spider.json
+- src/main/resources/data/invasion/loot_tables/entities/im_thrower.json
+- src/main/resources/data/invasion/loot_tables/entities/im_trap.json
+- src/main/resources/data/invasion/loot_tables/entities/im_wolf.json
+- src/main/resources/data/invasion/loot_tables/entities/im_zombie.json
+- src/main/resources/data/invasion/loot_tables/entities/im_zombie_pigman.json
+- src/main/resources/data/invasion/recipes/catalyst_mixture_stable.json
+- src/main/resources/data/invasion/recipes/catalyst_mixture_unstable.json
+- src/main/resources/data/invasion/recipes/catalyst_strong.json
+- src/main/resources/data/invasion/recipes/damping_agent_strong.json
+- src/main/resources/data/invasion/recipes/damping_agent_weak.json
+- src/main/resources/data/invasion/recipes/debug_wand.json
+- src/main/resources/data/invasion/recipes/engineer_hammer.json
+- src/main/resources/data/invasion/recipes/infused_sword.json
+- src/main/resources/data/invasion/recipes/material_probe.json
+- src/main/resources/data/invasion/recipes/nexus_adjuster.json
+- src/main/resources/data/invasion/recipes/nexus_catalyst_stable.json
+- src/main/resources/data/invasion/recipes/nexus_catalyst_unstable.json
+- src/main/resources/data/invasion/recipes/nexus.json
+- src/main/resources/data/invasion/recipes/phase_crystal.json
+- src/main/resources/data/invasion/recipes/rift_flux.json
+- src/main/resources/data/invasion/recipes/searing_bow.json
+- src/main/resources/data/invasion/recipes/small_remnants.json
+- src/main/resources/data/invasion/recipes/strange_bone.json
+- src/main/resources/data/invasion/recipes/trap_empty.json
+- src/main/resources/data/invasion/recipes/trap_flame.json
+- src/main/resources/data/invasion/recipes/trap_rift.json
+- src/main/resources/data/invasion/tags/blocks/nexus.json
+- src/main/resources/data/invasion/tags/items/infused_tool_materials.json
+- src/main/resources/data/invasion/tags/items/materials.json
+- src/main/resources/data/invasion/tags/items/spawn_eggs.json
+- src/main/resources/data/invasion/tags/items/tools.json
+- src/main/resources/data/invasion/tags/items/traps.json
+- src/main/resources/data/invasion/tags/items/weapons.json
+- src/main/resources/data/minecraft/tags/blocks/mineable/pickaxe.json
+- src/main/resources/data/minecraft/tags/items/spawn_eggs.json
+- src/main/resources/META-INF/neoforge.mods.toml
+
+## Build Errors (full-source build)
+From `./gradlew build` with full-source compilation enabled:
+- invmod/common/entity/NavigatorIM.java: PathNavigationRegion missing
+- invmod/common/entity/EntityIMFlying.java: World/IBlockAccess missing
+- invmod/common/entity/TerrainModifier.java: EntityLiving missing
+- invmod/common/entity/EntityIMCreeper.java: old net.minecraft.entity.*, DamageSource, Explosion missing
+- invmod/common/entity/ai/*: EntityAIBase, EntityLivingBase, Entity*, DamageSource missing
+- invmod/common/entity/ai/EntityAILeaderTarget.java: EntityLiving missing
+- invmod/common/entity/ai/EntityAISimpleTarget.java: EntityLivingBase/EntityPlayer missing
+- invmod/common/entity/ai/EntityAIFollowEntity.java: Entity/EntityLivingBase missing
+- invmod/common/entity/ai/EntityAIFlyingTackle.java: EntityAIBase/EntityLivingBase missing
+- invmod/common/entity/ai/EntityAIMeleeAttack.java: EntityAIBase/EntityLivingBase missing
+- invmod/common/entity/ai/EntityAIMeleeFight.java: Entity/EntityLivingBase missing
+- invmod/common/entity/ai/EntityAIBoP.java: EntityAIBase/EntityLivingBase missing
+- invmod/common/entity/ai/EntityAIGoToNexus.java: EntityAIBase missing
+- invmod/common/entity/ai/EntityAIThrowerKillEntity.java: Entity/EntityLivingBase missing
+- invmod/common/entity/ai/EntityAIKillEntity.java: Entity/EntityLivingBase missing
+- invmod/common/entity/ai/EntityAIWingAttack.java: EntityLivingBase missing
+- invmod/common/entity/ai/EntityAISprinpigman.java: Entity/EntityAIBase/DamageSource missing
+- invmod/common/entity/ai/EntityAITargetOnNoNexusPath.java: EntityLiving missing
+- invmod/common/entity/ai/EntityAIStoop.java: EntityAIBase missing
+- invmod/common/entity/ai/EntityAIBirdFight.java: Entity/EntityLivingBase missing
+
