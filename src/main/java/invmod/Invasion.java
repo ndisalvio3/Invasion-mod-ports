@@ -6,7 +6,11 @@ import com.whammich.invasion.network.NetworkHandler;
 import com.whammich.invasion.registry.ModBlocks;
 import com.whammich.invasion.registry.ModItems;
 import invmod.common.nexus.TileEntityNexus;
+import invmod.common.nexus.IEntityIMPattern;
+import invmod.common.nexus.IMWaveBuilder;
 import invmod.common.nexus.MobBuilder;
+import invmod.common.util.ISelect;
+import invmod.common.util.RandomSelectionPool;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -21,13 +25,21 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public final class Invasion {
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public static final String[] DEFAULT_NIGHT_MOB_PATTERN_1_SLOTS = new String[] {"IMZombie", "IMZombie", "IMSpider"};
+    public static final String[] DEFAULT_NIGHT_MOB_PATTERN_1_SLOTS = new String[] {
+        "zombie_t1_any", "zombie_t2_any_basic", "zombie_t2_plain", "zombie_t2_tar",
+        "zombie_t3_any", "zombiePigman_t1_any", "zombiePigman_t2_any", "zombiePigman_t3_any", "spider_t1_any",
+        "spider_t2_any", "pigengy_t1_any", "skeleton_t1_any", "thrower_t1", "thrower_t2", "creeper_t1_basic",
+        "imp_t1"
+    };
+    private static final float[] DEFAULT_NIGHT_MOB_PATTERN_1_SLOT_WEIGHTS = new float[] {
+        1.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.5F,
+        0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F
+    };
 
     public static final Map<String, Integer> mobHealthInvasion = new HashMap<>();
     public static final Map<String, Integer> mobHealthNightspawn = new HashMap<>();
@@ -44,6 +56,7 @@ public final class Invasion {
     public static String recentNews = "null";
 
     private static final MobBuilder MOB_BUILDER = new MobBuilder();
+    private static volatile ISelect<IEntityIMPattern> nightSpawnPool1;
     private static TileEntityNexus focusNexus;
     private static TileEntityNexus activeNexus;
     private static volatile InvasionConfigSnapshot serverConfigSnapshot;
@@ -136,7 +149,52 @@ public final class Invasion {
         if (!getNightSpawnsEnabled()) {
             return new Entity[0];
         }
-        return new Entity[0];
+        if (level == null) {
+            return new Entity[0];
+        }
+        ISelect<IEntityIMPattern> mobPool = getNightSpawnPool();
+        if (mobPool == null) {
+            return new Entity[0];
+        }
+        int numberOfMobs = level.getRandom().nextInt(getNightMobMaxGroupSize()) + 1;
+        ArrayList<Entity> entities = new ArrayList<>(numberOfMobs);
+        for (int i = 0; i < numberOfMobs; i++) {
+            IEntityIMPattern pattern = mobPool.selectNext();
+            if (pattern == null) {
+                continue;
+            }
+            Entity entity = getMobBuilder().createMobFromConstruct(pattern.generateEntityConstruct(), level, null);
+            if (entity != null) {
+                entities.add(entity);
+            }
+        }
+        return entities.toArray(new Entity[0]);
+    }
+
+    private static ISelect<IEntityIMPattern> getNightSpawnPool() {
+        ISelect<IEntityIMPattern> currentPool = nightSpawnPool1;
+        if (currentPool != null) {
+            return currentPool;
+        }
+        if (DEFAULT_NIGHT_MOB_PATTERN_1_SLOTS.length != DEFAULT_NIGHT_MOB_PATTERN_1_SLOT_WEIGHTS.length) {
+            log("Mob pattern table element mismatch. Ensure each slot has a probability weight");
+            return null;
+        }
+        RandomSelectionPool<IEntityIMPattern> mobPool = new RandomSelectionPool<>();
+        for (int i = 0; i < DEFAULT_NIGHT_MOB_PATTERN_1_SLOTS.length; i++) {
+            String patternName = DEFAULT_NIGHT_MOB_PATTERN_1_SLOTS[i];
+            float weight = DEFAULT_NIGHT_MOB_PATTERN_1_SLOT_WEIGHTS[i];
+            if (weight <= 0.0F) {
+                continue;
+            }
+            if (IMWaveBuilder.isPatternNameValid(patternName)) {
+                mobPool.addEntry(IMWaveBuilder.getPattern(patternName), weight);
+            } else {
+                log("Night spawn pattern slot " + (i + 1) + " not recognized: " + patternName);
+            }
+        }
+        nightSpawnPool1 = mobPool;
+        return mobPool;
     }
 
     public static ItemStack getRenderHammerItem() {
