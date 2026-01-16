@@ -13,6 +13,12 @@ group = mod_group_id
 
 repositories {
     mavenLocal()
+    maven {
+        url "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 base {
@@ -51,8 +57,6 @@ sourceSets {
         java {
             srcDirs 'src/main/java', 'src/api/java'
             include 'com/**'
-            exclude 'com/whammich/invasion/client/**'
-            exclude 'com/whammich/invasion/ConfigHandler.java'
             include 'invmod/Invasion.java'
             include 'invmod/common/Config*.java'
             include 'invmod/common/SimplyID.java'
@@ -62,10 +66,6 @@ sourceSets {
             include 'invmod/common/INotifyTask.java'
             include 'invmod/common/SparrowAPI.java'
             include 'invmod/common/util/**'
-            exclude 'invmod/common/util/IMWailaProvider.java'
-            exclude 'invmod/common/util/VersionChecker.java'
-            exclude 'invmod/common/util/ThreadGetData.java'
-            exclude 'invmod/common/util/ExplosionUtil.java'
             include 'invmod/common/entity/Goal.java'
             include 'invmod/common/entity/NodeContainer.java'
             include 'invmod/common/entity/Path.java'
@@ -143,6 +143,7 @@ configurations {
 
 dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
+    compileOnly "maven.modrinth:nvQzSEkH:${jade_version}"
 }
 
 tasks.withType(ProcessResources).configureEach {

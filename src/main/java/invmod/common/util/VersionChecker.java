@@ -1,7 +1,7 @@
 package invmod.common.util;
 
 import invmod.Invasion;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -13,13 +13,15 @@ import java.util.List;
 public class VersionChecker {
 
 
-    public static boolean checkForUpdates(EntityPlayerMP entityplayer) {
+    public static boolean checkForUpdates(ServerPlayer player) {
         try {
             if (Invasion.getUpdateNotifications() && Invasion.getLatestVersionNumber() != null && Invasion.getRecentNews() != null) {
                 if (!Invasion.getLatestVersionNumber().equals("null")) {
-                    if (Version.get(Invasion.getLatestVersionNumber()).comparedState(Invasion.getVersionNumber()) == 1) {
-                        Invasion.sendMessageToPlayer(entityplayer, "Invasion mod outdated, consider updating to the latest version");
-                        Invasion.sendMessageToPlayer(entityplayer, "Changes in v" + Invasion.getLatestVersionNumber() + ": " + Invasion.getRecentNews());
+                    Version latest = Version.get(Invasion.getLatestVersionNumber());
+                    Version current = Version.get(Invasion.getVersionNumber());
+                    if (latest != null && current != null && latest.comparedState(current) == 1) {
+                        Invasion.sendMessageToPlayer(player, "Invasion mod outdated, consider updating to the latest version");
+                        Invasion.sendMessageToPlayer(player, "Changes in v" + Invasion.getLatestVersionNumber() + ": " + Invasion.getRecentNews());
                         return true;
                     }
                 }

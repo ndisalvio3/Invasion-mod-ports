@@ -2,58 +2,67 @@ package invmod.common.util;
 
 import invmod.common.nexus.BlockNexus;
 import invmod.common.nexus.TileEntityNexus;
-import mcp.mobius.waila.api.IWailaConfigHandler;
-import mcp.mobius.waila.api.IWailaDataAccessor;
-import mcp.mobius.waila.api.IWailaDataProvider;
-import mcp.mobius.waila.api.IWailaRegistrar;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.ResourceLocation;
+import snownee.jade.api.BlockAccessor;
+import snownee.jade.api.IComponentProvider;
+import snownee.jade.api.IServerDataProvider;
+import snownee.jade.api.ITooltip;
+import snownee.jade.api.IWailaClientRegistration;
+import snownee.jade.api.IWailaCommonRegistration;
+import snownee.jade.api.IWailaPlugin;
+import snownee.jade.api.TooltipPosition;
+import snownee.jade.api.WailaPlugin;
+import snownee.jade.api.config.IPluginConfig;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.StatCollector;
-import net.minecraft.world.level.Level;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
-import java.util.List;
-
-public class IMWailaProvider implements IWailaDataProvider {
-
-    public static void callbackRegister(IWailaRegistrar registrar) {
-        registrar.registerBodyProvider(new IMWailaProvider(), BlockNexus.class);
+@WailaPlugin
+public final class IMWailaProvider implements IWailaPlugin {
+    @Override
+    public void register(IWailaCommonRegistration registration) {
+        registration.registerBlockDataProvider(NexusComponentProvider.INSTANCE, TileEntityNexus.class);
     }
 
     @Override
-    public ItemStack getWailaStack(IWailaDataAccessor accessor, IWailaConfigHandler config) {
-        return null;
+    public void registerClient(IWailaClientRegistration registration) {
+        registration.registerBlockComponent(NexusComponentProvider.INSTANCE, BlockNexus.class);
     }
 
-    @Override
-    public List<String> getWailaHead(ItemStack itemStack, List<String> currenttip, IWailaDataAccessor accessor, IWailaConfigHandler config) {
-        return currenttip;
-    }
+    private enum NexusComponentProvider implements IComponentProvider<BlockAccessor>, IServerDataProvider<BlockAccessor> {
+        INSTANCE;
 
-    @Override
-    public List<String> getWailaBody(ItemStack itemStack, List<String> currenttip, IWailaDataAccessor accessor, IWailaConfigHandler config) {
-        TileEntityNexus teNexus = (TileEntityNexus) accessor.getTileEntity();
-        if (teNexus != null) {
+        private static final String KEY_ACTIVE = "invasionActive";
+        private static final String KEY_WAVE = "invasionWave";
+        private static final ResourceLocation UID = ResourceLocation.fromNamespaceAndPath("invasion", "nexus");
 
-            currenttip.add(String.format(StatCollector.translateToLocal("waila.invasion.status"), teNexus.isActive()));
-            if (teNexus.isActive()) {
-                int waveNumber = teNexus.getCurrentWave();
-                currenttip.add(String.format(StatCollector.translateToLocal("waila.invasion.wavenumber"), waveNumber));
+        @Override
+        public ResourceLocation getUid() {
+            return UID;
+        }
+
+        @Override
+        public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
+            CompoundTag data = accessor.getServerData();
+            boolean active = data.getBooleanOr(KEY_ACTIVE, false);
+            tooltip.add(Component.translatable("waila.invasion.status", active));
+            if (active) {
+                int wave = data.getIntOr(KEY_WAVE, 0);
+                tooltip.add(Component.translatable("waila.invasion.wavenumber", wave));
             }
         }
 
-        return currenttip;
-    }
+        @Override
+        public void appendServerData(CompoundTag data, BlockAccessor accessor) {
+            BlockEntity blockEntity = accessor.getBlockEntity();
+            if (!(blockEntity instanceof TileEntityNexus nexus)) {
+                return;
+            }
 
-    @Override
-    public List<String> getWailaTail(ItemStack itemStack, List<String> currenttip, IWailaDataAccessor accessor, IWailaConfigHandler config) {
-        return currenttip;
+            data.putBoolean(KEY_ACTIVE, nexus.isActive());
+            if (nexus.isActive()) {
+                data.putInt(KEY_WAVE, nexus.getCurrentWave());
+            }
+        }
     }
-
-    @Override
-    public NBTTagCompound getNBTData(EntityPlayerMP player, TileEntity te, NBTTagCompound tag, World world, int x, int y, int z) {
-        return null;
-    }
-
 }
