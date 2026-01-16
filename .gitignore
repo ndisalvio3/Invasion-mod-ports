@@ -15,6 +15,7 @@
 /libs/
 /logs/
 /.vscode/
+/.aim/
 
 # File Extensions
 *.psd
