@@ -3,8 +3,10 @@
 This file lists all reconciliation work required to reach 1:1 parity with the 1.7.2 reference repo.
 Generated from local diff reports in /tmp/invasion-recon and file set comparisons.
 
-## Missing From Current Repo (present in 1.7.2)
+## Done
 - src/main/java/assets/invmod/lang/en_US.lang
+
+## Missing From Current Repo (present in 1.7.2)
 - src/main/java/assets/invmod/sounds/bigzombie1.ogg
 - src/main/java/assets/invmod/sounds/chime1.ogg
 - src/main/java/assets/invmod/sounds/egghatch1.ogg
@@ -655,4 +657,3 @@ From `./gradlew build` with full-source compilation enabled:
 - invmod/common/entity/ai/EntityAITargetOnNoNexusPath.java: EntityLiving missing
 - invmod/common/entity/ai/EntityAIStoop.java: EntityAIBase missing
 - invmod/common/entity/ai/EntityAIBirdFight.java: Entity/EntityLivingBase missing
-
