@@ -6,6 +6,7 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 ## In Progress
 
 ## Done
+- Fix build errors with full-source compilation enabled (enable compilation for all sources; no disabling) (no errors found; build already compiles full sources)
 - Port legacy invmod entity/ai classes to modern API (compile errors)
 - src/main/java/assets/invmod/lang/en_US.lang
 - src/main/java/assets/invmod/sounds/bigzombie1.ogg
