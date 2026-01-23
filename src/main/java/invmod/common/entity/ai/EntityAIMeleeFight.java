@@ -3,10 +3,10 @@ package invmod.common.entity.ai;
 import invmod.common.entity.EntityIMLiving;
 import invmod.common.entity.Goal;
 import invmod.common.entity.INavigation;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
-public class EntityAIMeleeFight<T extends EntityLivingBase> extends EntityAIMeleeAttack<T> {
+public class EntityAIMeleeFight<T extends LivingEntity> extends EntityAIMeleeAttack<T> {
     private EntityIMLiving theEntity;
     private int time;
     private float startingHealth;
@@ -66,7 +66,7 @@ public class EntityAIMeleeFight<T extends EntityLivingBase> extends EntityAIMele
         return (this.theEntity.getAIGoal() == Goal.LEAVE_MELEE) && (this.theEntity.getPrevAIGoal() == Goal.MELEE_TARGET);
     }
 
-    protected void attackEntity(EntityLivingBase target) {
+    protected void attackEntity(LivingEntity target) {
         float h = target.getHealth();
         super.attackEntity(target);
         h -= target.getHealth();

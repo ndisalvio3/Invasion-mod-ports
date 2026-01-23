@@ -4,10 +4,9 @@ package invmod.common.entity.ai;
 import invmod.common.entity.EntityIMFlying;
 import invmod.common.entity.Goal;
 import invmod.common.entity.INavigationFlying;
-import net.minecraft.entity.ai.EntityAIBase;
 
 
-public class EntityAICircleTarget extends EntityAIBase {
+public class EntityAICircleTarget extends LegacyGoal {
     private static final int ATTACK_SEARCH_TIME = 400;
     private EntityIMFlying theEntity;
     private int time;

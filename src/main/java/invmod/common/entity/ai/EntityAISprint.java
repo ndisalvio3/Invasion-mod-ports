@@ -1,11 +1,10 @@
 package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.util.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.damagesource.DamageSource;
 
-public class EntityAISprint extends EntityAIBase {
+public class EntityAISprint extends LegacyGoal {
     private EntityIMLiving theEntity;
     private int updateTimer;
     private int timer;
@@ -54,9 +53,9 @@ public class EntityAISprint extends EntityAIBase {
                 return;
             }
 
-            double dX = target.posX - this.theEntity.posX;
-            double dZ = target.posZ - this.theEntity.posZ;
-            double dAngle = (Math.atan2(dZ, dX) * 180.0D / 3.141592653589793D - 90.0D - this.theEntity.rotationYaw) % 360.0D;
+            double dX = target.getX() - this.theEntity.getX();
+            double dZ = target.getZ() - this.theEntity.getZ();
+            double dAngle = (Math.atan2(dZ, dX) * 180.0D / 3.141592653589793D - 90.0D - this.theEntity.getYRot()) % 360.0D;
             if (dAngle > 60.0D) {
                 this.theEntity.setTurnRate(2.0F);
                 this.missingTarget = 1;
@@ -67,9 +66,9 @@ public class EntityAISprint extends EntityAIBase {
                 return;
             }
 
-            this.lastX = this.theEntity.posX;
-            this.lastY = this.theEntity.posY;
-            this.lastZ = this.theEntity.posZ;
+            this.lastX = this.theEntity.getX();
+            this.lastY = this.theEntity.getY();
+            this.lastZ = this.theEntity.getZ();
         }
 
         if (--this.timer <= 0) {
@@ -87,12 +86,12 @@ public class EntityAISprint extends EntityAIBase {
 
     protected void startSprint() {
         Entity target = this.theEntity.getAttackTarget();
-        if ((target == null) || (target.boundingBox.minY - this.theEntity.posY >= 1.0D)) {
+        if ((target == null) || (target.getBoundingBox().minY - this.theEntity.getY() >= 1.0D)) {
             return;
         }
-        double dX = target.posX - this.theEntity.posX;
-        double dZ = target.posZ - this.theEntity.posZ;
-        double dAngle = (Math.atan2(dZ, dX) * 180.0D / 3.141592653589793D - 90.0D - this.theEntity.rotationYaw) % 360.0D;
+        double dX = target.getX() - this.theEntity.getX();
+        double dZ = target.getZ() - this.theEntity.getZ();
+        double dAngle = (Math.atan2(dZ, dX) * 180.0D / 3.141592653589793D - 90.0D - this.theEntity.getYRot()) % 360.0D;
         if (dAngle < 10.0D) {
             this.isInWindup = true;
             this.timer = 20;
@@ -126,7 +125,7 @@ public class EntityAISprint extends EntityAIBase {
 
     protected void crash() {
         this.theEntity.stunEntity(40);
-        this.theEntity.attackEntityFrom(DamageSource.generic, 5.0F);
+        this.theEntity.hurt(this.theEntity.damageSources().generic(), 5.0F);
         this.theEntity.worldObj.playSoundAtEntity(this.theEntity, "random.explode", 1.0F, 0.6F);
         endSprint();
     }

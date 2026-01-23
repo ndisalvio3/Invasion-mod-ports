@@ -2,10 +2,9 @@ package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMLiving;
 import invmod.common.entity.Goal;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.world.entity.LivingEntity;
 
-public class EntityAIMeleeAttack<T extends EntityLivingBase> extends EntityAIBase {
+public class EntityAIMeleeAttack<T extends LivingEntity> extends LegacyGoal {
     private EntityIMLiving theEntity;
     private Class<? extends T> targetClass;
     private float attackRange;
@@ -21,12 +20,12 @@ public class EntityAIMeleeAttack<T extends EntityLivingBase> extends EntityAIBas
     }
 
     public boolean shouldExecute() {
-        EntityLivingBase target = this.theEntity.getAttackTarget();
-        return (target != null) && (this.theEntity.getAIGoal() == Goal.MELEE_TARGET) && (this.theEntity.getDistanceToEntity(target) < (this.attackRange + this.theEntity.width + target.width) * 4.0F) && (target.getClass().isAssignableFrom(this.targetClass));
+        LivingEntity target = this.theEntity.getAttackTarget();
+        return (target != null) && (this.theEntity.getAIGoal() == Goal.MELEE_TARGET) && (this.theEntity.getDistanceToEntity(target) < (this.attackRange + this.theEntity.getBbWidth() + target.getBbWidth()) * 4.0F) && (target.getClass().isAssignableFrom(this.targetClass));
     }
 
     public void updateTask() {
-        EntityLivingBase target = this.theEntity.getAttackTarget();
+        LivingEntity target = this.theEntity.getAttackTarget();
         if (canAttackEntity(target)) {
             attackEntity(target);
         }
@@ -37,15 +36,15 @@ public class EntityAIMeleeAttack<T extends EntityLivingBase> extends EntityAIBas
         return this.targetClass;
     }
 
-    protected void attackEntity(EntityLivingBase target) {
+    protected void attackEntity(LivingEntity target) {
         this.theEntity.attackEntityAsMob(target);
         setAttackTime(getAttackDelay());
     }
 
-    protected boolean canAttackEntity(EntityLivingBase target) {
+    protected boolean canAttackEntity(LivingEntity target) {
         if (getAttackTime() <= 0) {
-            double d = this.theEntity.width + this.attackRange;
-            return this.theEntity.getDistanceSq(target.posX, target.boundingBox.minY, target.posZ) < d * d;
+            double d = this.theEntity.getBbWidth() + this.attackRange;
+            return this.theEntity.getDistanceSq(target.getX(), target.getBoundingBox().minY, target.getZ()) < d * d;
         }
         return false;
     }

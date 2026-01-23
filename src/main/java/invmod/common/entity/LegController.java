@@ -23,8 +23,8 @@ public class LegController {
     public void update() {
         AnimationAction currAnimation = this.animationRun.getCurrentAction();
         if (this.theEntity.getMoveState() == MoveState.RUNNING) {
-            double dX = this.theEntity.posX - this.theEntity.lastTickPosX;
-            double dZ = this.theEntity.posZ - this.theEntity.lastTickPosZ;
+            double dX = this.theEntity.getDeltaMovement().x;
+            double dZ = this.theEntity.getDeltaMovement().z;
             double dist = Math.sqrt(dX * dX + dZ * dZ);
             float speed = 0.2F + (float) dist * 1.3F;
 

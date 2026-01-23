@@ -9,9 +9,8 @@ import invmod.common.nexus.INexusAccess;
 import invmod.common.util.CoordsInt;
 import invmod.common.util.Distance;
 import invmod.common.util.IPosition;
-import net.minecraft.entity.ai.EntityAIBase;
 
-public class EntityAIGoToNexus extends EntityAIBase {
+public class EntityAIGoToNexus extends LegacyGoal {
     private EntityIMMob theEntity;
     private IPosition lastPathRequestPos;
     private int pathRequestTimer;
@@ -58,7 +57,7 @@ public class EntityAIGoToNexus extends EntityAIBase {
                 pathSet = this.theEntity.getNavigatorNew().tryMoveToXYZ(nexus.getXCoord(), nexus.getYCoord(), nexus.getZCoord(), 1.0F, this.theEntity.getMoveSpeedStat());
             }
 
-            if ((!pathSet) || ((this.theEntity.getNavigatorNew().getLastPathDistanceToTarget() > 3.0F) && (Distance.distanceBetween(this.lastPathRequestPos, this.theEntity) < 3.5D))) {
+            if ((!pathSet) || ((this.theEntity.getNavigatorNew().getLastPathDistanceToTarget() > 3.0F) && (Distance.distanceBetween(this.lastPathRequestPos, this.theEntity.position()) < 3.5D))) {
                 this.pathFailedCount += 1;
                 this.pathRequestTimer = (40 * this.pathFailedCount + this.theEntity.worldObj.rand.nextInt(10));
             } else {

@@ -82,7 +82,7 @@ public class EntityAIPounce extends Goal {
         if (a > -0.7853981633974483D && a < 0.7853981633974483D) {
             double rratio = (1.0D - Math.tan(a)) * (1.0D / Math.cos(a));
             double r = dXZ / rratio;
-        double gravity = spider.getGravity();
+        double gravity = spider.getLegacyGravity();
         if (gravity <= 0.0D) {
             return false;
         }

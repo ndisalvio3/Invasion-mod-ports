@@ -4,7 +4,7 @@ import com.whammich.invasion.client.render.animation.AnimationAction;
 import com.whammich.invasion.client.render.animation.AnimationState;
 
 public class MouthController {
-    private EntityIMLiving theEntity;
+    private EntityIMBird theEntity;
     private AnimationState mouthState;
     private int mouthOpenTime;
 

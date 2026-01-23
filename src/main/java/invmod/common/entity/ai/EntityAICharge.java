@@ -1,16 +1,14 @@
 package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMLiving;
-import invmod.common.entity.EntityIMZombiePigman;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class EntityAICharge<T extends EntityLivingBase> extends EntityAIMoveToEntity<T> {
-    protected EntityCreature charger;
-    protected EntityLivingBase chargeTarget;
+public class EntityAICharge<T extends LivingEntity> extends EntityAIMoveToEntity<T> {
+    protected EntityIMLiving charger;
+    protected LivingEntity chargeTarget;
     protected double chargeX;
     protected double chargeY;
     protected double chargeZ;
@@ -48,7 +46,7 @@ public class EntityAICharge<T extends EntityLivingBase> extends EntityAIMoveToEn
         if ((distance < 5.0D) || (distance > 20.0D)) {
             return false;
         }
-        if (!this.charger.onGround) {
+        if (!this.charger.onGround()) {
             return false;
         }
         Vec3 chargePos = findChargePoint(this.charger, this.chargeTarget, 6.0D);
@@ -57,9 +55,9 @@ public class EntityAICharge<T extends EntityLivingBase> extends EntityAIMoveToEn
         }
 
 
-        this.chargeX = chargePos.xCoord;
-        this.chargeY = chargePos.yCoord;
-        this.chargeZ = chargePos.zCoord;
+        this.chargeX = chargePos.x;
+        this.chargeY = chargePos.y;
+        this.chargeZ = chargePos.z;
 
         return this.charger.getRNG().nextInt(1) == 0;
     }
@@ -81,20 +79,16 @@ public class EntityAICharge<T extends EntityLivingBase> extends EntityAIMoveToEn
 
     @Override
     public void updateTask() {
-        this.charger.getLookHelper().setLookPosition(this.chargeX, this.chargeY - 1.0D, this.chargeZ, 10.0F, this.charger.getVerticalFaceSpeed());
+        this.charger.getLookControl().setLookAt(this.chargeX, this.chargeY - 1.0D, this.chargeZ);
         if (this.windup > 0) {
             if (--this.windup == 0) {
-                this.charger.getNavigator().tryMoveToXYZ(this.chargeX, this.chargeY, this.chargeZ, this.speed);
+                this.charger.getNavigation().moveTo(this.chargeX, this.chargeY, this.chargeZ, this.speed);
             } else {
-                EntityCreature tmp90_87 = this.charger;
-                tmp90_87.limbSwingAmount = ((float) (tmp90_87.limbSwingAmount + 0.8D));
-                if ((this.charger instanceof EntityIMZombiePigman)) {
-                    ((EntityIMZombiePigman) this.charger).setCharging(true);
-                }
+                // charging animation handled by pigman-specific logic elsewhere
             }
         }
-        double var1 = this.charger.width * 2.1F * this.charger.width * 2.1F;
-        if (this.charger.getDistanceSq(this.chargeTarget.posX, this.chargeTarget.boundingBox.minY, this.chargeTarget.posZ) <= var1) {
+        double var1 = this.charger.getBbWidth() * 2.1F * this.charger.getBbWidth() * 2.1F;
+        if (this.charger.getDistanceSq(this.chargeTarget.getX(), this.chargeTarget.getBoundingBox().minY, this.chargeTarget.getZ()) <= var1) {
             if (!this.hasAttacked) {
                 this.hasAttacked = true;
                 this.charger.attackEntityAsMob(this.chargeTarget);
@@ -109,22 +103,19 @@ public class EntityAICharge<T extends EntityLivingBase> extends EntityAIMoveToEn
         this.hasAttacked = false;
         this.chargeDelay = 100;
         this.runTime = 15;
-        if ((this.charger instanceof EntityIMZombiePigman)) {
-            ((EntityIMZombiePigman) this.charger).setCharging(false);
-        }
+        // charging animation handled by pigman-specific logic elsewhere
     }
 
     protected Vec3 findChargePoint(Entity attacker, Entity target, double overshoot) {
-        double vecx = target.posX - attacker.posX;
-        double vecz = target.posZ - attacker.posZ;
+        double vecx = target.getX() - attacker.getX();
+        double vecz = target.getZ() - attacker.getZ();
         float rangle = (float) Math.atan2(vecz, vecx);
 
-        double distance = MathHelper.sqrt_double(vecx * vecx + vecz * vecz);
+        double distance = Mth.sqrt((float) (vecx * vecx + vecz * vecz));
 
-        double dx = MathHelper.cos(rangle) * (distance + overshoot);
-        double dz = MathHelper.sin(rangle) * (distance + overshoot);
+        double dx = Mth.cos(rangle) * (distance + overshoot);
+        double dz = Mth.sin(rangle) * (distance + overshoot);
 
-        return Vec3.createVectorHelper((attacker.posX + dx), target.posY, (attacker.posZ + dz));
+        return new Vec3((attacker.getX() + dx), target.getY(), (attacker.getZ() + dz));
     }
 }
-

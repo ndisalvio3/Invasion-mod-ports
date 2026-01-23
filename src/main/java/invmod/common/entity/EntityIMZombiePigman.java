@@ -15,6 +15,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -46,11 +47,16 @@ public class EntityIMZombiePigman extends Monster implements IHasNexus {
     private boolean charging;
     private int chargeTicks;
     private int chargeCooldown;
+    private float baseMoveSpeed = 0.23F;
+    private float turnRate = 30.0F;
+    public int attackTime;
+    public final LegacyWorld worldObj;
 
     public EntityIMZombiePigman(EntityType<? extends EntityIMZombiePigman> type, Level level) {
         super(type, level);
         this.tier = 1;
         this.flavour = 0;
+        this.worldObj = new LegacyWorld(level);
         applyAttributes();
     }
 
@@ -81,6 +87,53 @@ public class EntityIMZombiePigman extends Monster implements IHasNexus {
         entityData.set(DATA_TIER, normalizedTier);
         applyAttributes();
         applyDefaultTextureIfUnset();
+    }
+
+    public LivingEntity getAttackTarget() {
+        return getTarget();
+    }
+
+    public void setMoveSpeedStat(float speed) {
+        AttributeInstance speedAttr = getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speedAttr != null) {
+            speedAttr.setBaseValue(speed);
+        }
+    }
+
+    public float getMoveSpeedStat() {
+        AttributeInstance speedAttr = getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speedAttr != null) {
+            return (float) speedAttr.getValue();
+        }
+        return baseMoveSpeed;
+    }
+
+    public void resetMoveSpeed() {
+        setMoveSpeedStat(baseMoveSpeed);
+    }
+
+    public float getTurnRate() {
+        return turnRate;
+    }
+
+    public void setTurnRate(float turnRate) {
+        this.turnRate = turnRate;
+    }
+
+    public void stunEntity(int ticks) {
+        // no-op for now
+    }
+
+    public boolean canEntityBeSeen(Entity entity) {
+        return getSensing().hasLineOfSight(entity);
+    }
+
+    public double getDistanceSq(double x, double y, double z) {
+        return distanceToSqr(x, y, z);
+    }
+
+    public void updateAnimation(boolean sprinting) {
+        // no-op for now
     }
 
     public int getTier() {
@@ -287,6 +340,7 @@ public class EntityIMZombiePigman extends Monster implements IHasNexus {
         if (speedAttribute != null) {
             speedAttribute.setBaseValue(moveSpeed);
         }
+        this.baseMoveSpeed = (float) moveSpeed;
         AttributeInstance attackAttribute = getAttribute(Attributes.ATTACK_DAMAGE);
         if (attackAttribute != null) {
             attackAttribute.setBaseValue(attackDamage);

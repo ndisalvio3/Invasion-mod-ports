@@ -3,9 +3,11 @@ package invmod.common.entity;
 import invmod.Invasion;
 import invmod.common.INotifyTask;
 import invmod.common.util.Distance;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +15,7 @@ import java.util.List;
 public class TerrainModifier
         implements ITerrainModify {
     private static final float DEFAULT_REACH = 2.0F;
-    private EntityLiving theEntity;
+    private EntityIMLiving theEntity;
     private INotifyTask taskSetter;
     private INotifyTask blockNotify;
     private List<ModifyBlockEntry> modList;
@@ -25,7 +27,7 @@ public class TerrainModifier
     private boolean outOfRangeFlag;
     private boolean terrainFailFlag;
 
-    public TerrainModifier(EntityLiving entity, float defaultReach) {
+    public TerrainModifier(EntityIMLiving entity, float defaultReach) {
         this.theEntity = entity;
         this.modList = new ArrayList();
         this.entryIndex = 0;
@@ -109,34 +111,26 @@ public class TerrainModifier
     }
 
     private boolean changeBlock(ModifyBlockEntry entry) {
-        if (Distance.distanceBetween(this.theEntity.posX, this.theEntity.posY + this.theEntity.height / 2.0F, this.theEntity.posZ, entry.getXCoord() + 0.5D, entry.getYCoord() + 0.5D, entry.getZCoord() + 0.5D) > this.reach) {
+        if (Distance.distanceBetween(this.theEntity.getX(), this.theEntity.getY() + this.theEntity.getBbHeight() / 2.0F, this.theEntity.getZ(), entry.getXCoord() + 0.5D, entry.getYCoord() + 0.5D, entry.getZCoord() + 0.5D) > this.reach) {
             this.outOfRangeFlag = true;
             return false;
         }
 
+        Level level = this.theEntity.level();
+        BlockPos pos = new BlockPos(entry.getXCoord(), entry.getYCoord(), entry.getZCoord());
         Block newBlock = entry.getNewBlock();
-        Block oldBlock = this.theEntity.worldObj.getBlock(entry.getXCoord(), entry.getYCoord(), entry.getZCoord());
-        int oldMeta = this.theEntity.worldObj.getBlockMetadata(entry.getXCoord(), entry.getYCoord(), entry.getZCoord());
+        BlockState oldState = level.getBlockState(pos);
+        Block oldBlock = oldState.getBlock();
         entry.setOldBlock(oldBlock);
         if (oldBlock == Invasion.blockNexus) {
             this.terrainFailFlag = true;
             return false;
         }
 
-        boolean succeeded = this.theEntity.worldObj.setBlock(entry.getXCoord(), entry.getYCoord(), entry.getZCoord(), entry.getNewBlock(), entry.getNewBlockMeta(), 3);
+        boolean succeeded = level.setBlock(pos, newBlock.defaultBlockState(), 3);
         if (succeeded) {
-            if (newBlock == Blocks.air) {
-                oldBlock.onBlockDestroyedByPlayer(this.theEntity.worldObj, entry.getXCoord(), entry.getYCoord(), entry.getZCoord(), oldMeta);
-
-                if (Invasion.getDestructedBlocksDrop()) {
-                    oldBlock.dropBlockAsItem(this.theEntity.worldObj, entry.getXCoord(), entry.getYCoord(), entry.getZCoord(), oldMeta, 0);
-                }
-            }
-            if (newBlock == Blocks.ladder) {
-                int meta = newBlock.onBlockPlaced(this.theEntity.worldObj, entry.getXCoord(), entry.getYCoord(), entry.getZCoord(), 0, 0.0F, 0.0F, 0.0F, oldMeta);
-                this.theEntity.worldObj.setBlockMetadataWithNotify(entry.getXCoord(), entry.getYCoord(), entry.getZCoord(), meta, 3);
-
-                Blocks.ladder.onPostBlockPlaced(this.theEntity.worldObj, entry.getXCoord(), entry.getYCoord(), entry.getZCoord(), meta);
+            if (newBlock == Blocks.AIR && Invasion.getDestructedBlocksDrop()) {
+                level.destroyBlock(pos, true, this.theEntity);
             }
         } else {
             this.terrainFailFlag = true;
@@ -145,7 +139,8 @@ public class TerrainModifier
     }
 
     private boolean isTerrainIdentical(ModifyBlockEntry entry) {
-        if ((this.theEntity.worldObj.getBlock(entry.getXCoord(), entry.getYCoord(), entry.getZCoord()) == entry.getNewBlock()) && (this.theEntity.worldObj.getBlockMetadata(entry.getXCoord(), entry.getYCoord(), entry.getZCoord()) == entry.getNewBlockMeta())) {
+        BlockPos pos = new BlockPos(entry.getXCoord(), entry.getYCoord(), entry.getZCoord());
+        if (this.theEntity.level().getBlockState(pos).getBlock() == entry.getNewBlock()) {
             return true;
         }
         return false;

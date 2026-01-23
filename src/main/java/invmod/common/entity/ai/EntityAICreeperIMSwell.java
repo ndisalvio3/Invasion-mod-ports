@@ -4,14 +4,13 @@ package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMCreeper;
 import invmod.common.entity.EntityIMWolf;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 
-public class EntityAICreeperIMSwell extends EntityAIBase {
+public class EntityAICreeperIMSwell extends LegacyGoal {
     EntityIMCreeper theEntity;
-    EntityLivingBase targetEntity;
+    LivingEntity targetEntity;
 
     public EntityAICreeperIMSwell(EntityIMCreeper par1EntityCreeper) {
         this.theEntity = par1EntityCreeper;
@@ -20,9 +19,9 @@ public class EntityAICreeperIMSwell extends EntityAIBase {
 
     @Override
     public boolean shouldExecute() {
-        EntityLivingBase entityliving = this.theEntity.getAttackTarget();
+        LivingEntity entityliving = this.theEntity.getAttackTarget();
 
-        return (this.theEntity.getCreeperState() > 0) || ((entityliving != null) && (this.theEntity.getDistanceSqToEntity(entityliving) < 9.0D) && ((entityliving.getClass() == EntityPlayer.class) || (entityliving.getClass() == EntityIMWolf.class) || (entityliving.getClass() == EntityPlayerMP.class)));
+        return (this.theEntity.getCreeperState() > 0) || ((entityliving != null) && (this.theEntity.getDistanceSqToEntity(entityliving) < 9.0D) && ((entityliving.getClass() == Player.class) || (entityliving.getClass() == EntityIMWolf.class) || (entityliving.getClass() == ServerPlayer.class)));
     }
 
     @Override
@@ -48,7 +47,7 @@ public class EntityAICreeperIMSwell extends EntityAIBase {
             return;
         }
 
-        if (!this.theEntity.getEntitySenses().canSee(this.targetEntity)) {
+        if (!this.theEntity.getEntitySenses().hasLineOfSight(this.targetEntity)) {
             this.theEntity.setCreeperState(-1);
             return;
         }

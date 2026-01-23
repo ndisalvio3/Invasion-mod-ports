@@ -318,6 +318,14 @@ public class EntityIMSpider extends Spider implements IHasNexus, ISpawnsOffsprin
         return !onClimbable();
     }
 
+    public float getLegacyGravity() {
+        AttributeInstance gravityAttr = getAttribute(Attributes.GRAVITY);
+        if (gravityAttr != null) {
+            return (float) gravityAttr.getValue();
+        }
+        return 0.08F;
+    }
+
     private int readTagInt(CompoundTag tag, String primary, String fallback, int defaultValue) {
         if (tag.contains(primary)) {
             return tag.getIntOr(primary, defaultValue);

@@ -1,5 +1,6 @@
 package invmod.common.entity;
 
+import invmod.common.INotifyTask;
 import invmod.common.IPathfindable;
 import invmod.common.SparrowAPI;
 import invmod.common.nexus.INexusAccess;
@@ -7,7 +8,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.JumpControl;
+import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -17,13 +24,46 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import invmod.common.util.CoordsInt;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus, IPathfindable, SparrowAPI {
+    public static final Map<Block, Float> blockCosts = new HashMap<>();
+    public static final java.util.Set<Block> unDestructableBlocks = java.util.Collections.emptySet();
     private INexusAccess nexus;
     private MoveState moveState = MoveState.NONE;
+    private Goal aiGoal = Goal.NONE;
+    private Goal prevAIGoal = Goal.NONE;
+    private float moveSpeedStat = 0.25F;
+    private float groundFriction = 1.0F;
+    private float rotationRoll;
+    private String displayName = "";
+    private int gender;
+    private final IPathSource pathSource = new PathCreator();
+    protected final LegacyGoalSelector tasks;
+    protected final LegacyGoalSelector targetTasks;
+    protected int attackStrength;
+    protected int selfDamage;
+    protected int maxSelfDamage;
+    protected int maxDestructiveness;
+    private float senseRange = 16.0F;
+    private float aggroRange = 8.0F;
+    private int jumpHeight = 1;
+    private boolean canClimb = true;
+    private float legacyGravity = 0.08F;
+    public final LegacyWorld worldObj;
+    private final INavigation navigatorNew;
+    public int attackTime;
+    private float turnRate = 30.0F;
 
     protected EntityIMLiving(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
+        this.worldObj = new LegacyWorld(level);
+        this.moveControl = new IMMoveHelper(this);
+        this.tasks = new LegacyGoalSelector(this.goalSelector);
+        this.targetTasks = new LegacyGoalSelector(this.targetSelector);
+        this.navigatorNew = new NavigatorIM(this, pathSource);
     }
 
     @Override
@@ -34,6 +74,198 @@ public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus,
     @Override
     public void acquiredByNexus(INexusAccess nexus) {
         this.nexus = nexus;
+    }
+
+    public double findDistanceToNexus() {
+        if (nexus == null) {
+            return Double.MAX_VALUE;
+        }
+        return Math.sqrt(distanceToSqr(nexus.getXCoord() + 0.5D, nexus.getYCoord() + 0.5D, nexus.getZCoord() + 0.5D));
+    }
+
+    public boolean isNexusBound() {
+        return this.nexus != null;
+    }
+
+    public IPathSource getPathSource() {
+        return pathSource;
+    }
+
+    public float getMoveSpeedStat() {
+        return moveSpeedStat;
+    }
+
+    public void setMoveSpeedStat(float speed) {
+        this.moveSpeedStat = speed;
+        AttributeInstance attribute = getAttribute(Attributes.MOVEMENT_SPEED);
+        if (attribute != null) {
+            attribute.setBaseValue(speed);
+        }
+    }
+
+    public void resetMoveSpeed() {
+        setMoveSpeedStat(this.moveSpeedStat);
+    }
+
+    public void setBaseMoveSpeedStat(float speed) {
+        setMoveSpeedStat(speed);
+    }
+
+    public float getGroundFriction() {
+        return groundFriction;
+    }
+
+    public void setGroundFriction(float groundFriction) {
+        this.groundFriction = groundFriction;
+    }
+
+    public float getRotationRoll() {
+        return rotationRoll;
+    }
+
+    public void setRotationRoll(float rotationRoll) {
+        this.rotationRoll = rotationRoll;
+    }
+
+    public JumpControl getJumpHelper() {
+        return getJumpControl();
+    }
+
+    public void setMaxHealthAndHealth(float value) {
+        AttributeInstance attribute = getAttribute(Attributes.MAX_HEALTH);
+        if (attribute != null) {
+            attribute.setBaseValue(value);
+        }
+        setHealth(value);
+    }
+
+    public void setName(String name) {
+        this.displayName = name;
+        setCustomName(Component.literal(name));
+    }
+
+    public void setGender(int gender) {
+        this.gender = gender;
+    }
+
+
+    public void setDestructiveness(int destructiveness) {
+        this.maxDestructiveness = destructiveness;
+    }
+
+    public float getSenseRange() {
+        return senseRange;
+    }
+
+    public float getAggroRange() {
+        return aggroRange;
+    }
+
+    public void setSenseRange(float senseRange) {
+        this.senseRange = senseRange;
+    }
+
+    public void setAggroRange(float aggroRange) {
+        this.aggroRange = aggroRange;
+    }
+
+    public void setJumpHeight(int jumpHeight) {
+        this.jumpHeight = jumpHeight;
+    }
+
+
+    public void setCanClimb(boolean canClimb) {
+        this.canClimb = canClimb;
+    }
+
+    public boolean canClimb() {
+        return canClimb;
+    }
+
+    public float getAIMoveSpeed() {
+        return (float) getAttributeValue(Attributes.MOVEMENT_SPEED);
+    }
+
+    public LivingEntity getAttackTarget() {
+        return getTarget();
+    }
+
+    public boolean isAIEnabled() {
+        return true;
+    }
+
+    public boolean canEntityBeSeen(Entity entity) {
+        return getSensing().hasLineOfSight(entity);
+    }
+
+    public float getLegacyGravity() {
+        return legacyGravity;
+    }
+
+    public void setGravity(float gravity) {
+        this.legacyGravity = gravity;
+    }
+
+    public float getAirResistance() {
+        return 0.91F;
+    }
+
+    public float getDistanceToEntity(Entity entity) {
+        return distanceTo(entity);
+    }
+
+    public IMMoveHelper getMoveHelper() {
+        if (getMoveControl() instanceof IMMoveHelper helper) {
+            return helper;
+        }
+        return new IMMoveHelper(this);
+    }
+
+    public INavigation getNavigatorNew() {
+        return navigatorNew;
+    }
+
+    public boolean onPathBlocked(Path path, INotifyTask notifee) {
+        return false;
+    }
+
+    public float getDistance(int x, int y, int z) {
+        return (float) Math.sqrt(distanceToSqr(x + 0.5D, y + 0.5D, z + 0.5D));
+    }
+
+    public double getDistanceSq(double x, double y, double z) {
+        return distanceToSqr(x, y, z);
+    }
+
+    public double getDistanceSq(int x, int y, int z) {
+        return distanceToSqr(x + 0.5D, y + 0.5D, z + 0.5D);
+    }
+
+    public double getDistanceSqToEntity(LivingEntity entity) {
+        return distanceToSqr(entity);
+    }
+
+    public void setAttackTarget(LivingEntity target) {
+        setTarget(target);
+    }
+
+    public LivingEntity getAITarget() {
+        return getLastHurtByMob();
+    }
+
+    public net.minecraft.world.entity.ai.sensing.Sensing getEntitySenses() {
+        return getSensing();
+    }
+
+    public boolean attackEntityAsMob(LivingEntity target) {
+        if (level() instanceof ServerLevel serverLevel) {
+            return doHurtTarget(serverLevel, target);
+        }
+        return false;
+    }
+
+    public net.minecraft.util.RandomSource getRNG() {
+        return random;
     }
 
     @Override
@@ -323,7 +555,7 @@ public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus,
     }
 
     protected int getJumpHeight() {
-        return 1;
+        return jumpHeight;
     }
 
     protected int getCollideSizeX() {
@@ -450,7 +682,7 @@ public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus,
 
     @Override
     public int getGender() {
-        return 0;
+        return gender;
     }
 
     @Override
@@ -469,6 +701,10 @@ public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus,
         setXRot(pitch);
     }
 
+    public void moveEntity(double dx, double dy, double dz) {
+        setPos(getX() + dx, getY() + dy, getZ() + dz);
+    }
+
     public boolean getCanSpawnHere() {
         return checkSpawnRules(level(), EntitySpawnReason.NATURAL) && checkSpawnObstruction(level());
     }
@@ -481,8 +717,49 @@ public abstract class EntityIMLiving extends PathfinderMob implements IHasNexus,
         this.moveState = moveState;
     }
 
+    public Goal getAIGoal() {
+        return aiGoal;
+    }
+
+    public Goal getPrevAIGoal() {
+        return prevAIGoal;
+    }
+
+    public void setAIGoal(Goal goal) {
+        this.prevAIGoal = this.aiGoal;
+        this.aiGoal = goal;
+    }
+
+    public void transitionAIGoal(Goal goal) {
+        setAIGoal(goal);
+    }
+
+    public boolean readyToRally() {
+        return false;
+    }
+
+    public void rally(LivingEntity leader) {
+        // no-op for now
+    }
+
+    public void onFollowingEntity(LivingEntity leader) {
+        // no-op for now
+    }
+
     public float getTurnRate() {
-        return 30.0F;
+        return turnRate;
+    }
+
+    public void setTurnRate(float turnRate) {
+        this.turnRate = turnRate;
+    }
+
+    public void stunEntity(int ticks) {
+        // no-op for now
+    }
+
+    public void setSneaking(boolean sneaking) {
+        // no-op for now
     }
 
     public boolean isHoldingOntoLadder() {

@@ -1,9 +1,8 @@
 package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMLiving;
-import net.minecraft.entity.ai.EntityAIBase;
 
-public class EntityAIStoop extends EntityAIBase {
+public class EntityAIStoop extends LegacyGoal {
     private EntityIMLiving theEntity;
     private int updateTimer;
     private boolean stopStoop;
@@ -16,7 +15,7 @@ public class EntityAIStoop extends EntityAIBase {
     public boolean shouldExecute() {
         if (--this.updateTimer <= 0) {
             this.updateTimer = 10;
-            if (this.theEntity.worldObj.getBlock(this.theEntity.getXCoord(), this.theEntity.getYCoord() + 2, this.theEntity.getZCoord()).getMaterial().blocksMovement()) {
+            if (this.theEntity.level().getBlockState(new net.minecraft.core.BlockPos(this.theEntity.getXCoord(), this.theEntity.getYCoord() + 2, this.theEntity.getZCoord())).blocksMotion()) {
                 return true;
             }
         }
@@ -35,7 +34,7 @@ public class EntityAIStoop extends EntityAIBase {
     public void updateTask() {
         if (--this.updateTimer <= 0) {
             this.updateTimer = 10;
-            if (!this.theEntity.worldObj.getBlock(this.theEntity.getXCoord(), this.theEntity.getYCoord() + 2, this.theEntity.getZCoord()).getMaterial().blocksMovement()) {
+            if (!this.theEntity.level().getBlockState(new net.minecraft.core.BlockPos(this.theEntity.getXCoord(), this.theEntity.getYCoord() + 2, this.theEntity.getZCoord())).blocksMotion()) {
                 this.theEntity.setSneaking(false);
                 this.stopStoop = true;
             }

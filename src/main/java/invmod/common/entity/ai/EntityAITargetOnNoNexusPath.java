@@ -2,12 +2,12 @@ package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMLiving;
 import invmod.common.entity.Goal;
-import net.minecraft.entity.EntityLiving;
+import net.minecraft.world.entity.LivingEntity;
 
 public class EntityAITargetOnNoNexusPath extends EntityAISimpleTarget {
     private final float PATH_DISTANCE_TRIGGER = 4.0F;
 
-    public EntityAITargetOnNoNexusPath(EntityIMLiving entity, Class<? extends EntityLiving> targetType, float distance) {
+    public EntityAITargetOnNoNexusPath(EntityIMLiving entity, Class<? extends LivingEntity> targetType, float distance) {
         super(entity, targetType, distance);
     }
 

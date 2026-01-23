@@ -93,7 +93,7 @@ public class NavigatorBurrower extends NavigatorParametric {
 
     protected void doMovementTo(int time) {
         PosRotate3D movePos = entityPositionAtParam(time);
-        this.theEntity.moveEntity(movePos.getPosX() - this.theEntity.posX, movePos.getPosY() - this.theEntity.posY, movePos.getPosZ() - this.theEntity.posZ);
+        this.theEntity.moveEntity(movePos.getPosX() - this.theEntity.getX(), movePos.getPosY() - this.theEntity.getY(), movePos.getPosZ() - this.theEntity.getZ());
         ((EntityIMBurrower) this.theEntity).setHeadRotation(movePos);
 
         if (this.nodeChanged) {

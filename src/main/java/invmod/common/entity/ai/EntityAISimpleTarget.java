@@ -2,27 +2,26 @@ package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMLiving;
 import invmod.common.util.ComparatorEntityDistanceFrom;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class EntityAISimpleTarget extends EntityAIBase {
+public class EntityAISimpleTarget extends LegacyGoal {
     private final EntityIMLiving theEntity;
-    private EntityLivingBase targetEntity;
-    private Class<? extends EntityLivingBase> targetClass;
+    private LivingEntity targetEntity;
+    private Class<? extends LivingEntity> targetClass;
     private int outOfLosTimer;
     private float distance;
     private boolean needsLos;
 
-    public EntityAISimpleTarget(EntityIMLiving entity, Class<? extends EntityLivingBase> targetType, float distance) {
+    public EntityAISimpleTarget(EntityIMLiving entity, Class<? extends LivingEntity> targetType, float distance) {
         this(entity, targetType, distance, true);
     }
 
-    public EntityAISimpleTarget(EntityIMLiving entity, Class<? extends EntityLivingBase> targetType, float distance, boolean needsLoS) {
+    public EntityAISimpleTarget(EntityIMLiving entity, Class<? extends LivingEntity> targetType, float distance, boolean needsLoS) {
         this.theEntity = entity;
         this.targetClass = targetType;
         this.outOfLosTimer = 0;
@@ -36,21 +35,21 @@ public class EntityAISimpleTarget extends EntityAIBase {
     }
 
     public boolean shouldExecute() {
-        if (this.targetClass == EntityPlayer.class) {
-            EntityPlayer entityplayer = this.theEntity.worldObj.getClosestVulnerablePlayerToEntity(this.theEntity, this.distance);
-            if (isValidTarget(entityplayer)) {
-                this.targetEntity = entityplayer;
+        if (this.targetClass == Player.class) {
+            Player player = this.theEntity.worldObj.getClosestVulnerablePlayerToEntity(this.theEntity, this.distance);
+            if (isValidTarget(player)) {
+                this.targetEntity = player;
                 return true;
             }
         }
 
-        List list = this.theEntity.worldObj.getEntitiesWithinAABB(this.targetClass, this.theEntity.boundingBox.expand(this.distance, this.distance / 2.0F, this.distance));
-        Comparator comp = new ComparatorEntityDistanceFrom(this.theEntity.posX, this.theEntity.posY, this.theEntity.posZ);
+        List list = this.theEntity.worldObj.getEntitiesWithinAABB(this.targetClass, this.theEntity.getBoundingBox().inflate(this.distance, this.distance / 2.0F, this.distance));
+        Comparator comp = new ComparatorEntityDistanceFrom(this.theEntity.getX(), this.theEntity.getY(), this.theEntity.getZ());
         Collections.sort(list, comp);
 
         boolean foundEntity = false;
         while (list.size() > 0) {
-            EntityLivingBase entity = (EntityLivingBase) list.remove(list.size() - 1);
+            LivingEntity entity = (LivingEntity) list.remove(list.size() - 1);
             if (isValidTarget(entity)) {
                 this.targetEntity = entity;
                 return true;
@@ -61,18 +60,18 @@ public class EntityAISimpleTarget extends EntityAIBase {
 
     @Override
     public boolean continueExecuting() {
-        EntityLivingBase entityliving = this.theEntity.getAttackTarget();
+        LivingEntity entityliving = this.theEntity.getAttackTarget();
         if (entityliving == null) {
             return false;
         }
-        if (!entityliving.isEntityAlive()) {
+        if (!entityliving.isAlive()) {
             return false;
         }
         if (this.theEntity.getDistanceSqToEntity(entityliving) > this.distance * this.distance) {
             return false;
         }
         if (this.needsLos) {
-            if (!this.theEntity.getEntitySenses().canSee(entityliving)) {
+            if (!this.theEntity.getEntitySenses().hasLineOfSight(entityliving)) {
                 if (++this.outOfLosTimer > 60) {
                     return false;
                 }
@@ -95,7 +94,7 @@ public class EntityAISimpleTarget extends EntityAIBase {
         this.theEntity.setAttackTarget(null);
     }
 
-    public Class<? extends EntityLivingBase> getTargetType() {
+    public Class<? extends LivingEntity> getTargetType() {
         return this.targetClass;
     }
 
@@ -103,29 +102,29 @@ public class EntityAISimpleTarget extends EntityAIBase {
         return this.distance;
     }
 
-    protected void setTarget(EntityLivingBase entity) {
+    protected void setTarget(LivingEntity entity) {
         this.targetEntity = entity;
     }
 
-    protected boolean isValidTarget(EntityLivingBase entity) {
+    protected boolean isValidTarget(LivingEntity entity) {
         if (entity == null) {
             return false;
         }
         if (entity == this.theEntity) {
             return false;
         }
-        if (!entity.isEntityAlive()) {
+        if (!entity.isAlive()) {
             return false;
         }
 
         //players in creative mode won't be targeted 
-        if (this.targetClass == EntityPlayer.class) {
-            if (((EntityPlayer) entity).capabilities.disableDamage) {
+        if (this.targetClass == Player.class && entity instanceof Player player) {
+            if (player.getAbilities().invulnerable) {
                 return false;
             }
         }
 
-        if ((this.needsLos) && (!this.theEntity.getEntitySenses().canSee(entity))) {
+        if ((this.needsLos) && (!this.theEntity.getEntitySenses().hasLineOfSight(entity))) {
             return false;
         }
         return true;

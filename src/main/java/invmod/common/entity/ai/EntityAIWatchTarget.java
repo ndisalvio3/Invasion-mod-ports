@@ -1,20 +1,23 @@
 package invmod.common.entity.ai;
 
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.LivingEntity;
 
-public class EntityAIWatchTarget extends EntityAIBase {
-    private EntityLiving theEntity;
+public class EntityAIWatchTarget extends LegacyGoal {
+    private Mob theEntity;
 
-    public EntityAIWatchTarget(EntityLiving entity) {
+    public EntityAIWatchTarget(Mob entity) {
         this.theEntity = entity;
     }
 
     public boolean shouldExecute() {
-        return this.theEntity.getAttackTarget() != null;
+        return this.theEntity.getTarget() != null;
     }
 
     public void updateTask() {
-        this.theEntity.getLookHelper().setLookPositionWithEntity(this.theEntity.getAttackTarget(), 2.0F, 2.0F);
+        LivingEntity target = this.theEntity.getTarget();
+        if (target != null) {
+            this.theEntity.getLookControl().setLookAt(target, 2.0F, 2.0F);
+        }
     }
 }

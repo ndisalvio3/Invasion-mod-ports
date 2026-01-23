@@ -6,10 +6,9 @@ import invmod.common.entity.EntityIMFlying;
 import invmod.common.entity.Goal;
 import invmod.common.entity.INavigationFlying;
 import invmod.common.entity.MoveState;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.world.entity.LivingEntity;
 
-public class EntityAIFlyingTackle extends EntityAIBase {
+public class EntityAIFlyingTackle extends LegacyGoal {
     private EntityIMFlying theEntity;
     private int time;
 
@@ -23,8 +22,8 @@ public class EntityAIFlyingTackle extends EntityAIBase {
     }
 
     public boolean continueExecuting() {
-        EntityLivingBase target = this.theEntity.getAttackTarget();
-        if ((target == null) || (target.isDead)) {
+        LivingEntity target = this.theEntity.getAttackTarget();
+        if ((target == null) || (!target.isAlive())) {
             this.theEntity.transitionAIGoal(Goal.NONE);
             return false;
         }
@@ -37,7 +36,7 @@ public class EntityAIFlyingTackle extends EntityAIBase {
 
     public void startExecuting() {
         this.time = 0;
-        EntityLivingBase target = this.theEntity.getAttackTarget();
+        LivingEntity target = this.theEntity.getAttackTarget();
         if (target != null) {
             this.theEntity.getNavigatorNew().setMovementType(INavigationFlying.MoveType.PREFER_WALKING);
         }

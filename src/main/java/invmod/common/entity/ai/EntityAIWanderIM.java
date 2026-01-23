@@ -3,9 +3,8 @@ package invmod.common.entity.ai;
 import invmod.common.entity.EntityIMLiving;
 import invmod.common.entity.Path;
 import invmod.common.util.IPosition;
-import net.minecraft.entity.ai.EntityAIBase;
 
-public class EntityAIWanderIM extends EntityAIBase {
+public class EntityAIWanderIM extends LegacyGoal {
     private static final int MIN_HORIZONTAL_PATH = 1;
     private static final int MAX_HORIZONTAL_PATH = 6;
     private static final int MAX_VERTICAL_PATH = 4;

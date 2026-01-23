@@ -4,29 +4,39 @@ import invmod.Invasion;
 import invmod.common.INotifyTask;
 import invmod.common.entity.ai.*;
 import invmod.common.nexus.INexusAccess;
-import invmod.common.util.ExplosionUtil;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
-import net.minecraft.entity.ai.*;
-import net.minecraft.entity.monster.EntitySkeleton;
-import net.minecraft.entity.passive.EntityOcelot;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.item.Items;
-import net.minecraft.item.Item;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.Ocelot;
+import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.util.DamageSource;
-import net.minecraft.world.Explosion;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 
 //NOOB HAUS  this.c.addTask(0, new EntityAISwimming(this));   c = this.tasks...
 //Noob HAUS  this.d.addTask(2, new EntityAIHurtByTarget(this, false));   d = this.targetTasks
 
 //public class EntityIMCreeper extends EntityIMMob implements ILeader
 public class EntityIMCreeper extends EntityIMMob {
+    private static final EntityDataAccessor<Byte> DATA_CREEPER_STATE = SynchedEntityData.defineId(EntityIMCreeper.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Byte> DATA_POWERED = SynchedEntityData.defineId(EntityIMCreeper.class, EntityDataSerializers.BYTE);
     private int timeSinceIgnited;
     private int lastActiveTime;
     private boolean explosionDeath;
@@ -34,12 +44,15 @@ public class EntityIMCreeper extends EntityIMMob {
     private int explodeDirection;
     private int tier;
 
-    public EntityIMCreeper(World world) {
-        this(world, null);
+    public EntityIMCreeper(EntityType<? extends EntityIMCreeper> type, Level level) {
+        this(type, level, null);
     }
 
-    public EntityIMCreeper(World world, INexusAccess nexus) {
-        super(world, nexus);
+    public EntityIMCreeper(EntityType<? extends EntityIMCreeper> type, Level level, INexusAccess nexus) {
+        super(type, level);
+        if (nexus != null) {
+            acquiredByNexus(nexus);
+        }
         this.setName("Creeper");
         this.setGender(0);
         this.tier = 1;
@@ -49,44 +62,34 @@ public class EntityIMCreeper extends EntityIMMob {
     }
 
     private void setAI() {
-        this.tasks.addTask(0, new EntityAISwimming(this));
+        this.tasks.addTask(0, new FloatGoal(this));
         this.tasks.addTask(1, new EntityAICreeperIMSwell(this));
-        this.tasks.addTask(2, new EntityAIAvoidEntity(this, EntityOcelot.class, 6.0F, 0.25D, 0.300000011920929D));
-        this.tasks.addTask(3, new EntityAIKillEntity(this, EntityPlayer.class, 40));
-        this.tasks.addTask(3, new EntityAIKillEntity(this, EntityPlayerMP.class, 40));
+        this.tasks.addTask(2, new AvoidEntityGoal<>(this, Ocelot.class, 6.0F, 0.25D, 0.300000011920929D));
+        this.tasks.addTask(3, new EntityAIKillEntity(this, Player.class, 40));
+        this.tasks.addTask(3, new EntityAIKillEntity(this, ServerPlayer.class, 40));
         this.tasks.addTask(4, new EntityAIAttackNexus(this));
         this.tasks.addTask(5, new EntityAIWaitForEngy(this, 4.0F, true));
-        this.tasks.addTask(6, new EntityAIKillEntity(this, EntityLiving.class, 40));
+        this.tasks.addTask(6, new EntityAIKillEntity(this, LivingEntity.class, 40));
         this.tasks.addTask(7, new EntityAIGoToNexus(this));
         this.tasks.addTask(8, new EntityAIWanderIM(this));
-        this.tasks.addTask(9, new EntityAIWatchClosest(this, EntityPlayer.class, 4.8F));
-        this.tasks.addTask(9, new EntityAILookIdle(this));
-        this.targetTasks.addTask(0, new EntityAITargetRetaliate(this, EntityLiving.class, 12.0F));
+        this.tasks.addTask(9, new LookAtPlayerGoal(this, Player.class, 4.8F));
+        this.tasks.addTask(9, new RandomLookAroundGoal(this));
+        this.targetTasks.addTask(0, new EntityAITargetRetaliate(this, LivingEntity.class, 12.0F));
         if (this.isNexusBound()) {
-            this.targetTasks.addTask(1, new EntityAISimpleTarget(this, EntityPlayer.class, 20.0F, true));
+            this.targetTasks.addTask(1, new EntityAISimpleTarget(this, Player.class, 20.0F, true));
         } else {
-            this.targetTasks.addTask(1, new EntityAISimpleTarget(this, EntityPlayer.class, this.getSenseRange(), false));
-            this.targetTasks.addTask(2, new EntityAISimpleTarget(this, EntityPlayer.class, this.getAggroRange(), true));
+            this.targetTasks.addTask(1, new EntityAISimpleTarget(this, Player.class, this.getSenseRange(), false));
+            this.targetTasks.addTask(2, new EntityAISimpleTarget(this, Player.class, this.getAggroRange(), true));
         }
-        this.targetTasks.addTask(3, new EntityAIHurtByTarget(this, false));
-    }
-
-    @Override
-    public void updateAITick() {
-        super.updateAITick();
-    }
-
-    @Override
-    public boolean isAIEnabled() {
-        return true;
+        this.targetTasks.addTask(3, new HurtByTargetGoal(this));
     }
 
     @Override
     public boolean onPathBlocked(Path path, INotifyTask notifee) {
         if (!path.isFinished()) {
             PathNode node = path.getPathPointFromIndex(path.getCurrentPathIndex());
-            double dX = node.xCoord + 0.5D - this.posX;
-            double dZ = node.zCoord + 0.5D - this.posZ;
+            double dX = node.xCoord + 0.5D - this.getX();
+            double dZ = node.zCoord + 0.5D - this.getZ();
             float facing = (float) (Math.atan2(dZ, dX) * 180.0D / 3.141592653589793D) - 90.0F;
             if (facing < 0.0F) {
                 facing += 360.0F;
@@ -109,24 +112,24 @@ public class EntityIMCreeper extends EntityIMMob {
     }
 
     @Override
-    protected void entityInit() {
-        super.entityInit();
-        this.dataWatcher.addObject(16, Byte.valueOf((byte) -1));
-        this.dataWatcher.addObject(17, Byte.valueOf((byte) 0));
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_CREEPER_STATE, (byte) -1);
+        builder.define(DATA_POWERED, (byte) 0);
     }
 
     @Override
-    public void onUpdate() {
+    public void tick() {
         if (this.explosionDeath) {
             doExplosion();
-            setDead();
-        } else if (isEntityAlive()) {
+            discard();
+        } else if (isAlive()) {
             this.lastActiveTime = this.timeSinceIgnited;
             int state = getCreeperState();
 
             if (state > 0) {
                 if (this.commitToExplode) {
-                    getMoveHelper().setMoveTo(this.posX + invmod.common.util.CoordsInt.offsetAdjX[this.explodeDirection], this.posY, this.posZ + invmod.common.util.CoordsInt.offsetAdjZ[this.explodeDirection], 0.0D);
+                    getMoveHelper().setMoveTo(this.getX() + invmod.common.util.CoordsInt.offsetAdjX[this.explodeDirection], this.getY(), this.getZ() + invmod.common.util.CoordsInt.offsetAdjZ[this.explodeDirection], 0.0D);
                 }
                 if (this.timeSinceIgnited == 0) {
                     this.worldObj.playSoundAtEntity(this, "random.fuse", 1.0F, 0.5F);
@@ -142,7 +145,7 @@ public class EntityIMCreeper extends EntityIMMob {
             }
         }
 
-        super.onUpdate();
+        super.tick();
     }
 
 //  @Override
@@ -150,16 +153,6 @@ public class EntityIMCreeper extends EntityIMMob {
 //  {
 //    return this.explosionDeath;
 //  }
-
-    @Override
-    protected String getHurtSound() {
-        return "mob.creeper.say";
-    }
-
-    @Override
-    protected String getDeathSound() {
-        return "mob.creeper.death";
-    }
 
     @Override
     public String getSpecies() {
@@ -172,16 +165,17 @@ public class EntityIMCreeper extends EntityIMMob {
     }
 
     @Override
-    public void onDeath(DamageSource par1DamageSource) {
-        super.onDeath(par1DamageSource);
-
-        if ((par1DamageSource.getEntity() instanceof EntitySkeleton)) {
-            dropItem(Item.getItemById(Item.getIdFromItem(Items.record_13) + this.rand.nextInt(10)), 1);
+    public void die(DamageSource source) {
+        super.die(source);
+        if (source.getEntity() instanceof Skeleton) {
+            if (level() instanceof ServerLevel serverLevel) {
+                spawnAtLocation(serverLevel, new ItemStack(Items.MUSIC_DISC_13));
+            }
         }
     }
 
     @Override
-    public boolean attackEntityAsMob(Entity par1Entity) {
+    public boolean doHurtTarget(ServerLevel level, Entity par1Entity) {
         return true;
     }
 
@@ -190,9 +184,11 @@ public class EntityIMCreeper extends EntityIMMob {
     }
 
     @Override
-    public float getBlockPathCost(PathNode prevNode, PathNode node, IBlockAccess terrainMap) {
-        Block block = terrainMap.getBlock(node.xCoord, node.yCoord, node.zCoord);
-        if ((block != Blocks.air) && (!block.getBlocksMovement(terrainMap, node.xCoord, node.yCoord, node.zCoord)) && (block != Invasion.blockNexus)) {
+    public float getBlockPathCost(PathNode prevNode, PathNode node, BlockGetter terrainMap) {
+        BlockState state = terrainMap.getBlockState(new BlockPos(node.xCoord, node.yCoord, node.zCoord));
+        Block block = state.getBlock();
+        BlockPos pos = new BlockPos(node.xCoord, node.yCoord, node.zCoord);
+        if (!state.isAir() && !state.isCollisionShapeFullBlock(terrainMap, pos) && (block != Invasion.blockNexus)) {
             return prevNode.distanceTo(node) * 12.0F;
         }
 
@@ -205,29 +201,25 @@ public class EntityIMCreeper extends EntityIMMob {
     }
 
     @Override
-    protected void dropFewItems(boolean flag, int amount) {
-        entityDropItem(new ItemStack(Items.gunpowder, 1, 1), 0.0F);
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean recentlyHit) {
+        spawnAtLocation(level, new ItemStack(Items.GUNPOWDER, 1));
     }
 
     protected void doExplosion() {
-        Explosion explosion = new Explosion(this.worldObj, this, posX, posY, posZ, 2.1F);
-        explosion.isFlaming = false;
-        explosion.isSmoking = true;
-        if (!worldObj.isRemote) {
-            explosion.doExplosionA();
+        if (!level().isClientSide) {
+            level().explode(this, getX(), getY(), getZ(), 2.1F, Level.ExplosionInteraction.MOB);
         }
-        ExplosionUtil.doExplosionB(worldObj, explosion, true);
     }
 
     public int getCreeperState() {
-        return this.dataWatcher.getWatchableObjectByte(16);
+        return entityData.get(DATA_CREEPER_STATE);
     }
 
     public void setCreeperState(int state) {
         if ((this.commitToExplode) && (state != 1)) {
             return;
         }
-        this.dataWatcher.updateObject(16, Byte.valueOf((byte) state));
+        entityData.set(DATA_CREEPER_STATE, (byte) state);
     }
 
 }

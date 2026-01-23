@@ -1,9 +1,9 @@
 package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMLiving;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.world.entity.LivingEntity;
 
-public class EntityAIRallyBehindEntity<T extends EntityLivingBase, ILeader> extends EntityAIFollowEntity<T> {
+public class EntityAIRallyBehindEntity<T extends LivingEntity, ILeader> extends EntityAIFollowEntity<T> {
     private static final float DEFAULT_FOLLOW_DISTANCE = 5.0F;
 
     public EntityAIRallyBehindEntity(EntityIMLiving entity, Class<T> leader) {
@@ -28,7 +28,7 @@ public class EntityAIRallyBehindEntity<T extends EntityLivingBase, ILeader> exte
     public void updateTask() {
         super.updateTask();
         if (getEntity().readyToRally()) {
-            EntityLivingBase leader = (EntityLivingBase) getTarget();
+            LivingEntity leader = (LivingEntity) getTarget();
             //if (((ILeader) leader).isMartyr())
             //rally(leader);
         }

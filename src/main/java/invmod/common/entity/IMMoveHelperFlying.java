@@ -103,7 +103,7 @@ public class IMMoveHelperFlying extends IMMoveHelper {
 
         if (distanceSquared > 0.04D) {
             int timeToTurn = 10;
-            float gravity = this.a.getGravity();
+            float gravity = this.a.getLegacyGravity();
             float liftConstant = gravity;
             double xAccel = 0.0D;
             double yAccel = 0.0D;
@@ -262,7 +262,7 @@ public class IMMoveHelperFlying extends IMMoveHelper {
             return FlyState.GROUNDED;
         }
         if (this.a.horizontalCollision) {
-            this.a.getJumpHelper().setJumping();
+            this.a.getJumpHelper().jump();
         }
         Vec3 thrust = calcThrust(0.0D);
         this.a.setFlightAccelerationVector((float) thrust.x, (float) thrust.y, (float) thrust.z);
@@ -271,7 +271,7 @@ public class IMMoveHelperFlying extends IMMoveHelper {
 
         this.a.setXRot(correctRotation(this.a.getXRot(), 40.0F, 4.0F));
 
-        float gravity = this.a.getGravity();
+        float gravity = this.a.getLegacyGravity();
         float liftConstant = gravity;
         double liftForce = speed / (this.a.getMaxPoweredFlightSpeed() * this.a.getLiftFactor()) * liftConstant;
 

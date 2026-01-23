@@ -5,16 +5,15 @@ import invmod.common.entity.Goal;
 import invmod.common.entity.INavigationFlying;
 import invmod.common.entity.MoveState;
 import invmod.common.util.MathUtil;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-public class EntityAISwoop extends EntityAIBase {
+public class EntityAISwoop extends LegacyGoal {
     private static final int INITIAL_LINEUP_TIME = 25;
     private EntityIMBird theEntity;
     private float minDiveClearanceY;
-    private EntityLivingBase swoopTarget;
+    private LivingEntity swoopTarget;
     private float diveAngle;
     private float diveHeight;
     private float strikeDistance;
@@ -35,7 +34,7 @@ public class EntityAISwoop extends EntityAIBase {
         this.diveAngle = 0.0F;
         this.diveHeight = 0.0F;
         this.maxSteepness = 40.0F;
-        this.strikeDistance = (entity.width + 1.5F);
+        this.strikeDistance = (entity.getBbWidth() + 1.5F);
         this.minHeight = 6.0F;
         this.minXZDistance = 10.0F;
         this.finalRunLength = 4.0F;
@@ -50,9 +49,9 @@ public class EntityAISwoop extends EntityAIBase {
     public boolean shouldExecute() {
         if ((this.theEntity.getAIGoal() == Goal.FIND_ATTACK_OPPORTUNITY) && (this.theEntity.getAttackTarget() != null)) {
             this.swoopTarget = this.theEntity.getAttackTarget();
-            double dX = this.swoopTarget.posX - this.theEntity.posX;
-            double dY = this.swoopTarget.posY - this.theEntity.posY;
-            double dZ = this.swoopTarget.posZ - this.theEntity.posZ;
+            double dX = this.swoopTarget.getX() - this.theEntity.getX();
+            double dY = this.swoopTarget.getY() - this.theEntity.getY();
+            double dZ = this.swoopTarget.getZ() - this.theEntity.getZ();
             double dXZ = Math.sqrt(dX * dX + dZ * dZ);
             if ((-dY < this.minHeight) || (dXZ < this.minXZDistance)) {
                 return false;
@@ -116,7 +115,7 @@ public class EntityAISwoop extends EntityAIBase {
                     this.endSwoop = true;
                 }
             } else if (this.time > 25) {
-                double dYp = -(this.swoopTarget.posY - this.theEntity.posY);
+                double dYp = -(this.swoopTarget.getY() - this.theEntity.getY());
                 if (dYp < 2.9D) {
                     dYp = 0.0D;
                 }
@@ -129,10 +128,10 @@ public class EntityAISwoop extends EntityAIBase {
             this.theEntity.getNavigatorNew().enableDirectTarget(false);
             this.endSwoop = true;
         } else {
-            double dX = this.swoopTarget.posX - this.theEntity.posX;
-            double dZ = this.swoopTarget.posZ - this.theEntity.posZ;
+            double dX = this.swoopTarget.getX() - this.theEntity.getX();
+            double dZ = this.swoopTarget.getZ() - this.theEntity.getZ();
             double yawToTarget = Math.atan2(dZ, dX) * 180.0D / 3.141592653589793D - 90.0D;
-            if (Math.abs(MathUtil.boundAngle180Deg(yawToTarget - this.theEntity.rotationYaw)) > 90.0D) {
+            if (Math.abs(MathUtil.boundAngle180Deg(yawToTarget - this.theEntity.getYRot())) > 90.0D) {
                 this.theEntity.transitionAIGoal(Goal.NONE);
                 this.theEntity.getNavigatorNew().enableDirectTarget(false);
                 this.theEntity.setClawsForward(false);
@@ -141,21 +140,20 @@ public class EntityAISwoop extends EntityAIBase {
         }
     }
 
-    private boolean isSwoopPathClear(EntityLivingBase target, float diveAngle) {
-        double dX = target.posX - this.theEntity.posX;
-        double dY = target.posY - this.theEntity.posY;
-        double dZ = target.posZ - this.theEntity.posZ;
+    private boolean isSwoopPathClear(LivingEntity target, float diveAngle) {
+        double dX = target.getX() - this.theEntity.getX();
+        double dY = target.getY() - this.theEntity.getY();
+        double dZ = target.getZ() - this.theEntity.getZ();
         double dXZ = Math.sqrt(dX * dX + dZ * dZ);
         double dRayY = 2.0D;
         int hitCount = 0;
-        double lowestCollide = this.theEntity.posY;
-        for (double y = this.theEntity.posY - dRayY; y > target.posY; y -= dRayY) {
-            double dist = Math.tan(90.0F + diveAngle) * (this.theEntity.posY - y);
-            double x = -Math.sin(this.theEntity.rotationYaw / 180.0F * 3.141592653589793D) * dist;
-            double z = Math.cos(this.theEntity.rotationYaw / 180.0F * 3.141592653589793D) * dist;
-            //Vec3 source = this.theEntity.worldObj.getWorldVec3Pool().getVecFromPool(x, y, z);
-            Vec3 source = Vec3.createVectorHelper(x, y, z);
-            MovingObjectPosition collide = this.theEntity.worldObj.rayTraceBlocks(source, target.getPosition(1.0F));
+        double lowestCollide = this.theEntity.getY();
+        for (double y = this.theEntity.getY() - dRayY; y > target.getY(); y -= dRayY) {
+            double dist = Math.tan(90.0F + diveAngle) * (this.theEntity.getY() - y);
+            double x = -Math.sin(this.theEntity.getYRot() / 180.0F * 3.141592653589793D) * dist;
+            double z = Math.cos(this.theEntity.getYRot() / 180.0F * 3.141592653589793D) * dist;
+            Vec3 source = new Vec3(x, y, z);
+            HitResult collide = this.theEntity.worldObj.rayTraceBlocks(source, target.position());
             if (collide != null) {
                 if (hitCount == 0) {
                     lowestCollide = y;
@@ -164,7 +162,7 @@ public class EntityAISwoop extends EntityAIBase {
             }
         }
 
-        if (isAcceptableDiveSpace(this.theEntity.posY, lowestCollide, hitCount)) {
+        if (isAcceptableDiveSpace(this.theEntity.getY(), lowestCollide, hitCount)) {
             return true;
         }
 
@@ -172,16 +170,16 @@ public class EntityAISwoop extends EntityAIBase {
     }
 
     private boolean isFinalRunLinedUp() {
-        double dX = this.swoopTarget.posX - this.theEntity.posX;
-        double dY = this.swoopTarget.posY - this.theEntity.posY;
-        double dZ = this.swoopTarget.posZ - this.theEntity.posZ;
+        double dX = this.swoopTarget.getX() - this.theEntity.getX();
+        double dY = this.swoopTarget.getY() - this.theEntity.getY();
+        double dZ = this.swoopTarget.getZ() - this.theEntity.getZ();
         double dXZ = Math.sqrt(dX * dX + dZ * dZ);
         double yawToTarget = Math.atan2(dZ, dX) * 180.0D / 3.141592653589793D - 90.0D;
-        double dYaw = MathUtil.boundAngle180Deg(yawToTarget - this.theEntity.rotationYaw);
+        double dYaw = MathUtil.boundAngle180Deg(yawToTarget - this.theEntity.getYRot());
         if ((dYaw < -this.finalRunArcLimit) || (dYaw > this.finalRunArcLimit)) {
             return false;
         }
-        double dPitch = Math.atan(dY / dXZ) * 180.0D / 3.141592653589793D - this.theEntity.rotationPitch;
+        double dPitch = Math.atan(dY / dXZ) * 180.0D / 3.141592653589793D - this.theEntity.getXRot();
         if ((dPitch < -this.finalRunArcLimit) || (dPitch > this.finalRunArcLimit)) {
             return false;
         }

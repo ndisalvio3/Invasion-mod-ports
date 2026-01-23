@@ -125,7 +125,7 @@ public class IMMoveHelper extends MoveControl {
         double w = Math.max(this.a.getBbWidth() * 0.5F + 1.0F, 1.0D);
         w = this.a.getBbWidth() * 0.5F + 1.0F;
         if ((dY > 0.0D) && ((dX * dX + dZ * dZ <= w * w) || (isInLiquid))) {
-            this.a.getJumpHelper().setJumping();
+            this.a.getJumpHelper().jump();
             if (ladderPos != -1)
                 return MoveState.CLIMBING;
         }

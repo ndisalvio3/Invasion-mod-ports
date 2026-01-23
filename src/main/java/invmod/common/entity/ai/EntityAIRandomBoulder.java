@@ -2,9 +2,8 @@ package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMThrower;
 import invmod.common.nexus.INexusAccess;
-import net.minecraft.entity.ai.EntityAIBase;
 
-public class EntityAIRandomBoulder extends EntityAIBase {
+public class EntityAIRandomBoulder extends LegacyGoal {
     private final EntityIMThrower theEntity;
     private int randomAmmo;
     private int timer;

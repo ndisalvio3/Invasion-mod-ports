@@ -15,7 +15,7 @@ public class NavigatorEngy extends NavigatorIM {
     }
 
     protected Path createPath(EntityIMLiving entity, int x, int y, int z, float targetRadius) {
-        IBlockAccess terrainCache = getChunkCache(entity.getXCoord(), entity.getYCoord(), entity.getZCoord(), x, y, z, 16.0F);
+        BlockGetter terrainCache = getChunkCache(entity.getXCoord(), entity.getYCoord(), entity.getZCoord(), x, y, z, 16.0F);
         INexusAccess nexus = this.pigEntity.getNexus();
         if (nexus != null) {
             IBlockAccessExtended terrainCacheExt = nexus.getAttackerAI().wrapEntityData(terrainCache);
@@ -23,7 +23,7 @@ public class NavigatorEngy extends NavigatorIM {
             nexus.getAttackerAI().addScaffoldDataTo(terrainCacheExt);
             terrainCache = terrainCacheExt;
         }
-        float maxSearchRange = 12.0F + (float) Distance.distanceBetween(entity, x, y, z);
+        float maxSearchRange = 12.0F + (float) Distance.distanceBetween(entity, new net.minecraft.world.phys.Vec3(x + 0.5D, y + 0.5D, z + 0.5D));
         if (this.pathSource.canPathfindNice(IPathSource.PathPriority.HIGH, maxSearchRange, this.pathSource.getSearchDepth(), this.pathSource.getQuickFailDepth())) {
             return this.pathSource.createPath(entity, x, y, z, targetRadius, maxSearchRange, terrainCache);
         }

@@ -1,11 +1,12 @@
 package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.projectile.EntityArrow;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.level.Level;
 
-public class EntityAIKillWithArrow<T extends EntityLivingBase> extends EntityAIKillEntity<T> {
+public class EntityAIKillWithArrow<T extends LivingEntity> extends EntityAIKillEntity<T> {
     private float attackRangeSq;
 
     public EntityAIKillWithArrow(EntityIMLiving entity, Class<? extends T> targetClass, int attackDelay, float attackRange) {
@@ -15,20 +16,23 @@ public class EntityAIKillWithArrow<T extends EntityLivingBase> extends EntityAIK
 
     public void updateTask() {
         super.updateTask();
-        EntityLivingBase target = getTarget();
-        if ((getEntity().getDistanceSq(target.posX, target.boundingBox.minY, target.posZ) < 36.0D) && (getEntity().getEntitySenses().canSee(target)))
+        LivingEntity target = getTarget();
+        if ((getEntity().distanceToSqr(target.getX(), target.getBoundingBox().minY, target.getZ()) < 36.0D) && (getEntity().getEntitySenses().hasLineOfSight(target)))
             getEntity().getNavigatorNew().haltForTick();
     }
 
     protected void attackEntity(Entity target) {
         setAttackTime(getAttackDelay());
-        EntityLivingBase entity = getEntity();
-        EntityArrow entityarrow = new EntityArrow(entity.worldObj, entity, getTarget(), 1.1F, 12.0F);
-        entity.worldObj.playSoundAtEntity(entity, "random.bow", 1.0F, 1.0F / (entity.getRNG().nextFloat() * 0.4F + 0.8F));
-        entity.worldObj.spawnEntityInWorld(entityarrow);
+        LivingEntity entity = getEntity();
+        Level level = entity.level();
+        Arrow arrow = new Arrow(net.minecraft.world.entity.EntityType.ARROW, level);
+        arrow.setOwner(entity);
+        arrow.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), 0.0F, 1.1F * 1.6F, 12.0F);
+        level.playSound(null, entity.blockPosition(), net.minecraft.sounds.SoundEvents.ARROW_SHOOT, entity.getSoundSource(), 1.0F, 1.0F / (entity.getRandom().nextFloat() * 0.4F + 0.8F));
+        level.addFreshEntity(arrow);
     }
 
     protected boolean canAttackEntity(Entity target) {
-        return (getAttackTime() <= 0) && (getEntity().getDistanceSq(target.posX, target.boundingBox.minY, target.posZ) < this.attackRangeSq) && (getEntity().getEntitySenses().canSee(target));
+        return (getAttackTime() <= 0) && (getEntity().distanceToSqr(target.getX(), target.getBoundingBox().minY, target.getZ()) < this.attackRangeSq) && (getEntity().getEntitySenses().hasLineOfSight(target));
     }
 }

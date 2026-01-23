@@ -107,6 +107,41 @@ public class EntityIMThrower extends Monster implements IHasNexus, RangedAttackM
         return entityData.get(DATA_TEXTURE);
     }
 
+    public float getDistance(double x, double y, double z) {
+        return (float) Math.sqrt(distanceToSqr(x, y, z));
+    }
+
+    public double findDistanceToNexus() {
+        if (nexus == null) {
+            return Double.MAX_VALUE;
+        }
+        return Math.sqrt(distanceToSqr(nexus.getXCoord() + 0.5D, nexus.getYCoord() + 0.5D, nexus.getZCoord() + 0.5D));
+    }
+
+    public net.minecraft.util.RandomSource getRNG() {
+        return random;
+    }
+
+    public boolean canThrow() {
+        return true;
+    }
+
+    public void throwTNT(double x, double y, double z) {
+        if (level() instanceof ServerLevel serverLevel) {
+            throwTnt(serverLevel, new Vec3(x, y, z));
+        }
+    }
+
+    public void throwBoulder(double x, double y, double z) {
+        if (level() instanceof ServerLevel serverLevel) {
+            throwBoulder(serverLevel, new Vec3(x, y, z));
+        }
+    }
+
+    public net.minecraft.world.entity.ai.sensing.Sensing getEntitySenses() {
+        return getSensing();
+    }
+
     @Override
     public INexusAccess getNexus() {
         return nexus;

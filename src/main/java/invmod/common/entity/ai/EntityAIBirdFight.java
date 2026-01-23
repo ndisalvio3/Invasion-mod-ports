@@ -2,80 +2,95 @@ package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMBird;
 import invmod.common.entity.Goal;
-import invmod.common.entity.INavigationFlying;
-import invmod.common.entity.Path;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 
-public class EntityAIBirdFight<T extends EntityLivingBase> extends EntityAIMeleeFight<T> {
-    private EntityIMBird theEntity;
-    private boolean wantsToRetreat;
-    private boolean buffetedTarget;
+public class EntityAIBirdFight<T extends LivingEntity> extends LegacyGoal {
+    private final EntityIMBird theEntity;
+    private final Class<? extends T> targetClass;
+    private final int attackDelay;
+    private final float retreatHealthLossPercent;
+    private int nextAttack;
 
     public EntityAIBirdFight(EntityIMBird entity, Class<? extends T> targetClass, int attackDelay, float retreatHealthLossPercent) {
-        super(entity, targetClass, attackDelay, retreatHealthLossPercent);
         this.theEntity = entity;
-        this.wantsToRetreat = false;
-        this.buffetedTarget = false;
+        this.targetClass = targetClass;
+        this.attackDelay = attackDelay;
+        this.retreatHealthLossPercent = retreatHealthLossPercent;
+        this.nextAttack = 0;
+        setMutexBits(1);
+    }
+
+    public boolean shouldExecute() {
+        LivingEntity target = this.theEntity.getAttackTarget();
+        return this.theEntity.getAIGoal() == Goal.MELEE_TARGET && target != null && targetClass.isAssignableFrom(target.getClass());
+    }
+
+    public boolean continueExecuting() {
+        LivingEntity target = this.theEntity.getAttackTarget();
+        return target != null && this.theEntity.getAIGoal() == Goal.MELEE_TARGET;
     }
 
     public void updateTask() {
         if (getAttackTime() == 0) {
             this.theEntity.setAttackingWithWings(isInStartMeleeRange());
         }
-        super.updateTask();
+        LivingEntity target = this.theEntity.getAttackTarget();
+        if (target != null && canAttackEntity(target)) {
+            attackEntity(target);
+        }
+        setAttackTime(getAttackTime() - 1);
     }
 
     public void resetTask() {
         this.theEntity.setAttackingWithWings(false);
-        super.resetTask();
     }
 
-    public void updatePath() {
-        INavigationFlying nav = this.theEntity.getNavigatorNew();
-        Entity target = this.theEntity.getAttackTarget();
-        if (target != nav.getTargetEntity()) {
-            nav.clearPath();
-            nav.setMovementType(INavigationFlying.MoveType.PREFER_WALKING);
-            Path path = nav.getPathToEntity(target, 0.0F);
-            if ((path != null) && (path.getCurrentPathLength() > 1.6D * this.theEntity.getDistanceToEntity(target))) {
-                nav.setMovementType(INavigationFlying.MoveType.MIXED);
-            }
-            nav.autoPathToEntity(target);
-        }
-    }
-
-    protected void updateDisengage() {
-        if (!this.wantsToRetreat) {
-            if (shouldLeaveMelee())
-                this.wantsToRetreat = true;
-        } else if ((this.buffetedTarget) && (this.theEntity.getAIGoal() == Goal.MELEE_TARGET)) {
-            this.theEntity.transitionAIGoal(Goal.LEAVE_MELEE);
-        }
-    }
-
-    protected void attackEntity(EntityLivingBase target) {
+    protected void attackEntity(LivingEntity target) {
         this.theEntity.doMeleeSound();
-        super.attackEntity(target);
-        if (this.wantsToRetreat) {
-            doWingBuffetAttack(target);
-            this.buffetedTarget = true;
+        if (theEntity.level() instanceof ServerLevel serverLevel) {
+            theEntity.doHurtTarget(serverLevel, target);
         }
+        if (retreatHealthLossPercent > 0.0F) {
+            doWingBuffetAttack(target);
+        }
+        setAttackTime(getAttackDelay());
+    }
+
+    protected boolean canAttackEntity(LivingEntity target) {
+        if (getAttackTime() <= 0) {
+            double d = this.theEntity.getBbWidth() + this.theEntity.getAttackRange() + 3.0D;
+            return this.theEntity.getDistanceSq(target.getX(), target.getBoundingBox().minY, target.getZ()) < d * d;
+        }
+        return false;
     }
 
     protected boolean isInStartMeleeRange() {
-        EntityLivingBase target = this.theEntity.getAttackTarget();
+        LivingEntity target = this.theEntity.getAttackTarget();
         if (target == null) {
             return false;
         }
-        double d = this.theEntity.width + this.theEntity.getAttackRange() + 3.0D;
-        return this.theEntity.getDistanceSq(target.posX, target.boundingBox.minY, target.posZ) < d * d;
+        double d = this.theEntity.getBbWidth() + this.theEntity.getAttackRange() + 3.0D;
+        return this.theEntity.getDistanceSq(target.getX(), target.getBoundingBox().minY, target.getZ()) < d * d;
     }
 
-    protected void doWingBuffetAttack(EntityLivingBase target) {
+    protected void doWingBuffetAttack(LivingEntity target) {
         int knockback = 2;
-        target.addVelocity(-MathHelper.sin(this.theEntity.rotationYaw * 3.141593F / 180.0F) * knockback * 0.5F, 0.4D, MathHelper.cos(this.theEntity.rotationYaw * 3.141593F / 180.0F) * knockback * 0.5F);
-        target.worldObj.playSoundAtEntity(target, "damage.fallbig", 1.0F, 1.0F);
+        float yawRad = this.theEntity.getYRot() * Mth.DEG_TO_RAD;
+        target.push(-Mth.sin(yawRad) * knockback * 0.5F, 0.4D, Mth.cos(yawRad) * knockback * 0.5F);
+        target.level().playSound(null, target.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_HURT, target.getSoundSource(), 1.0F, 1.0F);
+    }
+
+    protected int getAttackTime() {
+        return this.nextAttack;
+    }
+
+    protected void setAttackTime(int time) {
+        this.nextAttack = time;
+    }
+
+    protected int getAttackDelay() {
+        return this.attackDelay;
     }
 }

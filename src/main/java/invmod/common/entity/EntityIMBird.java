@@ -5,6 +5,7 @@ import invmod.common.entity.ai.AttackNexusGoal;
 import invmod.common.entity.ai.IMNearestAttackableTargetGoal;
 import invmod.common.nexus.INexusAccess;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -52,11 +53,26 @@ public class EntityIMBird extends Monster implements IHasNexus {
     private float oFlap;
     private float oFlapSpeed;
     private float flapping = 1.0F;
+    public final LegacyWorld worldObj;
+    private int debugMode;
+    private String renderLabel = "";
+    private float maxPoweredFlightSpeed = 1.0F;
+    private float thrust;
+    private float liftFactor;
+    private float thrustComponentRatioMin;
+    private float thrustComponentRatioMax;
+    private float maxTurnForce;
+    private boolean clawsForward;
+    private boolean attackingWithWings;
+    private invmod.common.entity.Goal aiGoal = invmod.common.entity.Goal.NONE;
+    private invmod.common.entity.Goal prevAIGoal = invmod.common.entity.Goal.NONE;
+    private final INavigationFlying navigatorNew = new NavigationBirdStub();
 
     public EntityIMBird(EntityType<? extends EntityIMBird> type, Level level) {
         super(type, level);
         this.tier = 1;
         this.flavour = 0;
+        this.worldObj = new LegacyWorld(level);
         this.moveControl = new FlyingMoveControl(this, 10, false);
         this.setPathfindingMalus(PathType.WATER, 0.0F);
     }
@@ -114,6 +130,322 @@ public class EntityIMBird extends Monster implements IHasNexus {
 
     public float getOldFlapSpeed() {
         return oFlapSpeed;
+    }
+
+    public boolean isAttackingWithWings() {
+        return attackingWithWings;
+    }
+
+    public void setAttackingWithWings(boolean value) {
+        this.attackingWithWings = value;
+    }
+
+    public void setClawsForward(boolean value) {
+        this.clawsForward = value;
+    }
+
+    public boolean getClawsForward() {
+        return clawsForward;
+    }
+
+    public invmod.common.entity.Goal getAIGoal() {
+        return aiGoal;
+    }
+
+    public void setAIGoal(invmod.common.entity.Goal goal) {
+        this.prevAIGoal = this.aiGoal;
+        this.aiGoal = goal;
+    }
+
+    public void transitionAIGoal(invmod.common.entity.Goal goal) {
+        setAIGoal(goal);
+    }
+
+    public LivingEntity getAttackTarget() {
+        return getTarget();
+    }
+
+    public void setAttackTarget(LivingEntity target) {
+        setTarget(target);
+    }
+
+    public INavigationFlying getNavigatorNew() {
+        return navigatorNew;
+    }
+
+    public float getMaxPoweredFlightSpeed() {
+        return maxPoweredFlightSpeed;
+    }
+
+    public void doScreech() {
+        // no-op for now
+    }
+
+    public void setName(String name) {
+        setCustomName(Component.literal(name));
+    }
+
+    public void setGender(int gender) {
+        // no-op for now
+    }
+
+    public void setSize(float width, float height) {
+        // no-op for now
+    }
+
+    public void setGravity(float gravity) {
+        // no-op for now
+    }
+
+    public float getLegacyGravity() {
+        return 0.08F;
+    }
+
+    public void setThrust(float thrust) {
+        this.thrust = thrust;
+    }
+
+    public void setMaxPoweredFlightSpeed(float speed) {
+        this.maxPoweredFlightSpeed = speed;
+    }
+
+    public void setLiftFactor(float liftFactor) {
+        this.liftFactor = liftFactor;
+    }
+
+    public void setThrustComponentRatioMin(float value) {
+        this.thrustComponentRatioMin = value;
+    }
+
+    public void setThrustComponentRatioMax(float value) {
+        this.thrustComponentRatioMax = value;
+    }
+
+    public void setMaxTurnForce(float value) {
+        this.maxTurnForce = value;
+    }
+
+    public void setMaxHealthAndHealth(int maxHealth) {
+        var attr = getAttribute(Attributes.MAX_HEALTH);
+        if (attr != null) {
+            attr.setBaseValue(maxHealth);
+            setHealth(maxHealth);
+        }
+    }
+
+    public void setBaseMoveSpeedStat(float speed) {
+        var attr = getAttribute(Attributes.MOVEMENT_SPEED);
+        if (attr != null) {
+            attr.setBaseValue(speed);
+        }
+    }
+
+    public void setDebugMode(int mode) {
+        this.debugMode = mode;
+    }
+
+    public int getDebugMode() {
+        return debugMode;
+    }
+
+    public void setRenderLabel(String label) {
+        this.renderLabel = label;
+    }
+
+    public String getNavString() {
+        return "";
+    }
+
+    public float getCarriedEntityYawOffset() {
+        return 0.0F;
+    }
+
+    public void setBeakState(int state) {
+        // no-op for now
+    }
+
+    public boolean attackEntityAsMob(LivingEntity target, int damage) {
+        if (level() instanceof ServerLevel serverLevel) {
+            target.hurt(target.damageSources().mobAttack(this), damage);
+            return true;
+        }
+        return false;
+    }
+
+    public float getAttackRange() {
+        return 1.0F;
+    }
+
+    public double getDistanceSq(double x, double y, double z) {
+        return distanceToSqr(x, y, z);
+    }
+
+    public float getDistanceToEntity(Entity target) {
+        return distanceTo(target);
+    }
+
+    public void doMeleeSound() {
+        // no-op for now
+    }
+
+    public FlyState getFlyState() {
+        return onGround() ? FlyState.GROUNDED : FlyState.FLYING;
+    }
+
+    public boolean isThrustOn() {
+        return !onGround();
+    }
+
+    public float getThrustEffort() {
+        return 1.0F;
+    }
+
+    public MoveState getMoveState() {
+        return onGround() ? MoveState.RUNNING : MoveState.FLYING;
+    }
+
+    private static final class NavigationBirdStub implements INavigationFlying {
+        @Override
+        public void setMovementType(MoveType moveType) {
+        }
+
+        @Override
+        public void setLandingPath() {
+        }
+
+        @Override
+        public void setCirclingPath(Entity entity, float radius, float height) {
+        }
+
+        @Override
+        public void setCirclingPath(double x, double y, double z, float radius, float height) {
+        }
+
+        @Override
+        public float getDistanceToCirclingRadius() {
+            return 0.0F;
+        }
+
+        @Override
+        public boolean isCircling() {
+            return false;
+        }
+
+        @Override
+        public void setFlySpeed(float speed) {
+        }
+
+        @Override
+        public void setPitchBias(float min, float max) {
+        }
+
+        @Override
+        public void enableDirectTarget(boolean enabled) {
+        }
+
+        @Override
+        public PathAction getCurrentWorkingAction() {
+            return null;
+        }
+
+        @Override
+        public void setSpeed(float paramFloat) {
+        }
+
+        @Override
+        public Path getPathToXYZ(double paramDouble1, double paramDouble2, double paramDouble3, float paramFloat) {
+            return null;
+        }
+
+        @Override
+        public boolean tryMoveToXYZ(double paramDouble1, double paramDouble2, double paramDouble3, float paramFloat1, float paramFloat2) {
+            return false;
+        }
+
+        @Override
+        public Path getPathTowardsXZ(double paramDouble1, double paramDouble2, int paramInt1, int paramInt2, int paramInt3) {
+            return null;
+        }
+
+        @Override
+        public boolean tryMoveTowardsXZ(double paramDouble1, double paramDouble2, int paramInt1, int paramInt2, int paramInt3, float paramFloat) {
+            return false;
+        }
+
+        @Override
+        public Path getPathToEntity(Entity paramEntity, float paramFloat) {
+            return null;
+        }
+
+        @Override
+        public boolean tryMoveToEntity(Entity paramEntity, float paramFloat1, float paramFloat2) {
+            return false;
+        }
+
+        @Override
+        public void autoPathToEntity(Entity paramEntity) {
+        }
+
+        @Override
+        public boolean setPath(Path paramPath, float paramFloat) {
+            return false;
+        }
+
+        @Override
+        public boolean isWaitingForTask() {
+            return false;
+        }
+
+        @Override
+        public Path getPath() {
+            return null;
+        }
+
+        @Override
+        public void onUpdateNavigation() {
+        }
+
+        @Override
+        public int getLastActionResult() {
+            return 0;
+        }
+
+        @Override
+        public boolean noPath() {
+            return true;
+        }
+
+        @Override
+        public int getStuckTime() {
+            return 0;
+        }
+
+        @Override
+        public float getLastPathDistanceToTarget() {
+            return 0.0F;
+        }
+
+        @Override
+        public void clearPath() {
+        }
+
+        @Override
+        public void haltForTick() {
+        }
+
+        @Override
+        public Entity getTargetEntity() {
+            return null;
+        }
+
+        @Override
+        public String getStatus() {
+            return "idle";
+        }
+
+        @Override
+        public void notifyTask(int result) {
+        }
     }
 
     @Override

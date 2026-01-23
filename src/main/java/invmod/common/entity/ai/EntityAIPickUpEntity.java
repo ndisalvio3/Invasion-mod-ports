@@ -3,11 +3,10 @@ package invmod.common.entity.ai;
 import invmod.common.entity.EntityIMBird;
 import invmod.common.entity.Goal;
 import invmod.common.util.MathUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
-public class EntityAIPickUpEntity extends EntityAIBase {
+public class EntityAIPickUpEntity extends LegacyGoal {
     private EntityIMBird theEntity;
     private int time;
     private int holdTime;
@@ -37,21 +36,21 @@ public class EntityAIPickUpEntity extends EntityAIBase {
     }
 
     public boolean shouldExecute() {
-        return (this.theEntity.getAIGoal() == Goal.PICK_UP_TARGET) || (this.theEntity.riddenByEntity != null);
+        return (this.theEntity.getAIGoal() == Goal.PICK_UP_TARGET) || (this.theEntity.getFirstPassenger() != null);
     }
 
     public void startExecuting() {
-        this.isHoldingEntity = (this.theEntity.riddenByEntity != null);
+        this.isHoldingEntity = (this.theEntity.getFirstPassenger() != null);
         this.time = 0;
     }
 
     public boolean continueExecuting() {
-        EntityLivingBase target = this.theEntity.getAttackTarget();
-        if ((target != null) && (!target.isDead)) {
+        LivingEntity target = this.theEntity.getAttackTarget();
+        if ((target != null) && (target.isAlive())) {
             if (!this.isHoldingEntity) {
                 if ((this.time > this.abortTime) && (isLinedUp(target)))
                     return true;
-            } else if (this.theEntity.riddenByEntity == target) {
+            } else if (this.theEntity.getFirstPassenger() == target) {
                 return true;
             }
         }
@@ -63,22 +62,20 @@ public class EntityAIPickUpEntity extends EntityAIBase {
     public void updateTask() {
         this.time += 1;
         if (!this.isHoldingEntity) {
-            EntityLivingBase target = this.theEntity.getAttackTarget();
-            double dY = target.prevPosY - this.theEntity.prevPosY;
-            System.out.println(dY);
+            LivingEntity target = this.theEntity.getAttackTarget();
+            double dY = target.getY() - this.theEntity.getY();
             if (Math.abs(dY - this.pickupPointY) < this.pickupRangeY) {
-                double dAngle = this.theEntity.prevRotationYaw / 180.0F * 3.141592653589793D;
+                double dAngle = this.theEntity.getYRot() / 180.0F * 3.141592653589793D;
                 double sinF = Math.sin(dAngle);
                 double cosF = Math.cos(dAngle);
                 double x = this.pickupPointX * cosF - this.pickupPointZ * sinF;
                 double z = this.pickupPointZ * cosF + this.pickupPointX * sinF;
 
-                double dX = target.prevPosX - (x + this.theEntity.prevPosX);
-                double dZ = target.prevPosZ - (z + this.theEntity.prevPosZ);
+                double dX = target.getX() - (x + this.theEntity.getX());
+                double dZ = target.getZ() - (z + this.theEntity.getZ());
                 double dXZ = Math.sqrt(dX * dX + dZ * dZ);
-                System.out.println(dXZ);
                 if (dXZ < this.pickupRangeXZ) {
-                    target.mountEntity(this.theEntity);
+                    target.startRiding(this.theEntity, true);
                     this.isHoldingEntity = true;
                     this.time = 0;
                     this.theEntity.getNavigatorNew().clearPath();
@@ -88,21 +85,21 @@ public class EntityAIPickUpEntity extends EntityAIBase {
         } else if (this.time == 45) {
             this.theEntity.getNavigatorNew().setPitchBias(0.0F, 0.0F);
         } else if (this.time > this.holdTime) {
-            this.theEntity.getAttackTarget().mountEntity(null);
+            this.theEntity.getAttackTarget().stopRiding();
         }
     }
 
     private boolean isLinedUp(Entity target) {
-        double dX = target.posX - this.theEntity.posX;
-        double dY = target.posY - this.theEntity.posY;
-        double dZ = target.posZ - this.theEntity.posZ;
+        double dX = target.getX() - this.theEntity.getX();
+        double dY = target.getY() - this.theEntity.getY();
+        double dZ = target.getZ() - this.theEntity.getZ();
         double dXZ = Math.sqrt(dX * dX + dZ * dZ);
         double yawToTarget = Math.atan2(dZ, dX) * 180.0D / 3.141592653589793D - 90.0D;
-        double dYaw = MathUtil.boundAngle180Deg(yawToTarget - this.theEntity.rotationYaw);
+        double dYaw = MathUtil.boundAngle180Deg(yawToTarget - this.theEntity.getYRot());
         if ((dYaw < -this.abortAngleYaw) || (dYaw > this.abortAngleYaw)) {
             return false;
         }
-        double dPitch = Math.atan(dY / dXZ) * 180.0D / 3.141592653589793D - this.theEntity.rotationPitch;
+        double dPitch = Math.atan(dY / dXZ) * 180.0D / 3.141592653589793D - this.theEntity.getXRot();
         if ((dPitch < -this.abortAnglePitch) || (dPitch > this.abortAnglePitch)) {
             return false;
         }

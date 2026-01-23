@@ -3,12 +3,16 @@ package invmod.common.entity;
 import invmod.common.IBlockAccessExtended;
 import invmod.common.nexus.INexusAccess;
 import invmod.common.util.MathUtil;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 
 public abstract class EntityIMFlying extends EntityIMLiving {
     private static final int META_TARGET_X = 29;
@@ -16,6 +20,11 @@ public abstract class EntityIMFlying extends EntityIMLiving {
     private static final int META_TARGET_Z = 31;
     private static final int META_THRUST_DATA = 28;
     private static final int META_FLYSTATE = 27;
+    private static final EntityDataAccessor<Integer> DATA_TARGET_X = SynchedEntityData.defineId(EntityIMFlying.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TARGET_Y = SynchedEntityData.defineId(EntityIMFlying.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TARGET_Z = SynchedEntityData.defineId(EntityIMFlying.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Byte> DATA_THRUST = SynchedEntityData.defineId(EntityIMFlying.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Integer> DATA_FLYSTATE = SynchedEntityData.defineId(EntityIMFlying.class, EntityDataSerializers.INT);
     private final NavigatorFlying navigatorFlying;
     private final IMMoveHelperFlying i;
     private final IMLookHelper h;
@@ -38,12 +47,15 @@ public abstract class EntityIMFlying extends EntityIMLiving {
     private boolean flyPathfind;
     private boolean debugFlying;
 
-    public EntityIMFlying(World world) {
-        this(world, null);
+    public EntityIMFlying(EntityType<? extends EntityIMFlying> type, Level level) {
+        this(type, level, null);
     }
 
-    public EntityIMFlying(World world, INexusAccess nexus) {
-        super(world, nexus);
+    public EntityIMFlying(EntityType<? extends EntityIMFlying> type, Level level, INexusAccess nexus) {
+        super(type, level);
+        if (nexus != null) {
+            acquiredByNexus(nexus);
+        }
         this.debugFlying = true;
         this.flyState = FlyState.GROUNDED;
         this.maxPoweredFlightSpeed = 0.28F;
@@ -51,7 +63,7 @@ public abstract class EntityIMFlying extends EntityIMLiving {
         this.thrust = 0.08F;
         this.thrustComponentRatioMin = 0.0F;
         this.thrustComponentRatioMax = 0.1F;
-        this.maxTurnForce = (getGravity() * 3.0F);
+        this.maxTurnForce = (getLegacyGravity() * 3.0F);
         this.optimalPitch = 52.0F;
         this.landingSpeedThreshold = (getMoveSpeedStat() * 1.2F);
         this.maxRunSpeed = 0.45F;
@@ -66,32 +78,36 @@ public abstract class EntityIMFlying extends EntityIMLiving {
         pathSource.setSearchDepth(800);
         pathSource.setQuickFailDepth(200);
         this.navigatorFlying = new NavigatorFlying(this, pathSource);
-
-        this.dataWatcher.addObject(29, Integer.valueOf(0));
-        this.dataWatcher.addObject(30, Integer.valueOf(0));
-        this.dataWatcher.addObject(31, Integer.valueOf(0));
-        this.dataWatcher.addObject(28, Byte.valueOf((byte) 0));
-        this.dataWatcher.addObject(27, Integer.valueOf(this.flyState.ordinal()));
     }
 
     @Override
-    public void onUpdate() {
-        super.onUpdate();
-        if (!this.worldObj.isRemote) {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_TARGET_X, 0);
+        builder.define(DATA_TARGET_Y, 0);
+        builder.define(DATA_TARGET_Z, 0);
+        builder.define(DATA_THRUST, (byte) 0);
+        builder.define(DATA_FLYSTATE, flyState.ordinal());
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!level().isClientSide) {
             if (this.debugFlying) {
                 Vec3 target = this.navigatorFlying.getTarget();
-                float oldTargetX = MathUtil.unpackFloat(this.dataWatcher.getWatchableObjectInt(29));
-                float oldTargetY = MathUtil.unpackFloat(this.dataWatcher.getWatchableObjectInt(30));
-                float oldTargetZ = MathUtil.unpackFloat(this.dataWatcher.getWatchableObjectInt(31));
+                float oldTargetX = MathUtil.unpackFloat(entityData.get(DATA_TARGET_X));
+                float oldTargetY = MathUtil.unpackFloat(entityData.get(DATA_TARGET_Y));
+                float oldTargetZ = MathUtil.unpackFloat(entityData.get(DATA_TARGET_Z));
 
-                if ((!MathUtil.floatEquals(oldTargetX, (float) target.xCoord, 0.1F)) || (!MathUtil.floatEquals(oldTargetY, (float) target.yCoord, 0.1F)) || (!MathUtil.floatEquals(oldTargetZ, (float) target.zCoord, 0.1F))) {
-                    this.dataWatcher.updateObject(29, Integer.valueOf(MathUtil.packFloat((float) target.xCoord)));
-                    this.dataWatcher.updateObject(30, Integer.valueOf(MathUtil.packFloat((float) target.yCoord)));
-                    this.dataWatcher.updateObject(31, Integer.valueOf(MathUtil.packFloat((float) target.zCoord)));
+                if ((!MathUtil.floatEquals(oldTargetX, (float) target.x, 0.1F)) || (!MathUtil.floatEquals(oldTargetY, (float) target.y, 0.1F)) || (!MathUtil.floatEquals(oldTargetZ, (float) target.z, 0.1F))) {
+                    entityData.set(DATA_TARGET_X, MathUtil.packFloat((float) target.x));
+                    entityData.set(DATA_TARGET_Y, MathUtil.packFloat((float) target.y));
+                    entityData.set(DATA_TARGET_Z, MathUtil.packFloat((float) target.z));
                 }
             }
 
-            byte thrustData = this.dataWatcher.getWatchableObjectByte(28);
+            byte thrustData = entityData.get(DATA_THRUST);
             int oldThrustOn = thrustData & 0x1;
             int oldThrustEffortEncoded = thrustData >> 1 & 0xF;
             int thrustEffortEncoded = (int) (this.thrustEffort * 15.0F);
@@ -99,20 +115,20 @@ public abstract class EntityIMFlying extends EntityIMLiving {
                 if (thrustEffortEncoded == oldThrustEffortEncoded)
                     ;
             } else {
-                this.dataWatcher.updateObject(28, Byte.valueOf((byte) (thrustEffortEncoded << 1 | oldThrustOn)));
+                entityData.set(DATA_THRUST, (byte) (thrustEffortEncoded << 1 | oldThrustOn));
             }
 
         } else {
             if (this.debugFlying) {
-                float x = MathUtil.unpackFloat(this.dataWatcher.getWatchableObjectInt(29));
-                float y = MathUtil.unpackFloat(this.dataWatcher.getWatchableObjectInt(30));
-                float z = MathUtil.unpackFloat(this.dataWatcher.getWatchableObjectInt(31));
+                float x = MathUtil.unpackFloat(entityData.get(DATA_TARGET_X));
+                float y = MathUtil.unpackFloat(entityData.get(DATA_TARGET_Y));
+                float z = MathUtil.unpackFloat(entityData.get(DATA_TARGET_Z));
                 this.navigatorFlying.setTarget(x, y, z);
             }
 
-            this.flyState = FlyState.values()[this.dataWatcher.getWatchableObjectInt(27)];
+            this.flyState = FlyState.values()[entityData.get(DATA_FLYSTATE)];
 
-            byte thrustData = this.dataWatcher.getWatchableObjectByte(28);
+            byte thrustData = entityData.get(DATA_THRUST);
             this.thrustOn = ((thrustData & 0x1) > 0);
             this.thrustEffort = ((thrustData >> 1 & 0xF) / 15.0F);
         }
@@ -124,12 +140,13 @@ public abstract class EntityIMFlying extends EntityIMLiving {
 
     protected void setFlyState(FlyState flyState) {
         this.flyState = flyState;
-        if (!this.worldObj.isRemote)
-            this.dataWatcher.updateObject(27, Integer.valueOf(flyState.ordinal()));
+        if (!level().isClientSide) {
+            entityData.set(DATA_FLYSTATE, flyState.ordinal());
+        }
     }
 
     public boolean isThrustOn() {
-        return this.dataWatcher.getWatchableObjectByte(28) != 0;
+        return entityData.get(DATA_THRUST) != 0;
     }
 
     protected void setThrustOn(boolean flag) {
@@ -148,17 +165,14 @@ public abstract class EntityIMFlying extends EntityIMLiving {
         return this.navigatorFlying.getTarget();
     }
 
-    @Override
     public INavigationFlying getNavigatorNew() {
         return this.navigatorFlying;
     }
 
-    @Override
     public IMMoveHelperFlying getMoveHelper() {
         return this.i;
     }
 
-    @Override
     public IMLookHelper getLookHelper() {
         return this.h;
     }
@@ -167,69 +181,10 @@ public abstract class EntityIMFlying extends EntityIMLiving {
         return this.bn;
     }
 
-    @Override
     public void moveEntityWithHeading(float x, float z) {
-        if (isInWater()) {
-            double y = this.posY;
-            moveFlying(x, z, isAIEnabled() ? 0.04F : 0.02F);
-            moveEntity(this.motionX, this.motionY, this.motionZ);
-            this.motionX *= 0.8D;
-            this.motionY *= 0.8D;
-            this.motionZ *= 0.8D;
-            this.motionY -= 0.02D;
-            if ((this.isCollidedHorizontally) && (isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6D - this.posY + y, this.motionZ)))
-                this.motionY = 0.3D;
-        } else if (handleLavaMovement()) {
-            double y = this.posY;
-            moveFlying(x, z, isAIEnabled() ? 0.04F : 0.02F);
-            moveEntity(this.motionX, this.motionY, this.motionZ);
-            this.motionX *= 0.5D;
-            this.motionY *= 0.5D;
-            this.motionZ *= 0.5D;
-            this.motionY -= 0.02D;
-            if ((this.isCollidedHorizontally) && (isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6D - this.posY + y, this.motionZ)))
-                this.motionY = 0.3D;
-        } else {
-            float groundFriction = 0.9995F;
-
-            if (this.onGround) {
-                groundFriction = getGroundFriction();
-
-                float maxRunSpeed = getMaxRunSpeed();
-                if (this.motionX * this.motionX + this.motionZ * this.motionZ < maxRunSpeed * maxRunSpeed) {
-                    float landMoveSpeed = getAIMoveSpeed();
-                    landMoveSpeed *= 0.162771F / (groundFriction * groundFriction * groundFriction);
-                    moveFlying(x, z, landMoveSpeed);
-                }
-            } else {
-                moveFlying(x, z, 0.01F);
-            }
-
-            this.motionX += this.flightAccelX;
-            this.motionY += this.flightAccelY;
-            this.motionZ += this.flightAccelZ;
-
-            moveEntity(this.motionX, this.motionY, this.motionZ);
-            this.motionY -= getGravity();
-            this.motionY *= getAirResistance();
-            this.motionX *= groundFriction * getAirResistance();
-            this.motionZ *= groundFriction * getAirResistance();
-        }
-
-        this.prevLimbSwingAmount = this.limbSwingAmount;
-        double dX = this.posX - this.prevPosX;
-        double dZ = this.posZ - this.prevPosZ;
-        float limbEnergy = MathHelper.sqrt_double(dX * dX + dZ * dZ) * 4.0F;
-
-        if (limbEnergy > 1.0F) {
-            limbEnergy = 1.0F;
-        }
-
-        this.limbSwingAmount += (limbEnergy - this.limbSwingAmount) * 0.4F;
-        this.limbSwing += this.limbSwingAmount;
+        travel(new Vec3(x, getDeltaMovement().y, z));
     }
 
-    @Override
     public boolean isOnLadder() {
         return false;
     }
@@ -321,23 +276,21 @@ public abstract class EntityIMFlying extends EntityIMLiving {
         this.optimalPitch = pitch;
     }
 
-    @Override
     protected void fall(float par1) {
     }
 
-    @Override
     protected void updateFallState(double par1, boolean par3) {
     }
 
     @Override
-    protected void calcPathOptions(IBlockAccess terrainMap, PathNode currentNode, PathfinderIM pathFinder) {
+    protected void calcPathOptions(BlockGetter terrainMap, PathNode currentNode, PathfinderIM pathFinder) {
         if (!this.flyPathfind)
             super.calcPathOptions(terrainMap, currentNode, pathFinder);
         else
             calcPathOptionsFlying(terrainMap, currentNode, pathFinder);
     }
 
-    protected void calcPathOptionsFlying(IBlockAccess terrainMap, PathNode currentNode, PathfinderIM pathFinder) {
+    protected void calcPathOptionsFlying(BlockGetter terrainMap, PathNode currentNode, PathfinderIM pathFinder) {
         if ((currentNode.yCoord <= 0) || (currentNode.yCoord > 255)) {
             return;
         }
@@ -363,8 +316,7 @@ public abstract class EntityIMFlying extends EntityIMLiving {
         }
     }
 
-    @Override
-    protected float calcBlockPathCost(PathNode prevNode, PathNode node, IBlockAccess terrainMap) {
+    protected float calcBlockPathCost(PathNode prevNode, PathNode node, BlockGetter terrainMap) {
         float multiplier = 1.0F;
         if ((terrainMap instanceof IBlockAccessExtended)) {
             int mobDensity = ((IBlockAccessExtended) terrainMap).getLayeredData(node.xCoord, node.yCoord, node.zCoord) & 0x7;
@@ -372,8 +324,8 @@ public abstract class EntityIMFlying extends EntityIMLiving {
         }
 
         for (int i = -1; i > -6; i--) {
-            Block block = terrainMap.getBlock(node.xCoord, node.yCoord + i, node.zCoord);
-            if (block != Blocks.air) {
+            Block block = terrainMap.getBlockState(new net.minecraft.core.BlockPos(node.xCoord, node.yCoord + i, node.zCoord)).getBlock();
+            if (block != Blocks.AIR) {
                 int blockType = getBlockType(block);
                 if (blockType != 1) {
                     multiplier += 1.0F - -i * 0.2F;
@@ -389,7 +341,7 @@ public abstract class EntityIMFlying extends EntityIMLiving {
 
         for (int i = 0; i < 4; i++) {
             for (int j = 1; j <= 2; j++) {
-                Block block = terrainMap.getBlock(node.xCoord + invmod.common.util.CoordsInt.offsetAdjX[i] * j, node.yCoord, node.zCoord + invmod.common.util.CoordsInt.offsetAdjZ[i] * j);
+                Block block = terrainMap.getBlockState(new net.minecraft.core.BlockPos(node.xCoord + invmod.common.util.CoordsInt.offsetAdjX[i] * j, node.yCoord, node.zCoord + invmod.common.util.CoordsInt.offsetAdjZ[i] * j)).getBlock();
                 int blockType = getBlockType(block);
                 if (blockType != 1) {
                     multiplier += 1.5F - j * 0.5F;
@@ -404,18 +356,29 @@ public abstract class EntityIMFlying extends EntityIMLiving {
         }
 
         if (node.action == PathAction.SWIM) {
-            multiplier *= ((node.yCoord <= prevNode.yCoord) && (terrainMap.getBlock(node.xCoord, node.yCoord + 1, node.zCoord) != Blocks.air) ? 3.0F : 1.0F);
+            Block above = terrainMap.getBlockState(new net.minecraft.core.BlockPos(node.xCoord, node.yCoord + 1, node.zCoord)).getBlock();
+            multiplier *= ((node.yCoord <= prevNode.yCoord) && (above != Blocks.AIR) ? 3.0F : 1.0F);
             return prevNode.distanceTo(node) * 1.3F * multiplier;
         }
 
-        Block block = terrainMap.getBlock(node.xCoord, node.yCoord, node.zCoord);
+        Block block = terrainMap.getBlockState(new net.minecraft.core.BlockPos(node.xCoord, node.yCoord, node.zCoord)).getBlock();
         if (EntityIMLiving.blockCosts.containsKey(block)) {
             return prevNode.distanceTo(node) * ((Float) EntityIMLiving.blockCosts.get(block)).floatValue() * multiplier;
         }
-        if (block.isCollidable()) {
+        if (block.defaultBlockState().isCollisionShapeFullBlock(terrainMap, new net.minecraft.core.BlockPos(node.xCoord, node.yCoord, node.zCoord))) {
             return prevNode.distanceTo(node) * 3.2F * multiplier;
         }
 
         return prevNode.distanceTo(node) * 1.0F * multiplier;
+    }
+
+    private int getBlockType(Block block) {
+        if (block == Blocks.AIR) {
+            return 0;
+        }
+        if (block == Blocks.WATER || block == Blocks.LAVA) {
+            return 2;
+        }
+        return 1;
     }
 }

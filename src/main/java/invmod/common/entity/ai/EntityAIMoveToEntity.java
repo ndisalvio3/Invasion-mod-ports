@@ -1,10 +1,9 @@
 package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMLiving;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.world.entity.LivingEntity;
 
-public class EntityAIMoveToEntity<T extends EntityLivingBase> extends EntityAIBase {
+public class EntityAIMoveToEntity<T extends LivingEntity> extends LegacyGoal {
     private EntityIMLiving theEntity;
     private T targetEntity;
     private Class<? extends T> targetClass;
@@ -16,7 +15,7 @@ public class EntityAIMoveToEntity<T extends EntityLivingBase> extends EntityAIBa
     private int pathFailedCount;
 
     public EntityAIMoveToEntity(EntityIMLiving entity) {
-        this(entity, (Class<? extends T>) EntityLivingBase.class);
+        this(entity, (Class<? extends T>) LivingEntity.class);
     }
 
     public EntityAIMoveToEntity(EntityIMLiving entity, Class<? extends T> target) {
@@ -30,9 +29,9 @@ public class EntityAIMoveToEntity<T extends EntityLivingBase> extends EntityAIBa
 
     public boolean shouldExecute() {
         if (--this.pathRequestTimer <= 0) {
-            EntityLivingBase target = this.theEntity.getAttackTarget();
+            LivingEntity target = this.theEntity.getAttackTarget();
             if ((target != null) && (this.targetClass.isAssignableFrom(this.theEntity.getAttackTarget().getClass()))) {
-                this.targetEntity = (T) ((EntityLivingBase) this.targetClass.cast(target));
+                this.targetEntity = (T) ((LivingEntity) this.targetClass.cast(target));
                 return true;
             }
         }
@@ -40,7 +39,7 @@ public class EntityAIMoveToEntity<T extends EntityLivingBase> extends EntityAIBa
     }
 
     public boolean continueExecuting() {
-        EntityLivingBase target = this.theEntity.getAttackTarget();
+        LivingEntity target = this.theEntity.getAttackTarget();
         if ((target != null) && (target == this.targetEntity)) {
             return true;
         }
@@ -57,11 +56,11 @@ public class EntityAIMoveToEntity<T extends EntityLivingBase> extends EntityAIBa
     }
 
     public void updateTask() {
-        if ((--this.pathRequestTimer <= 0) && (!this.theEntity.getNavigatorNew().isWaitingForTask()) && (this.targetMoves) && (this.targetEntity.getDistanceSq(this.lastX, this.lastY, this.lastZ) > 1.8D)) {
+        if ((--this.pathRequestTimer <= 0) && (!this.theEntity.getNavigatorNew().isWaitingForTask()) && (this.targetMoves) && (this.targetEntity.distanceToSqr(this.lastX, this.lastY, this.lastZ) > 1.8D)) {
             setPath();
         }
         if (this.pathFailedCount > 3) {
-            this.theEntity.getMoveHelper().setMoveTo(this.targetEntity.posX, this.targetEntity.posY, this.targetEntity.posZ, this.theEntity.getMoveSpeedStat());
+            this.theEntity.getMoveHelper().setMoveTo(this.targetEntity.getX(), this.targetEntity.getY(), this.targetEntity.getZ(), this.theEntity.getMoveSpeedStat());
         }
     }
 
@@ -94,8 +93,8 @@ public class EntityAIMoveToEntity<T extends EntityLivingBase> extends EntityAIBa
             this.pathRequestTimer = (40 * this.pathFailedCount + this.theEntity.worldObj.rand.nextInt(10));
         }
 
-        this.lastX = this.targetEntity.posX;
-        this.lastY = this.targetEntity.posY;
-        this.lastZ = this.targetEntity.posZ;
+        this.lastX = this.targetEntity.getX();
+        this.lastY = this.targetEntity.getY();
+        this.lastZ = this.targetEntity.getZ();
     }
 }

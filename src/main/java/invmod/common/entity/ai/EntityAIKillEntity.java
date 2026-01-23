@@ -1,10 +1,10 @@
 package invmod.common.entity.ai;
 
 import invmod.common.entity.EntityIMLiving;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
-public class EntityAIKillEntity<T extends EntityLivingBase> extends EntityAIMoveToEntity<T> {
+public class EntityAIKillEntity<T extends LivingEntity> extends EntityAIMoveToEntity<T> {
     private static final float ATTACK_RANGE = 1.0F;
     private int attackDelay;
     private int nextAttack;
@@ -33,9 +33,9 @@ public class EntityAIKillEntity<T extends EntityLivingBase> extends EntityAIMove
     protected boolean canAttackEntity(Entity target) {
         if (getAttackTime() <= 0) {
             Entity entity = getEntity();
-            double d = (entity.width + 1.0F) * (entity.width + 1.0F);
+            double d = (entity.getBbWidth() + 1.0F) * (entity.getBbWidth() + 1.0F);
 
-            return entity.getDistanceSq(target.posX, target.boundingBox.minY, target.posZ) < d;
+            return entity.distanceToSqr(target.getX(), target.getBoundingBox().minY, target.getZ()) < d;
         }
         return false;
     }

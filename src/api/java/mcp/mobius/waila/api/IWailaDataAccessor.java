@@ -1,7 +1,7 @@
 package mcp.mobius.waila.api;
 
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public interface IWailaDataAccessor {
-    TileEntity getTileEntity();
+    BlockEntity getTileEntity();
 }

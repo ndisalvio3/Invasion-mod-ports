@@ -6,10 +6,9 @@ import invmod.common.entity.EntityIMFlying;
 import invmod.common.entity.Goal;
 import invmod.common.entity.INavigationFlying;
 import invmod.common.entity.Path;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.world.entity.Entity;
 
-public class EntityAIFlyingMoveToEntity extends EntityAIBase {
+public class EntityAIFlyingMoveToEntity extends LegacyGoal {
     private EntityIMFlying theEntity;
 
     public EntityAIFlyingMoveToEntity(EntityIMFlying entity) {

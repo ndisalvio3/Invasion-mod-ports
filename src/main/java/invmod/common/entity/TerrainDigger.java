@@ -2,8 +2,9 @@ package invmod.common.entity;
 
 import invmod.common.INotifyTask;
 import invmod.common.util.IPosition;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
 
 public class TerrainDigger
         implements ITerrainDig, INotifyTask {
@@ -30,13 +31,14 @@ public class TerrainDigger
         ModifyBlockEntry[] removalEntries = new ModifyBlockEntry[removals.length];
         int entries = 0;
         for (int i = 0; i < removals.length; i++) {
-            Block block = this.digger.getTerrain().getBlock(removals[i].getXCoord(), removals[i].getYCoord(), removals[i].getZCoord());
-            if ((block != Blocks.air) && (!block.getBlocksMovement(this.digger.getTerrain(), removals[i].getXCoord(), removals[i].getYCoord(), removals[i].getZCoord()))) {
+            BlockPos pos = new BlockPos(removals[i].getXCoord(), removals[i].getYCoord(), removals[i].getZCoord());
+            BlockState state = this.digger.getTerrain().getBlockState(pos);
+            if ((!state.isAir()) && (!state.blocksMotion())) {
                 if (!this.digger.canClearBlock(removals[i].getXCoord(), removals[i].getYCoord(), removals[i].getZCoord())) {
                     return false;
                 }
 
-                removalEntries[(entries++)] = new ModifyBlockEntry(removals[i].getXCoord(), removals[i].getYCoord(), removals[i].getZCoord(), Blocks.air, (int) (costMultiplier * this.digger.getBlockRemovalCost(removals[i].getXCoord(), removals[i].getYCoord(), removals[i].getZCoord()) / this.digRate));
+                removalEntries[(entries++)] = new ModifyBlockEntry(removals[i].getXCoord(), removals[i].getYCoord(), removals[i].getZCoord(), Blocks.AIR, (int) (costMultiplier * this.digger.getBlockRemovalCost(removals[i].getXCoord(), removals[i].getYCoord(), removals[i].getZCoord()) / this.digRate));
             }
         }
         ModifyBlockEntry[] finalEntries = new ModifyBlockEntry[entries];
@@ -48,7 +50,7 @@ public class TerrainDigger
         if (!this.digger.canClearBlock(x, y, z)) {
             return false;
         }
-        ModifyBlockEntry[] removalEntries = {new ModifyBlockEntry(x, y, z, Blocks.air, (int) (costMultiplier * this.digger.getBlockRemovalCost(x, y, z) / this.digRate))};
+        ModifyBlockEntry[] removalEntries = {new ModifyBlockEntry(x, y, z, Blocks.AIR, (int) (costMultiplier * this.digger.getBlockRemovalCost(x, y, z) / this.digRate))};
         return this.modifier.requestTask(removalEntries, onFinished, this);
     }
 

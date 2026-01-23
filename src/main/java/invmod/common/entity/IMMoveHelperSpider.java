@@ -8,9 +8,9 @@ public class IMMoveHelperSpider extends IMMoveHelper {
     }
 
     protected int getClimbFace(double x, double y, double z) {
-        int mobX = MathHelper.floor_double(x - this.a.width / 2.0F);
-        int mobY = MathHelper.floor_double(y);
-        int mobZ = MathHelper.floor_double(z - this.a.width / 2.0F);
+        int mobX = Mth.floor(x - this.a.getBbWidth() / 2.0F);
+        int mobY = Mth.floor(y);
+        int mobZ = Mth.floor(z - this.a.getBbWidth() / 2.0F);
 
         int index = 0;
         Path path = this.a.getNavigatorNew().getPath();
@@ -40,7 +40,8 @@ public class IMMoveHelperSpider extends IMMoveHelper {
 
         for (int count = 0; count < 8; count++) {
             //set bool to true, donno why
-            if (this.a.worldObj.isBlockNormalCubeDefault(mobX + invmod.common.util.CoordsInt.offsetAdj2X[index], mobY, mobZ + invmod.common.util.CoordsInt.offsetAdj2Z[index], true)) {
+            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(mobX + invmod.common.util.CoordsInt.offsetAdj2X[index], mobY, mobZ + invmod.common.util.CoordsInt.offsetAdj2Z[index]);
+            if (this.a.level().getBlockState(pos).isCollisionShapeFullBlock(this.a.level(), pos)) {
                 return index / 2;
             }
             index++;

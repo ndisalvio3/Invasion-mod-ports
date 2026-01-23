@@ -29,7 +29,7 @@ public class WingController {
         else {
             this.timeAttacking += 1;
         }
-        if (this.theEntity.ticksExisted % 5 == 0) {
+        if (this.theEntity.tickCount % 5 == 0) {
             if (++this.sampleIndex >= this.flapEffortSamples.length) {
                 this.sampleIndex = 0;
             }

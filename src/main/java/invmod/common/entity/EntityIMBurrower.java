@@ -20,12 +20,12 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -35,7 +35,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public class EntityIMBurrower extends Monster implements IHasNexus {
+public class EntityIMBurrower extends EntityIMLiving {
     private static final int NUMBER_OF_SEGMENTS = 16;
     private static final int SEGMENT_TICK_SPACING = 4;
     private static final int DIG_COOLDOWN_TICKS = 6;
@@ -71,7 +71,7 @@ public class EntityIMBurrower extends Monster implements IHasNexus {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return Monster.createMonsterAttributes()
+        return Mob.createMobAttributes()
             .add(Attributes.MAX_HEALTH, 22.0D)
             .add(Attributes.MOVEMENT_SPEED, 0.22D)
             .add(Attributes.ATTACK_DAMAGE, 4.0D)
@@ -285,7 +285,7 @@ public class EntityIMBurrower extends Monster implements IHasNexus {
         return digCooldown == 0 && horizontalCollision && (nexus != null || getTarget() != null) && canDig();
     }
 
-    private boolean canDig() {
+    protected boolean canDig() {
         return tier > 0;
     }
 

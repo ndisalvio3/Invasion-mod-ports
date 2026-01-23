@@ -9,9 +9,8 @@ import invmod.common.entity.Goal;
 import invmod.common.nexus.INexusAccess;
 import invmod.common.nexus.TileEntityNexus;
 import invmod.common.util.CoordsInt;
-import net.minecraft.entity.ai.EntityAIBase;
 
-public class EntityAIAttackNexus extends EntityAIBase {
+public class EntityAIAttackNexus extends LegacyGoal {
     private EntityIMLiving theEntity;
     private boolean attacked;
 

@@ -3,7 +3,10 @@
 This file lists all reconciliation work required to reach 1:1 parity with the 1.7.2 reference repo.
 Generated from local diff reports in /tmp/invasion-recon and file set comparisons.
 
+## In Progress
+
 ## Done
+- Port legacy invmod entity/ai classes to modern API (compile errors)
 - src/main/java/assets/invmod/lang/en_US.lang
 - src/main/java/assets/invmod/sounds/bigzombie1.ogg
 - src/main/java/assets/invmod/sounds/chime1.ogg
