@@ -5,9 +5,9 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 
 ## Done
 - src/main/java/assets/invmod/lang/en_US.lang
+- src/main/java/assets/invmod/sounds/bigzombie1.ogg
 
 ## Missing From Current Repo (present in 1.7.2)
-- src/main/java/assets/invmod/sounds/bigzombie1.ogg
 - src/main/java/assets/invmod/sounds/chime1.ogg
 - src/main/java/assets/invmod/sounds/egghatch1.ogg
 - src/main/java/assets/invmod/sounds/egghatch2.ogg
