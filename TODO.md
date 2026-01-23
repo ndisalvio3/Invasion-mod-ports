@@ -8,9 +8,9 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 - src/main/java/assets/invmod/sounds/bigzombie1.ogg
 - src/main/java/assets/invmod/sounds/chime1.ogg
 - src/main/java/assets/invmod/sounds/egghatch1.ogg
+- src/main/java/assets/invmod/sounds/egghatch2.ogg
 
 ## Missing From Current Repo (present in 1.7.2)
-- src/main/java/assets/invmod/sounds/egghatch2.ogg
 - src/main/java/assets/invmod/sounds/fireball1.ogg
 - src/main/java/assets/invmod/sounds.json
 - src/main/java/assets/invmod/sounds/rumble1.ogg
