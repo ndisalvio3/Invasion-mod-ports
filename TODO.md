@@ -6,6 +6,7 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 ## In Progress
 
 ## Done
+- Import missing 1.7.2 invmod assets (sounds.json + sound/texture files) into src/main/java/assets/invmod (mapped 7 legacy names to closest textures)
 - Fix build errors with full-source compilation enabled (enable compilation for all sources; no disabling) (no errors found; build already compiles full sources)
 - Port legacy invmod entity/ai classes to modern API (compile errors)
 - src/main/java/assets/invmod/lang/en_US.lang
@@ -15,7 +16,6 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 - src/main/java/assets/invmod/sounds/egghatch2.ogg
 - src/main/java/assets/invmod/sounds/fireball1.ogg
 
-## Missing From Current Repo (present in 1.7.2)
 - src/main/java/assets/invmod/sounds.json
 - src/main/java/assets/invmod/sounds/rumble1.ogg
 - src/main/java/assets/invmod/sounds/scrape1.ogg
@@ -84,6 +84,7 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 - src/main/java/assets/invmod/textures/zombieT2.png
 - src/main/java/assets/invmod/textures/zombieT3.png
 - src/main/java/assets/invmod/textures/zombietar.png
+## Missing From Current Repo (present in 1.7.2)
 - src/main/java/invmod/client/ProxyClient.java
 - src/main/java/invmod/client/render/animation/AnimationAction.java
 - src/main/java/invmod/client/render/animation/Animation.java
