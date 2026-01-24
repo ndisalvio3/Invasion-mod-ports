@@ -6,6 +6,7 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 ## In Progress
 
 ## Done
+- Update AGENTS instructions to require full functionality in addition to compilability
 - Import remaining invmod client render classes (models/renderers)
 - Import missing 1.7.2 invmod assets (sounds.json + sound/texture files) into src/main/java/assets/invmod (mapped 7 legacy names to closest textures)
 - Fix build errors with full-source compilation enabled (enable compilation for all sources; no disabling) (no errors found; build already compiles full sources)
