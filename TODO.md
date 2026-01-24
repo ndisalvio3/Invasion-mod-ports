@@ -4,6 +4,7 @@ This file lists all reconciliation work required to reach 1:1 parity with the 1.
 Generated from local diff reports in /tmp/invasion-recon and file set comparisons.
 
 ## In Progress
+- Import remaining invmod client render classes (models/renderers)
 
 ## Done
 - Import missing 1.7.2 invmod assets (sounds.json + sound/texture files) into src/main/java/assets/invmod (mapped 7 legacy names to closest textures)
@@ -84,8 +85,6 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 - src/main/java/assets/invmod/textures/zombieT2.png
 - src/main/java/assets/invmod/textures/zombieT3.png
 - src/main/java/assets/invmod/textures/zombietar.png
-## Missing From Current Repo (present in 1.7.2)
-- src/main/java/invmod/client/ProxyClient.java
 - src/main/java/invmod/client/render/animation/AnimationAction.java
 - src/main/java/invmod/client/render/animation/Animation.java
 - src/main/java/invmod/client/render/animation/AnimationPhaseInfo.java
@@ -95,9 +94,11 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 - src/main/java/invmod/client/render/animation/BonesWings.java
 - src/main/java/invmod/client/render/animation/InterpType.java
 - src/main/java/invmod/client/render/animation/KeyFrame.java
+- src/main/java/invmod/client/render/animation/Transition.java
+- src/main/java/invmod/client/ProxyClient.java
 - src/main/java/invmod/client/render/animation/ModelAnimator.java
 - src/main/java/invmod/client/render/AnimationRegistry.java
-- src/main/java/invmod/client/render/animation/Transition.java
+## Missing From Current Repo (present in 1.7.2)
 - src/main/java/invmod/client/render/ModelBigBiped.java
 - src/main/java/invmod/client/render/ModelBird.java
 - src/main/java/invmod/client/render/ModelB.java
