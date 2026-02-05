@@ -6,6 +6,7 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 ## In Progress
 
 ## Done
+- Fully port legacy invmod client render/model classes (replace stubs)
 - Correct AGENTS to forbid compile-only stubs without explicit approval
 - Clarify render stub intent in AGENTS instructions
 - Update AGENTS instructions to require full functionality in addition to compilability
