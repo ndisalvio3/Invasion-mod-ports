@@ -6,6 +6,7 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 ## In Progress
 
 ## Done
+- Port legacy config infrastructure (`Config` + `ConfigInvasion`) with NeoForge-compatible `Invasion` mappings
 - Fully port legacy invmod client render/model classes (replace stubs)
 - Correct AGENTS to forbid compile-only stubs without explicit approval
 - Clarify render stub intent in AGENTS instructions
@@ -136,8 +137,6 @@ Generated from local diff reports in /tmp/invasion-recon and file set comparison
 - src/main/java/invmod/client/render/RenderSpiderIM.java
 - src/main/java/invmod/client/render/RenderThrower.java
 - src/main/java/invmod/client/render/RenderTrap.java
-- src/main/java/invmod/common/ConfigInvasion.java
-- src/main/java/invmod/common/Config.java
 - src/main/java/invmod/common/creativetab/CreativeTabInvmod.java
 - src/main/java/invmod/common/GuiHandler.java
 - src/main/java/invmod/common/item/ItemCatalystMixture.java
