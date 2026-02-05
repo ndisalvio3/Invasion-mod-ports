@@ -1,8 +1,8 @@
 package com.whammich.invasion.registry;
 
 import com.whammich.invasion.Reference;
+import invmod.common.creativetab.CreativeTabInvmod;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -11,8 +11,8 @@ public final class ModCreativeTabs {
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Reference.MODID);
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> INVASION_TAB = TABS.register("invasion", () -> CreativeModeTab.builder()
-        .title(Component.translatable("itemGroup.invasion"))
-        .icon(() -> ModItems.INFUSED_SWORD.get().getDefaultInstance())
+        .title(CreativeTabInvmod.getDisplayName())
+        .icon(CreativeTabInvmod::getIconItem)
         .displayItems((parameters, output) -> {
             output.accept(ModBlocks.NEXUS_ITEM.get());
             output.accept(ModItems.CATALYST_MIXTURE_UNSTABLE.get());
